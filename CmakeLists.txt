@@ -1,0 +1,14 @@
+cmake_minimum_required(VERSION 3.28.1)
+
+# project name
+project(MagicalTower)
+
+# SRC_LIST
+set(SRC_LIST main.cpp map.h key.cpp key.h displayClass.h displayClass.cpp monsterClass.h playerClass.h framePrintChar.cpp framePrintChar.h  Cursor.cpp Cursor.h playerClass.cpp)
+
+# executable
+add_executable(${PROJECT_NAME} ${SRC_LIST})
+
+# compile option
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexec-charset=GBK")
+

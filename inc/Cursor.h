@@ -8,7 +8,8 @@ enum COLOR{
 	WHITE,
 	GREEN,
 	PURPLE,
-	GREY
+	GREY,
+	LIGHT_GREEN
 };
 
 void gotoxy(int x, int y);

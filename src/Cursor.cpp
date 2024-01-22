@@ -61,12 +61,17 @@ void SetColor(COLOR a)
 		SetConsoleColor(FOREGROUND_INTENSITY | 7);
 		break;
 	case GREEN:
-		SetConsoleColor(FOREGROUND_INTENSITY | 3);
+		SetConsoleColor(FOREGROUND_INTENSITY | 2);
 		break;
 	case GREY:
 		SetConsoleColor(FOREGROUND_INTENSITY | 8);
+		break;
 	case PURPLE:
 		SetConsoleColor(FOREGROUND_INTENSITY | 13);
+		break;
+	case LIGHT_GREEN:
+		SetConsoleColor(FOREGROUND_INTENSITY | 11);
+		break;
 	};
 }
 

@@ -5,6 +5,7 @@
 #ifdef WINDOWS
 #include <windows.h>
 #include <stdio.h>
+#include <string>
 
 /**
  * @brief 移动控制台的光标
@@ -59,16 +60,25 @@ void SetColor(COLOR a)
 	case WHITE:
 		SetConsoleColor(FOREGROUND_INTENSITY | 7);
 		break;
+	case GREEN:
+		SetConsoleColor(FOREGROUND_INTENSITY | 3);
+		break;
+	case GREY:
+		SetConsoleColor(FOREGROUND_INTENSITY | 8);
+	case PURPLE:
+		SetConsoleColor(FOREGROUND_INTENSITY | 13);
 	};
 }
 
 /**
  * @brief 以某个具体的颜色输出
  */
-void colorPrint(COLOR c, char* s)
+// void colorPrint(COLOR c, const char* s)
+void colorPrint(COLOR c, char *s)
+// void colorPrint(COLOR c, string s)
 {
 	SetColor(c);
-	printf("%s",s);
+	printf("%s", s);
 	SetColor(WHITE);
 }
 

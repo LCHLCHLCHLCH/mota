@@ -7,11 +7,13 @@ enum COLOR{
 	BLUE,
 	WHITE,
 	GREEN,
-	PURPLE
+	PURPLE,
+	GREY
 };
 
 void gotoxy(int x, int y);
 void hideCursor();
+void SetConsoleColor(int color);
 void SetColor(COLOR a);
 void colorPrint(COLOR c, char* s);
 

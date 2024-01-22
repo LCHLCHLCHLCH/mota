@@ -6,8 +6,6 @@ project(MagicalTower)
 # SRC_LIST
 aux_source_directory(./src SRC_LIST)
 
-# set(SRC_LIST main.cpp map.h key.cpp key.h displayClass.h displayClass.cpp monsterClass.h playerClass.h framePrintChar.cpp framePrintChar.h  Cursor.cpp Cursor.h playerClass.cpp)
-
 #include directory
 include_directories(./inc)
 

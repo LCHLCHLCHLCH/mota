@@ -11,6 +11,8 @@ void framePrintChar(uint8_t ch)
 		break;
 	case 2:
 		printf("■");
+		// printf("⊕");
+		// printf("██");
 		break;
 	case 3:
 		colorPrint(YELLOW, (char *)"〓");

@@ -5,6 +5,7 @@
 #include "Cursor.h"
 #include "monsterClass.h"
 #include "regionDisplay.h"
+#include "statusBarClass.h"
 
 extern uint8_t map[5][13][13];
 KEY key;
@@ -23,17 +24,19 @@ int main()
 	Display display;
 	display.init(player);
 
-	#include "monsterInit.cpp"
+	// status bar init
+	StatusBar statusBar;
 
 	// 显示颜色设为白色
 	SetColor(WHITE);
 
 	// 显示最初的内容
 	display.printDifferentia();
+	statusBar.firstShow(player);
 	hideCursor();
 
 	//测试的显示代码
-	regionPrint(1,14,13,"欢迎游玩魔塔,,,,这是由我开发的一个游戏,凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数");
+	regionPrint(2,14,12,"欢迎游玩魔塔,这是由我开发的一个游戏,凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数");
 
 	while (1)
 	{

@@ -3,15 +3,12 @@
 
 #include <stdio.h>
 #include "Cursor.h"
+#include "playerClass.h"
 
 class StatusBar
 {
-public:
-	;
-	void firstShow()
-	{
-		
-	}
+	public:
+	void firstShow(Player ply);
 };
 
 #endif

@@ -10,6 +10,11 @@ void Player::init()
 	x = 5;
 	y = 5;
 	yellowKey = 0;
+	blueKey = 0;
+	redKey = 0;
+	attack = 100;
+	defence = 100;
+	health = 1000;
 }
 
 /**
@@ -79,6 +84,7 @@ PREDICTION Player::predictMove(uint8_t Floor_going, uint8_t X_going, uint8_t Y_g
 	{
 		return UNREACHABLE;
 	}
+	else return UNREACHABLE;
 }
 
 /**

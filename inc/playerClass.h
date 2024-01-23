@@ -36,6 +36,10 @@ public:
 	PREDICTION PredictAttack(Monster monster);
 	PREDICTION predictMove(uint8_t Floor_going, uint8_t X_going, uint8_t Y_going);
 	void respondToKey(KEY key);
+
+	void respondToMap(uint8_t floor_going, uint8_t x_going, uint8_t y_going);
+	void reactToObject(uint8_t floor_going, uint8_t x_going, uint8_t y_going);
+	void reactToProp(uint8_t floor_going, uint8_t x_going, uint8_t y_going);
 };
 
 #endif

@@ -9,6 +9,7 @@ class StatusBar
 {
 	public:
 	void firstShow(Player ply);
+	void updateAll(Player ply);
 };
 
 #endif

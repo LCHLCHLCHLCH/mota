@@ -1,6 +1,8 @@
 #ifndef CURSOR_H
 #define CURSOR_H
 
+#include <string>
+
 enum COLOR{
 	RED,
 	YELLOW,
@@ -16,7 +18,8 @@ void gotoxy(int x, int y);
 void hideCursor();
 void SetConsoleColor(int color);
 void SetColor(COLOR a);
-void colorPrint(COLOR c, char* s);
+void colorPrint(COLOR c, char * s);
+// void colorPrint(COLOR c, std::string s);
 
 #endif
 

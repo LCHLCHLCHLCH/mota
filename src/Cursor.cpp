@@ -80,7 +80,7 @@ void SetColor(COLOR a)
  */
 // void colorPrint(COLOR c, const char* s)
 void colorPrint(COLOR c, char *s)
-// void colorPrint(COLOR c, string s)
+// void colorPrint(COLOR c, std::string s)
 {
 	SetColor(c);
 	printf("%s", s);

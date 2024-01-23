@@ -4,6 +4,7 @@
 #include "map.h"
 #include "Cursor.h"
 #include "monsterClass.h"
+#include "regionDisplay.h"
 
 extern uint8_t map[5][13][13];
 KEY key;
@@ -30,6 +31,9 @@ int main()
 	// 显示最初的内容
 	display.printDifferentia();
 	hideCursor();
+
+	//测试的显示代码
+	regionPrint(1,14,13,"欢迎游玩魔塔,,,,这是由我开发的一个游戏,凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数");
 
 	while (1)
 	{

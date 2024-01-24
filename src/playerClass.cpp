@@ -1,6 +1,6 @@
 #include <stdint.h>
 #include "playerClass.h"
-#include "calc.h"
+#include "monsterClass.h"
 
 /**
  * @brief 初始化函数
@@ -9,20 +9,21 @@ void Player::init()
 {
 	floor = 1;
 	x = 5;
-	y = 5;
-	yellowKey = 0;
-	blueKey = 0;
-	redKey = 0;
-	attack = 100;
-	defence = 100;
-	health = 1000;
+	// y = 11;
+	y = 6;
+	yellowKey = 5;
+	blueKey = 5;
+	redKey = 5;
+	attack = 10;
+	defence = 10;
+	health = 100000;
 }
 
 /**
  * @brief 预测假如攻击某个怪物会发生什么,若能打过则更新伤害值
  * @param Monster 要攻击的怪物
  *
- * @return PREDICTION类型的枚举
+ * @return LIVE:能打过 DIE:打不过
  */
 PREDICTION Player::PredictAttack(Monster monster)
 {
@@ -66,44 +67,44 @@ PREDICTION Player::PredictAttack(Monster monster)
 	}
 }
 
-// /**
-//  * @brief 预测移动到某一个格子以后会发生什么
-//  *
-//  * @param Floor_going
-//  * @param X_going
-//  * @param Y_going
-//  *
-//  * @return 结果,是一个PREDICT类型的枚举
-//  */
-// PREDICTION Player::predictMove(uint8_t Floor_going, uint8_t X_going, uint8_t Y_going)
-// {
-// 	uint8_t Object_Going = map[Floor_going][Y_going][X_going];
-// 	if (Object_Going == 1)
-// 		return REACHABLE;
-// 	else if (Object_Going == 2)
-// 		return UNREACHABLE;
-// 	else if (Object_Going == 3) // 黄门
-// 	{
-// 		return UNREACHABLE;
-// 	}
-// 	else
-// 		return UNREACHABLE;
-// }
-
 /**
  * @brief 对预定要前往的格子做出反应的函数
  */
 void Player::respondToMap(uint8_t floor_going, uint8_t x_going, uint8_t y_going)
 {
-	//如果将要到达的格子的ID在1-50之间,就调用处理object的函数
-	if(map[floor_going][y_going][x_going]>=1&&map[floor_going][y_going][x_going]<=50)reactToObject(floor_going, x_going, y_going);
-	//如果将要到达的格子的ID在51-100之间,就调用处理prop的函数
-	if(map[floor_going][y_going][x_going]>=51&&map[floor_going][y_going][x_going]<=100)reactToProp(floor_going, x_going, y_going);
+	// 如果将要到达的格子的ID在1-50之间,就调用处理object的函数
+	if (map[floor_going][y_going][x_going] >= 1 && map[floor_going][y_going][x_going] <= 50)
+		reactToObject(floor_going, x_going, y_going);
+	// 如果将要到达的格子的ID在51-100之间,就调用处理prop的函数
+	if (map[floor_going][y_going][x_going] >= 51 && map[floor_going][y_going][x_going] <= 100)
+		reactToProp(floor_going, x_going, y_going);
+	// 如果将要到达的格子的ID在101-150之间,就调用处理Monster的函数
+	if (map[floor_going][y_going][x_going] >= 101 && map[floor_going][y_going][x_going] <= 150)
+		reactToMonster(floor_going, x_going, y_going);
 }
 
 /**
  * @brief 对一个怪物做出反应的函数
  */
+void Player::reactToMonster(uint8_t floor_going, uint8_t x_going, uint8_t y_going)
+{
+	uint8_t id = map[floor_going][y_going][x_going];
+	Monster *m = getMonsterType(id);
+	PREDICTION prd = this->PredictAttack(*m);
+	if (prd == LIVE)
+	{
+		// 移动
+		this->x = x_going;
+		this->y = y_going;
+		// 清除怪物
+		map[floor_going][y_going][x_going] = 1;
+		// 受到伤害
+		this->health = this->health - this->hurt;
+		//加钱
+		this->money += m->money;
+	}
+	// 如果打不过的话,就什么都不干
+}
 
 /**
  * @brief 对一个实体做出反应的函数
@@ -256,7 +257,48 @@ void Player::reactToProp(uint8_t floor_going, uint8_t x_going, uint8_t y_going)
 		map[floor_going][y_going][x_going] = 1;
 		this->defence = this->defence + 50;
 		break;
+	case 66: // 神圣剑
+		this->x = x_going;
+		this->y = y_going;
+		map[floor_going][y_going][x_going] = 1;
+		this->attack = this->attack + 100;
+		break;
+	case 67: // 神圣盾
+		this->x = x_going;
+		this->y = y_going;
+		map[floor_going][y_going][x_going] = 1;
+		this->defence = this->defence + 100;
+		break;
 	}
+}
+
+/**
+ * @brief 冰冻的方法
+ */
+void Player::freezeLava()
+{
+	uint8_t target_x;
+	uint8_t target_y;
+
+	target_x = this->x + 1;
+	target_y = this->y;
+	if (map[this->floor][target_y][target_x] == 6)
+		map[this->floor][target_y][target_x] = 1;
+
+	target_x = this->x - 1;
+	target_y = this->y;
+	if (map[this->floor][target_y][target_x] == 6)
+		map[this->floor][target_y][target_x] = 1;
+
+	target_x = this->x;
+	target_y = this->y + 1;
+	if (map[this->floor][target_y][target_x] == 6)
+		map[this->floor][target_y][target_x] = 1;
+
+	target_x = this->x;
+	target_y = this->y - 1;
+	if (map[this->floor][target_y][target_x] == 6)
+		map[this->floor][target_y][target_x] = 1;
 }
 
 /**
@@ -268,6 +310,8 @@ void Player::respondToKey(KEY key)
 	uint8_t X_going;
 	uint8_t Y_going;
 	uint8_t Floor_going;
+
+	uint8_t move_flag = 1; // 这个变量标志着角色移动过了
 
 	switch (key)
 	{
@@ -291,13 +335,14 @@ void Player::respondToKey(KEY key)
 		X_going = this->x + 1;
 		Y_going = this->y;
 		break;
+	case KEY_V:
+		// 冰冻
+		freezeLava();
+		move_flag = 0;
+		break;
 	}
-
-	// PREDICTION prd = predictMove(this->floor, X_going, Y_going);
-	// if (prd == REACHABLE)
-	// {
-	// 	this->x = X_going;
-	// 	this->y = Y_going;
-	// }
-	respondToMap(floor, X_going, Y_going);
+	if (move_flag == 1)
+	{
+		respondToMap(floor, X_going, Y_going);
+	}
 }

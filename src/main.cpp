@@ -36,7 +36,7 @@ int main()
 	hideCursor();
 
 	//测试的显示代码
-	regionPrint(2,14,12,"欢迎游玩魔塔,这是由我开发的一个游戏,凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数凑字数");
+	regionPrint(2,14,12,"欢迎来到魔塔,你是第101位挑战者。");
 
 	while (1)
 	{
@@ -50,6 +50,9 @@ int main()
 		display.store_frame();
 		display.generateFrame(player);
 		display.printDifferentia();
+
+		//右边栏更新显示
+		statusBar.updateAll(player);
 
 		// 隐藏光标
 		hideCursor();

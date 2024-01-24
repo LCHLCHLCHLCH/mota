@@ -1,6 +1,4 @@
 #include "key.h"
-#include <conio.h>
-#include <stdint.h>
 
 KEY getKey(){
 	uint8_t ch = getch();
@@ -12,6 +10,7 @@ KEY getKey(){
 		else if(ch == 77)return RIGHT;
 		else return ERR;
 	}
+	else if(ch == 118||ch == 86)return KEY_V;
 	else{
 		return ERR;
 	}

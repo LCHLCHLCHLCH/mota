@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include "key.h"
 #include "monsterClass.h"
+#include "calc.h"
 
 extern uint8_t map[5][13][13];
 
@@ -34,12 +35,15 @@ public:
 
 	void init();
 	PREDICTION PredictAttack(Monster monster);
-	PREDICTION predictMove(uint8_t Floor_going, uint8_t X_going, uint8_t Y_going);
+	// PREDICTION predictMove(uint8_t Floor_going, uint8_t X_going, uint8_t Y_going);
 	void respondToKey(KEY key);
 
 	void respondToMap(uint8_t floor_going, uint8_t x_going, uint8_t y_going);
 	void reactToObject(uint8_t floor_going, uint8_t x_going, uint8_t y_going);
 	void reactToProp(uint8_t floor_going, uint8_t x_going, uint8_t y_going);
+	void reactToMonster(uint8_t floor_going, uint8_t x_going, uint8_t y_going);
+
+	void freezeLava();
 };
 
 #endif

@@ -6,13 +6,11 @@
 #include "monsterClass.h"
 #include "regionDisplay.h"
 #include "statusBarClass.h"
+#include "event.h"
+
 
 extern uint8_t map[5][13][13];
 KEY key;
-
-/**
- * @brief 怪物的实例化
- */
 
 int main()
 {
@@ -36,7 +34,9 @@ int main()
 	hideCursor();
 
 	//测试的显示代码
-	regionPrint(2,14,12,"欢迎来到魔塔,你是第101位挑战者。");
+	saySomething((char*)"魔王:很好,又一个来挑战的。");
+	saySomething((char*)"魔王:我等你好久了。");
+	saySomething((char*)"魔王:前来迎接我的挑战");
 
 	while (1)
 	{

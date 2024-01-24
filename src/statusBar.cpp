@@ -43,7 +43,7 @@ void StatusBar::firstShow(Player ply)
 	printf("%d", ply.attack);
 	gotoxy(31, 9);
 	printf("%d", ply.defence);
-	gotoxy(31, 9);
+	gotoxy(31, 11);
 	printf("%d", ply.money);
 	// gotoxy(33, 11);
 	// printf("%d", ply.health);

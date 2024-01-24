@@ -7,10 +7,10 @@
  */
 void Player::init()
 {
-	floor = 1;
+	floor = 0;
 	x = 5;
-	// y = 11;
-	y = 6;
+	y = 11;
+	// y = 6;
 	yellowKey = 5;
 	blueKey = 5;
 	redKey = 5;
@@ -100,7 +100,7 @@ void Player::reactToMonster(uint8_t floor_going, uint8_t x_going, uint8_t y_goin
 		map[floor_going][y_going][x_going] = 1;
 		// 受到伤害
 		this->health = this->health - this->hurt;
-		//加钱
+		// 加钱
 		this->money += m->money;
 	}
 	// 如果打不过的话,就什么都不干
@@ -338,6 +338,10 @@ void Player::respondToKey(KEY key)
 	case KEY_V:
 		// 冰冻
 		freezeLava();
+		move_flag = 0;
+		break;
+	case NOTHING:
+		//按下了不相关的键
 		move_flag = 0;
 		break;
 	}

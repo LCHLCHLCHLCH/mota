@@ -9,9 +9,11 @@ enum KEY{
 	DOWN,
 	LEFT,
 	RIGHT,
+	KEY_Z,
+	KEY_X,
 	KEY_V,
 	KEY_Q,
-	ERR
+	NOTHING
 };
 
 KEY getKey();

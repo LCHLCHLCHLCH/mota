@@ -34,9 +34,13 @@ int main()
 	hideCursor();
 
 	//测试的显示代码
-	saySomething((char*)"魔王:很好,又一个来挑战的。");
-	saySomething((char*)"魔王:我等你好久了。");
-	saySomething((char*)"魔王:前来迎接我的挑战");
+	// saySomething((char*)"魔王:很好,又一个来挑战的。");
+	// saySomething((char*)"魔王:我等你好久了。");
+	// saySomething((char*)"魔王:前来迎接我的挑战");
+
+	//测试选择
+	char* list[] = {(char*)"给我20金币", (char*)"提升5防御", (char*)"提升10攻击"};
+	chooseFromSomething(3, list);
 
 	while (1)
 	{

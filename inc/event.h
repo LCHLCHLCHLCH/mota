@@ -4,13 +4,15 @@
 #include <stdint.h>
 #include "eventMap.h"
 #include "regionDisplay.h"
+#include "key.h"
 #include <conio.h>
+#include <cstring>
 
 extern uint8_t map[5][13][13];
 
 void saySomething(char * s);
-void chooseFromSomething(uint8_t num, char*[]);
+uint8_t chooseFromSomething(uint8_t num, char** list);
 
-void upStair();
+// void upStair();
 
 #endif

@@ -10,7 +10,7 @@ aux_source_directory(./src SRC_LIST)
 include_directories(./inc)
 
 # executable
-add_executable(${PROJECT_NAME} ${SRC_LIST})
+add_executable(${PROJECT_NAME} ${SRC_LIST} ./logo/logo.rc)
 
 # compile option
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexec-charset=GBK")

@@ -8,7 +8,7 @@
 
 #define BLANK 0
 
-extern uint8_t map[5][13][13];
+extern uint8_t map[51][13][13];
 
 class Display
 {

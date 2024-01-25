@@ -13,6 +13,8 @@ KEY getKey(){
 	else if(ch == 118||ch == 86)return KEY_V;
 	else if(ch == 122||ch == 90)return KEY_Z;
 	else if(ch == 120||ch == 88)return KEY_X;
+	else if(ch == 49)return KEY_1;
+	else if(ch == 50)return KEY_2;
 	else{
 		return NOTHING;
 	}

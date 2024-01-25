@@ -53,10 +53,10 @@ void StatusBar::firstShow(Player ply)
 
 void StatusBar::updateAll(Player ply)
 {
-	// gotoxy(32, 0);
-	// printf("    ");
-	// gotoxy(32, 0);
-	// printf("%d", ply.floor);
+	gotoxy(32, 0);
+	printf("    ");
+	gotoxy(32, 0);
+	printf("%d", ply.floor);
 	gotoxy(31, 2);
 	printf("         ");
 	gotoxy(31, 2);

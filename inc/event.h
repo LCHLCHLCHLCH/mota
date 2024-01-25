@@ -8,7 +8,7 @@
 #include <conio.h>
 #include <cstring>
 
-extern uint8_t map[5][13][13];
+extern uint8_t map[51][13][13];
 
 void saySomething(char * s);
 uint8_t chooseFromSomething(uint8_t num, char** list);

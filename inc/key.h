@@ -13,6 +13,8 @@ enum KEY{
 	KEY_X,
 	KEY_V,
 	KEY_Q,
+	KEY_1,
+	KEY_2,
 	NOTHING
 };
 

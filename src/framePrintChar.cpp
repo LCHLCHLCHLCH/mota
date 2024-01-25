@@ -3,6 +3,7 @@
 
 void framePrintChar(uint8_t ch)
 {
+	uint8_t k=rand()%10;
 	switch (ch)
 	{
 	// 实体的部分
@@ -11,8 +12,6 @@ void framePrintChar(uint8_t ch)
 		break;
 	case 2:
 		printf("■");
-		// printf("⊕");
-		// printf("██");
 		break;
 	case 3:
 		colorPrint(YELLOW, (char *)"〓");
@@ -24,13 +23,15 @@ void framePrintChar(uint8_t ch)
 		colorPrint(RED, (char *)"〓");
 		break;
 	case 6:
-		SetConsoleColor(64);
+		SetConsoleColor(64 | 7);
 		printf("  ");
 		SetColor(WHITE);
 		break;
 	case 7:
 		SetConsoleColor(1 * 16 | 7); // 蓝底,白背景
 		printf("★");
+		// if(k == 1)printf("★");
+		// else printf("  ");
 		SetColor(WHITE);
 		break;
 	case 8:

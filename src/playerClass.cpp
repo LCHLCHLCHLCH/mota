@@ -7,9 +7,9 @@
  */
 void Player::init()
 {
-	floor = 0;
-	x = 5;
-	y = 11;
+	floor = 50;
+	x = 7;
+	y = 7;
 	// y = 6;
 	yellowKey = 5;
 	blueKey = 5;
@@ -340,8 +340,16 @@ void Player::respondToKey(KEY key)
 		freezeLava();
 		move_flag = 0;
 		break;
+	case KEY_1:
+		this->floor--;
+		move_flag = 0;
+		break;
+	case KEY_2:
+		this->floor++;
+		move_flag = 0;
+		break;
 	case NOTHING:
-		//按下了不相关的键
+		// 按下了不相关的键
 		move_flag = 0;
 		break;
 	}

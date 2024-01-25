@@ -9,7 +9,7 @@
 #include "event.h"
 
 
-extern uint8_t map[5][13][13];
+extern uint8_t map[51][13][13];
 KEY key;
 
 int main()

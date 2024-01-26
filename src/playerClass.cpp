@@ -16,7 +16,7 @@ void Player::init()
 	redKey = 5;
 	attack = 10;
 	defence = 10;
-	health = 100000;
+	health = 1000;
 }
 
 /**

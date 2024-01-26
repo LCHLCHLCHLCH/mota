@@ -129,6 +129,81 @@ void framePrintChar(uint8_t ch)
 	case 110:
 		colorPrint(RED, (char *)"蝠");
 		break;
+	case 111:
+		colorPrint(RED, (char*)"法");
+		break;
+	case 112:
+		colorPrint(YELLOW, (char*)"兽");
+		break;
+	case 113:
+		colorPrint(RED, (char*)"兽");
+		break;
+	case 114:
+		colorPrint(RED, (char*)"石");
+		break;
+	case 115:
+		colorPrint(RED, (char*)"章");
+		break;
+	case 116:
+		colorPrint(RED, (char*)"血");
+		break;
+	case 117:
+		colorPrint(RED, (char*)"师");
+		break;
+	case 118:
+		colorPrint(BLUE, (char*)"鬼");
+		break;
+	case 119:
+		colorPrint(BLUE, (char*)"战");
+		break;
+	case 120:
+		colorPrint(GREEN, (char*)"幽");
+		break;
+	case 121:
+		colorPrint(BLUE,(char*)"卫");
+		break;
+	case 122:
+		colorPrint(YELLOW, (char*)"武");
+		break;
+	case 123:
+		colorPrint(RED, (char*)"龙");
+		break;
+	case 124:
+		colorPrint(RED, (char*)"骑");
+		break;
+	case 125:
+		colorPrint(YELLOW, (char*)"骑");
+		break;
+	case 126:
+		colorPrint(YELLOW, (char*)"巫");
+		break;
+	case 127:
+		colorPrint(RED, (char*)"巫");
+		break;
+	case 128:
+		colorPrint(GREEN, (char*)"Θ");
+		break;
+	case 129:
+		colorPrint(RED, (char*)"蝠");
+		break;
+	case 130:
+		colorPrint(PURPLE, (char*)"骑");
+		break;
+	case 131:
+		colorPrint(BLUE, (char*)"警");
+		break;
+	case 132:
+		colorPrint(RED, (char*)"卫");
+		break;
+	case 133:
+		colorPrint(RED, (char*)"王");
+		break;
+	case 134:
+		colorPrint(RED, (char*)"王");
+		break;
+	case 135:
+		colorPrint(RED, (char*)"王");
+		break;
 	// player
 	case 255:
 		colorPrint(BLUE, (char *)"勇");

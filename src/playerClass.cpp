@@ -27,8 +27,8 @@ void Player::init()
  */
 PREDICTION Player::PredictAttack(Monster monster)
 {
-	uint32_t player_health_temp = this->health;
-	uint32_t monster_health_temp = monster.health;
+	int32_t player_health_temp = this->health;
+	int32_t monster_health_temp = monster.health;
 	int32_t damage_PlayerToMonster = this->attack - monster.defence;
 	int32_t damage_MonsterToPlayer = monster.attack - this->defence;
 

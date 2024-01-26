@@ -39,8 +39,8 @@ int main()
 	// saySomething((char*)"魔王:前来迎接我的挑战");
 
 	//测试选择
-	char* list[] = {(char*)"给我20金币", (char*)"提升5防御", (char*)"提升10攻击"};
-	chooseFromSomething(3, list);
+	// char* list[] = {(char*)"给我20金币", (char*)"提升5防御", (char*)"提升10攻击"};
+	// chooseFromSomething(3, list);
 
 	while (1)
 	{

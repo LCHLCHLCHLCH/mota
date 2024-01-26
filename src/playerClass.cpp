@@ -7,9 +7,9 @@
  */
 void Player::init()
 {
-	floor = 50;
+	floor = 1;
 	x = 7;
-	y = 7;
+	y = 11;
 	// y = 6;
 	yellowKey = 5;
 	blueKey = 5;
@@ -29,36 +29,27 @@ PREDICTION Player::PredictAttack(Monster monster)
 {
 	uint32_t player_health_temp = this->health;
 	uint32_t monster_health_temp = monster.health;
+	int32_t damage_PlayerToMonster = this->attack - monster.defence;
+	int32_t damage_MonsterToPlayer = monster.attack - this->defence;
 
-	// 攻击大于怪物的防御,无伤击败
-	if (this->attack >= monster_health_temp)
-	{
-		// hurt = 0;
-		this->hurt = 0;
-		return LIVE;
-	}
-	// 防御大于怪物的攻击,无伤击败
-	else if (this->defence >= monster.attack)
-	{
-		this->hurt = 0;
-		return LIVE;
-	}
+	if(damage_MonsterToPlayer<0)damage_MonsterToPlayer = 0;
+	if(damage_PlayerToMonster<0)damage_PlayerToMonster = 0;
+
 	// 攻击小于怪物的防御,无法击败
-	else if (this->attack <= monster.defence)
-	{
-		return DIE;
-	}
+	if(damage_PlayerToMonster == 0)return DIE;
 	else
 	{
 		while (1)
 		{
-			monster_health_temp = monster_health_temp - (this->attack - monster.defence);
+			//玩家攻击阶段
+			monster_health_temp = monster_health_temp - damage_PlayerToMonster;
 			if (monster_health_temp <= 0)
 			{
-				this->hurt = health - player_health_temp;
+				this->hurt = this->health - player_health_temp;
 				return LIVE;
 			}
-			player_health_temp = player_health_temp - (monster.attack - this->defence);
+			//怪物攻击阶段
+			player_health_temp = player_health_temp - damage_MonsterToPlayer;
 			if (player_health_temp <= 0)
 			{
 				return DIE;

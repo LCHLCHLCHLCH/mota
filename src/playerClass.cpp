@@ -11,12 +11,12 @@ void Player::init()
 	x = 7;
 	y = 11;
 	// y = 6;
-	yellowKey = 5;
-	blueKey = 5;
-	redKey = 5;
-	attack = 10;
-	defence = 10;
-	health = 1000;
+	yellowKey = 90;
+	blueKey = 90;
+	redKey = 90;
+	attack = 100;
+	defence = 100;
+	health = 10000;
 }
 
 /**
@@ -32,23 +32,26 @@ PREDICTION Player::PredictAttack(Monster monster)
 	int32_t damage_PlayerToMonster = this->attack - monster.defence;
 	int32_t damage_MonsterToPlayer = monster.attack - this->defence;
 
-	if(damage_MonsterToPlayer<0)damage_MonsterToPlayer = 0;
-	if(damage_PlayerToMonster<0)damage_PlayerToMonster = 0;
+	if (damage_MonsterToPlayer < 0)
+		damage_MonsterToPlayer = 0;
+	if (damage_PlayerToMonster < 0)
+		damage_PlayerToMonster = 0;
 
 	// 攻击小于怪物的防御,无法击败
-	if(damage_PlayerToMonster == 0)return DIE;
+	if (damage_PlayerToMonster == 0)
+		return DIE;
 	else
 	{
 		while (1)
 		{
-			//玩家攻击阶段
+			// 玩家攻击阶段
 			monster_health_temp = monster_health_temp - damage_PlayerToMonster;
 			if (monster_health_temp <= 0)
 			{
 				this->hurt = this->health - player_health_temp;
 				return LIVE;
 			}
-			//怪物攻击阶段
+			// 怪物攻击阶段
 			player_health_temp = player_health_temp - damage_MonsterToPlayer;
 			if (player_health_temp <= 0)
 			{
@@ -138,15 +141,21 @@ void Player::reactToObject(uint8_t floor_going, uint8_t x_going, uint8_t y_going
 	case 8: // 怪物看护的门
 		break;
 	case 9: // 上行楼梯
-		/*上楼的函数*/
+		this->x = x_going;
+		this->y = y_going;
+		upStair(&(this->floor), &(this->x), &(this->y));
 		break;
 	case 10: // 下行楼梯
-		/*下楼的函数*/
+		this->x = x_going;
+		this->y = y_going;
+		downStair(&(this->floor), &(this->x), &(this->y));
 		break;
 	case 11:
 		map[floor_going][y_going][x_going] = 1;
 		break;
 	default:
+		this->x = x_going;
+		this->y = y_going;
 		break;
 	}
 }
@@ -310,42 +319,38 @@ void Player::respondToKey(KEY key)
 		// y--;
 		X_going = this->x;
 		Y_going = this->y - 1;
+		respondToMap(floor, X_going, Y_going);
 		break;
 	case DOWN:
 		// y++;
 		X_going = this->x;
 		Y_going = this->y + 1;
+		respondToMap(floor, X_going, Y_going);
 		break;
 	case LEFT:
 		// x--;
 		X_going = this->x - 1;
 		Y_going = this->y;
+		respondToMap(floor, X_going, Y_going);
 		break;
 	case RIGHT:
 		// x++;
 		X_going = this->x + 1;
 		Y_going = this->y;
+		respondToMap(floor, X_going, Y_going);
 		break;
 	case KEY_V:
 		// 冰冻
 		freezeLava();
-		move_flag = 0;
 		break;
 	case KEY_1:
 		this->floor--;
-		move_flag = 0;
 		break;
 	case KEY_2:
 		this->floor++;
-		move_flag = 0;
 		break;
 	case NOTHING:
 		// 按下了不相关的键
-		move_flag = 0;
 		break;
-	}
-	if (move_flag == 1)
-	{
-		respondToMap(floor, X_going, Y_going);
 	}
 }

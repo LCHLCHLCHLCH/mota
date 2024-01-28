@@ -1,0 +1,52 @@
+{
+    "tasks": [
+    	// Task 1：生成build文件夹
+        {
+            "type": "shell", 
+            "label": "mk_build", // task的名字
+            "command": "mkdir", // 需要被运行的命令
+            "args": ["build"], // 传递给command的参数
+            "options": {
+                "cwd": "${workspaceFolder}",
+            },
+        },
+        // Task 2：运行cmake
+        {
+            "type": "shell",
+            "label": "cmake",
+            "command": "cmake",
+            "args": [
+                "-G",
+                "MinGW Makefiles",
+                "${workspaceFolder}"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/build", // 工作路径，就是说cmake的输出都会放在${workspaceFolder}/build文件夹下
+            },
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        // Task 3：运行make
+        {
+            "type": "shell",
+            "label": "build",
+            "command": "mingw32-make",
+            "args": ["-j4"],
+            "options": {
+                "cwd": "${workspaceFolder}/build",
+            },
+            "problemMatcher": [],
+            "group": {
+                "kind": "build", // 这里说明这个任务时输入"build"类型的，也就是说明，这是一个生成任务
+                "isDefault": true
+            },
+            "dependsOn": [
+                "cmake" // 这里设置，说明了这个任务一定要在Task “cmake”执行之后方可执行
+            ]
+        }     
+    ],
+    "version": "2.0.0"
+}

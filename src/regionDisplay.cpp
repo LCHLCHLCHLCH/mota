@@ -123,6 +123,8 @@ void regionErase(uint8_t start_place_x, uint8_t start_place_y, uint16_t len)
 		printf("%c", ' ');
 		column++;
 	}
+	gotoxy(0,14);
+	hideCursor();
 }
 
 /**

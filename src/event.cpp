@@ -77,3 +77,21 @@ uint8_t chooseFromSomething(uint8_t num, char **list)
 		regionEmphasize(2, 13 + chosenOption, list[chosenOption]);
 	}
 }
+
+/**
+ * @brief 处理上楼梯事件的函数
+ * @param 玩家所在楼层及其坐标的地址
+ */
+void upStair(uint8_t *Floor, uint8_t *X, uint8_t *Y)
+{
+	(*Floor)++;
+}
+
+/**
+ * @brief 处理下楼梯事件的函数
+ * @param 玩家所在楼层及其坐标的地址
+ */
+void downStair(uint8_t *Floor, uint8_t *X, uint8_t *Y)
+{
+	(*Floor)--;
+}

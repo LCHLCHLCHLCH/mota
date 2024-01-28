@@ -204,6 +204,21 @@ void framePrintChar(uint8_t ch)
 	case 135:
 		colorPrint(RED, (char*)"王");
 		break;
+	case 151:
+		colorPrint(WHITE,(char*)"老");
+		break;
+	case 152:
+		colorPrint(RED,(char*)"商");
+		break;
+	case 153:
+		colorPrint(PURPLE,(char*)"公");
+		break;
+	case 154:
+		colorPrint(YELLOW,(char*)"偷");
+		break;
+	case 155:
+		colorPrint(PURPLE,(char*)"祭");
+		break;
 	// player
 	case 255:
 		colorPrint(BLUE, (char *)"勇");

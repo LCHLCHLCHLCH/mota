@@ -4,6 +4,7 @@
 #include "key.h"
 #include "monsterClass.h"
 #include "calc.h"
+#include "event.h"
 
 extern uint8_t map[51][13][13];
 

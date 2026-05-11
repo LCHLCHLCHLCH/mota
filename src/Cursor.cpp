@@ -117,12 +117,28 @@ void SetColor(COLOR a) {
 void addstr_gbk(const char* s) {
 	int len = (int)std::strlen(s);
 	if (len == 0) return;
+
+	// 记录输出前位置
+	int y0, x0;
+	getyx(stdscr, y0, x0);
+
+	// 用 Windows API 将 GBK → wchar_t，绕过 MinGW 的 mbtowc
 	int wlen = MultiByteToWideChar(936, 0, s, len, NULL, 0);
-	if (wlen <= 0) { addstr(s); return; }  // 转换失败，回退
+	if (wlen <= 0) { addstr(s); return; }
 	wchar_t* buf = (wchar_t*)alloca((wlen + 1) * sizeof(wchar_t));
 	MultiByteToWideChar(936, 0, s, len, buf, wlen);
 	buf[wlen] = 0;
 	addwstr(buf);
+
+	// win32con 驱动下宽字符可能只前进 1 列而非 2 列，
+	// 用 GBK 字节数（= 列数）检测，不足则补空格
+	int y1, x1;
+	getyx(stdscr, y1, x1);
+	int advanced = x1 - x0;
+	while (advanced < len) {
+		addch(' ');
+		advanced++;
+	}
 }
 
 void colorPrint(COLOR c, char *s) {

@@ -48,10 +48,10 @@ int main()
 
 			// 检测当前位置的 NPC 事件
 			uint8_t tile = map_get(player.floor, player.x, player.y);
-			if (tile >= 151 && tile <= 155)
-			{
+			if (tile == 155)
+				events.checkAltar(player.floor, player);
+			else if (tile >= 151 && tile <= 154)
 				events.checkTile(player.floor, tile, player);
-			}
 		}
 	}
 

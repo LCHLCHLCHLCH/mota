@@ -14,8 +14,8 @@ void Player::init()
 	yellowKey = 90;
 	blueKey = 90;
 	redKey = 90;
-	attack = 100;
-	defence = 100;
+	attack = 130;
+	defence = 110;
 	health = 10000;
 }
 

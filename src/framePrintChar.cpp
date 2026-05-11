@@ -1,14 +1,14 @@
 #include "framePrintChar.h"
 #include "Cursor.h"
 
-static void padTo2Cols() {
+// Clear the right half of the current 2-column cell, then move back.
+// This guarantees no residual from a previous 2-col char can survive.
+static void clearRightHalf() {
 	int y, x;
 	getyx(stdscr, y, x);
-	// If we're at an odd column (character only took 1 col), fill with space
-	if (x & 1) {
-		SetColor(WHITE);
-		addch(' ');
-	}
+	gotoxy(x + 1, y);
+	addch(' ');
+	gotoxy(x, y);
 }
 
 void framePrintChar(uint8_t ch)
@@ -17,8 +17,8 @@ void framePrintChar(uint8_t ch)
 	{
 	// 实体的部分
 	case 1:
+		clearRightHalf();
 		addstr("·");
-		padTo2Cols();
 		break;
 	case 2:
 		SetConsoleColor(7 * 16 | 7);
@@ -41,8 +41,8 @@ void framePrintChar(uint8_t ch)
 		break;
 	case 7:
 		SetConsoleColor(1 * 16 | 7);
+		clearRightHalf();
 		addstr("★");
-		padTo2Cols();
 		SetColor(WHITE);
 		break;
 	case 8:
@@ -70,20 +70,20 @@ void framePrintChar(uint8_t ch)
 		colorPrint(RED, (char *)"钥");
 		break;
 	case 54:
+		clearRightHalf();
 		colorPrint(RED, (char *)"★");
-		padTo2Cols();
 		break;
 	case 55:
+		clearRightHalf();
 		colorPrint(BLUE, (char *)"★");
-		padTo2Cols();
 		break;
 	case 56:
+		clearRightHalf();
 		colorPrint(RED, (char *)"◆");
-		padTo2Cols();
 		break;
 	case 57:
+		clearRightHalf();
 		colorPrint(BLUE, (char *)"◆");
-		padTo2Cols();
 		break;
 	case 58:
 		colorPrint(GREY, (char *)"剑");
@@ -117,12 +117,12 @@ void framePrintChar(uint8_t ch)
 		break;
 	// 这一区域是怪物
 	case 101:
+		clearRightHalf();
 		colorPrint(GREEN, (char *)"⊙");
-		padTo2Cols();
 		break;
 	case 102:
+		clearRightHalf();
 		colorPrint(RED, (char *)"⊙");
-		padTo2Cols();
 		break;
 	case 103:
 		colorPrint(PURPLE, (char *)"蝠");
@@ -143,8 +143,8 @@ void framePrintChar(uint8_t ch)
 		colorPrint(RED, (char *)"骷");
 		break;
 	case 109:
+		clearRightHalf();
 		colorPrint(PURPLE, (char *)"⊙");
-		padTo2Cols();
 		break;
 	case 110:
 		colorPrint(RED, (char *)"蝠");
@@ -201,8 +201,8 @@ void framePrintChar(uint8_t ch)
 		colorPrint(RED, (char*)"巫");
 		break;
 	case 128:
+		clearRightHalf();
 		colorPrint(GREEN, (char*)"Θ");
-		padTo2Cols();
 		break;
 	case 129:
 		colorPrint(RED, (char*)"蝠");
@@ -246,8 +246,8 @@ void framePrintChar(uint8_t ch)
 		break;
 	// 显示错误
 	default:
+		clearRightHalf();
 		addstr("？");
-		padTo2Cols();
 		break;
 	}
 }

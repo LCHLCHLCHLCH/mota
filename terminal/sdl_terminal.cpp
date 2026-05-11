@@ -49,15 +49,14 @@ static Cell* g_cells = nullptr;
 // ============================================================
 static void init_palette() {
 	g_palette[0] = { 0,   0,   0,   255 };  // BLACK
-	g_palette[1] = { 255, 55,  55,  255 };  // RED
-	g_palette[2] = { 235, 235, 0,   255 };  // YELLOW
-	g_palette[3] = { 80,  80,  255, 255 };  // BLUE
-	g_palette[4] = { 220, 220, 220, 255 };  // WHITE
-	g_palette[5] = { 80,  220, 80,  255 };  // GREEN
-	g_palette[6] = { 220, 80,  220, 255 };  // PURPLE
-	g_palette[7] = { 140, 140, 140, 255 };  // GREY
-	g_palette[8] = { 80,  220, 220, 255 };  // CYAN / LIGHT_GREEN
-	// 其余用黑色填充
+	g_palette[1] = { 255, 50,  50,  255 };  // RED
+	g_palette[2] = { 255, 255, 0,   255 };  // YELLOW
+	g_palette[3] = { 60,  60,  255, 255 };  // BLUE
+	g_palette[4] = { 255, 255, 255, 255 };  // WHITE (纯白)
+	g_palette[5] = { 50,  255, 50,  255 };  // GREEN
+	g_palette[6] = { 255, 50,  255, 255 };  // PURPLE
+	g_palette[7] = { 160, 160, 160, 255 };  // GREY
+	g_palette[8] = { 50,  255, 255, 255 };  // CYAN / LIGHT_GREEN
 	for (int i = 9; i < 16; i++)
 		g_palette[i] = { 0, 0, 0, 255 };
 }
@@ -319,7 +318,13 @@ void refresh_term() {
 }
 
 void touchwin_term() {
-	g_dirty = true;
+	// 清除所有 cell，防止上一帧残留
+	for (int i = 0; i < g_cols * g_rows; i++) {
+		g_cells[i].ch = L' ';
+		g_cells[i].fg = 4;
+		g_cells[i].bg = 0;
+		g_cells[i].dirty = true;
+	}
 }
 
 void erase_term() {

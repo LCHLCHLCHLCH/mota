@@ -13,8 +13,7 @@ struct EventAction {
 struct Event {
 	uint8_t         floor_;           // 所在楼层
 	EventTrigger    trigger;          // 触发方式
-	uint8_t         trigger_param;    // ON_TILE: tile ID; ON_KILL: monster ID
-	uint8_t         trigger_count;    // ON_KILL: 需要击杀的数量
+	uint8_t         trigger_param;    // ON_TILE: tile ID; ON_CLEAR: 保留(0)
 	uint8_t         condition_flag;   // 此标记未设置时才触发（0 = 总是触发）
 	uint8_t         set_flag;         // 完成后设置的标记（0 = 不设）
 	uint8_t         action_count;

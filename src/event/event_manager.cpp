@@ -5,10 +5,9 @@
 #include <cstring>
 
 // ============================================================
-// 事件动作数据（静态存储，指针指向这些字符串）
+// 事件动作数据
 // ============================================================
 
-// 事件 #1: 第3层老人 — 对话
 static const char* TEXT_3F_OLD_MAN =
 	"我可以给你一本怪物手册，你可以用它预测该楼层各怪物对你造成的伤害。";
 
@@ -18,55 +17,32 @@ static const EventAction ACT_3F_OLD_MAN[] = {
 	{ ActionType::END,      0, 0, nullptr },
 };
 
-// 事件 #2: 第2层 — 击杀两个中级卫兵后打开牢门
+static const char* TEXT_2F_PRISON =
+	"所有牢门都已打开！";
+
 static const EventAction ACT_2F_PRISON_OPEN[] = {
-	{ ActionType::REPLACE_ALL, 8, 1, nullptr },  // 所有怪物门(8) → 空地(1)
-	{ ActionType::SAY,         0, 0, (const char*)"所有牢门都已打开！" },
+	{ ActionType::REPLACE_ALL, 8, 1, nullptr },
+	{ ActionType::SAY,         0, 0, TEXT_2F_PRISON },
 	{ ActionType::SET_FLAG,    2, 0, nullptr },
 	{ ActionType::END,         0, 0, nullptr },
 };
 
 // ============================================================
-// 事件注册表（在 init() 中统一注册）
+// EventManager
 // ============================================================
 void EventManager::init()
 {
 	event_count_ = 0;
 	std::memset(flags_, 0, sizeof(flags_));
-	std::memset(kills_, 0, sizeof(kills_));
 
-	// --- ON_TILE 事件 ---
+	// --- ON_TILE ---
+	addEvent({ 3, EventTrigger::ON_TILE, 151, 1, 1, 2, ACT_3F_OLD_MAN });
 
-	// 第3层 老人(151)
-	addEvent({
-		/* floor_         */ 3,
-		/* trigger        */ EventTrigger::ON_TILE,
-		/* trigger_param  */ 151,
-		/* trigger_count  */ 0,
-		/* condition_flag */ 1,
-		/* set_flag       */ 1,
-		/* action_count   */ 2,
-		/* actions        */ ACT_3F_OLD_MAN,
-	});
-
-	// --- ON_KILL 事件 ---
-
-	// 第2层：击杀 2 个中级卫兵(121) → 牢门全开
-	addEvent({
-		/* floor_         */ 2,
-		/* trigger        */ EventTrigger::ON_KILL,
-		/* trigger_param  */ 121,   // 中级卫兵
-		/* trigger_count  */ 2,     // 需要杀 2 个
-		/* condition_flag */ 2,     // flag 2 未设置时检查
-		/* set_flag       */ 2,     // 完成后设 flag 2
-		/* action_count   */ 3,
-		/* actions        */ ACT_2F_PRISON_OPEN,
-	});
+	// --- ON_CLEAR ---
+	// 第2层：当该层怪物全部死亡，打开所有怪物看护的门
+	addEvent({ 2, EventTrigger::ON_CLEAR, 0, 2, 2, 3, ACT_2F_PRISON_OPEN });
 }
 
-// ============================================================
-// 内部方法
-// ============================================================
 void EventManager::addEvent(const Event& ev)
 {
 	if (event_count_ < MAX_EVENTS)
@@ -75,8 +51,7 @@ void EventManager::addEvent(const Event& ev)
 
 void EventManager::setFlag(uint8_t id)
 {
-	if (id < MAX_FLAGS)
-		flags_[id] = 1;
+	if (id < MAX_FLAGS) flags_[id] = 1;
 }
 
 bool EventManager::hasFlag(uint8_t id) const
@@ -103,25 +78,18 @@ void EventManager::checkTile(uint8_t floor, uint8_t tile_id, Player& player)
 	}
 }
 
-void EventManager::checkKill(uint8_t floor, uint8_t monster_id)
+void EventManager::checkClear(uint8_t floor)
 {
-	if (floor >= 51 || monster_id >= 256) return;
-
-	kills_[floor][monster_id]++;
+	// 先检查该层是否还有活着的怪物
+	if (countMonsters(floor) > 0) return;
 
 	for (uint8_t i = 0; i < event_count_; i++)
 	{
 		const Event& ev = events_[i];
-		if (ev.trigger != EventTrigger::ON_KILL) continue;
+		if (ev.trigger != EventTrigger::ON_CLEAR) continue;
 		if (ev.floor_ != floor) continue;
-		if (ev.trigger_param != monster_id) continue;
 		if (ev.condition_flag != 0 && hasFlag(ev.condition_flag)) continue;
 
-		// 检查击杀数是否达标
-		if (kills_[floor][monster_id] < ev.trigger_count) continue;
-
-		// 需要 player 引用，但 kill 回调时没有上下文
-		// 折中：只执行非 player 相关动作
 		Player dummy;
 		dummy.init();
 		executeEvent(ev, dummy);
@@ -129,6 +97,22 @@ void EventManager::checkKill(uint8_t floor, uint8_t monster_id)
 	}
 }
 
+uint8_t EventManager::countMonsters(uint8_t floor)
+{
+	uint8_t count = 0;
+	for (uint8_t y = 0; y < 13; y++)
+		for (uint8_t x = 0; x < 13; x++)
+		{
+			uint8_t t = map_get(floor, x, y);
+			if (t >= 101 && t <= 150)
+				count++;
+		}
+	return count;
+}
+
+// ============================================================
+// 动作执行
+// ============================================================
 void EventManager::executeEvent(const Event& ev, Player& player)
 {
 	for (uint8_t i = 0; i < ev.action_count; i++)
@@ -196,7 +180,6 @@ void EventManager::executeAction(const EventAction& act, Player& player, uint8_t
 		break;
 
 	case ActionType::REPLACE_ALL:
-		// 将 ev_floor 层所有 from_id(param) 替换为 to_id(param2)
 		for (uint8_t y = 0; y < 13; y++)
 			for (uint8_t x = 0; x < 13; x++)
 				if (map_get(ev_floor, x, y) == act.param)

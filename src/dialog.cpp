@@ -5,8 +5,8 @@
  */
 void saySomething(char *s)
 {
-	// regionPrint(2, 13, s);
 	regionEmphasize(2, 13, s);
+	refresh();  // 确保对话在终端可见
 	while (1)
 	{
 		KEY k = getKey();
@@ -16,6 +16,7 @@ void saySomething(char *s)
 			break;
 	}
 	regionErase(2, 13, strlen(s));
+	refresh();  // 清除残留
 }
 
 /**

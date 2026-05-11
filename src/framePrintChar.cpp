@@ -17,8 +17,7 @@ void framePrintChar(uint8_t ch)
 	{
 	// 实体的部分
 	case 1:
-		clearRightHalf();
-		addstr("·");
+		addstr("  ");
 		break;
 	case 2:
 		SetConsoleColor(7 * 16 | 7);

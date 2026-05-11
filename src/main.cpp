@@ -25,12 +25,11 @@ int main()
 
 	while (1)
 	{
-		// clear() 重置 ncurses 缓冲区，消除双宽度字符的
-		// continuation-column 脏标记
-		clear();
+		// erase() 重置缓冲区但不触发物理清屏，避免闪烁
+		erase();
 
 		display.generateFrame(player);
-		statusBar.updateAll(player);
+		statusBar.draw(player);
 		hideCursor();
 		refresh();
 

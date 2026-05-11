@@ -6,7 +6,6 @@
 
 class StatusBar
 {
-	public:
-	void firstShow(const Player& ply);
-	void updateAll(const Player& ply);
+public:
+	void draw(const Player& ply);
 };

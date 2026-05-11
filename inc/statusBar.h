@@ -1,7 +1,7 @@
 #pragma once
 
 #include <stdio.h>
-#include "Cursor.h"
+#include <Cursor.h>
 #include "playerClass.h"
 
 class StatusBar

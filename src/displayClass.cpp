@@ -1,6 +1,6 @@
 #include "displayClass.h"
 #include "framePrintChar.h"
-#include "Cursor.h"
+#include <Cursor.h>
 #include "map.h"
 
 void Display::init(const Player&) {}

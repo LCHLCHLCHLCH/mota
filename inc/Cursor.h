@@ -1,6 +1,12 @@
 #pragma once
 
+#ifdef SDL3_BUILD
+// SDL3 版本：使用 sdl_terminal 提供的函数
+#include <sdl_terminal.h>
+#else
+// ncurses 版本
 #include <ncursesw/curses.h>
+#endif
 
 enum COLOR {
 	RED,
@@ -13,7 +19,6 @@ enum COLOR {
 	LIGHT_GREEN
 };
 
-// Special background attributes (used by SetConsoleColor)
 #define ATTR_LAVA      100
 #define ATTR_WALL      101
 #define ATTR_STAR      102
@@ -28,3 +33,6 @@ void SetConsoleColor(int attr);
 void SetColor(COLOR a);
 void colorPrint(COLOR c, char *s);
 void addstr_gbk(const char* s);
+#ifdef SDL3_BUILD
+void addch(char ch);
+#endif

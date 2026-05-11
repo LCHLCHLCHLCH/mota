@@ -2,7 +2,7 @@
 #include "displayClass.h"
 #include "key.h"
 #include "map.h"
-#include "Cursor.h"
+#include <Cursor.h>
 #include "monster.h"
 #include "regionDisplay.h"
 #include "statusBar.h"

@@ -1,8 +1,12 @@
 #include "framePrintChar.h"
-#include "Cursor.h"
+#include <Cursor.h>
 
 // Clear the right half of the current 2-column cell, then move back.
 // This guarantees no residual from a previous 2-col char can survive.
+#ifdef SDL3_BUILD
+// SDL3 用 GDI 渲染，无 CJK continuation-column 问题，此函数为空
+static void clearRightHalf() {}
+#else
 static void clearRightHalf() {
 	int y, x;
 	getyx(stdscr, y, x);
@@ -10,6 +14,7 @@ static void clearRightHalf() {
 	addch(' ');
 	gotoxy(x, y);
 }
+#endif
 
 void framePrintChar(uint8_t ch)
 {

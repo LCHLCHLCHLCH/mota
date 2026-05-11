@@ -2,7 +2,7 @@
 #include "playerClass.h"
 #include "dialog.h"
 #include "map.h"
-#include "Cursor.h"
+#include <Cursor.h>
 #include <cstring>
 #include <cstdio>
 

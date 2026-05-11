@@ -1,7 +1,7 @@
 #include <clocale>
 #include <cstring>
 #include <windows.h>
-#include "Cursor.h"
+#include <Cursor.h>
 
 // Map foreground COLOR to curses color constant
 static int curses_fg(COLOR c) {

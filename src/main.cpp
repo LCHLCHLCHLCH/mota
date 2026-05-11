@@ -29,7 +29,7 @@ int main()
 
 	while (1)
 	{
-		erase();
+		touchwin(stdscr);
 
 		display.generateFrame(player);
 		statusBar.draw(player);

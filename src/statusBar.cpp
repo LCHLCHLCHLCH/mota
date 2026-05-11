@@ -1,4 +1,4 @@
-#include "statusBarClass.h"
+#include "statusBar.h"
 
 /**
  * @brief 右侧状态边栏初始化

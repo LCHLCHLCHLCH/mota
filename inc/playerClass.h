@@ -2,9 +2,9 @@
 #include <stdint.h>
 #include "map.h"
 #include "key.h"
-#include "monsterClass.h"
+#include "monster.h"
 #include "calc.h"
-#include "event.h"
+#include "dialog.h"
 
 enum PREDICTION
 {
@@ -43,3 +43,6 @@ public:
 
 	void freezeLava();
 };
+
+void upStair(uint8_t *Floor, uint8_t *X, uint8_t *Y);
+void downStair(uint8_t *Floor, uint8_t *X, uint8_t *Y);

@@ -1,6 +1,6 @@
 #include <stdint.h>
 #include "playerClass.h"
-#include "monsterClass.h"
+#include "monster.h"
 
 /**
  * @brief 初始化函数
@@ -353,4 +353,21 @@ void Player::respondToKey(KEY key)
 		// 按下了不相关的键
 		break;
 	}
+}
+/**
+ * @brief 处理上楼梯事件的函数
+ * @param 玩家所在楼层及其坐标的地址
+ */
+void upStair(uint8_t *Floor, uint8_t *X, uint8_t *Y)
+{
+	(*Floor)++;
+}
+
+/**
+ * @brief 处理下楼梯事件的函数
+ * @param 玩家所在楼层及其坐标的地址
+ */
+void downStair(uint8_t *Floor, uint8_t *X, uint8_t *Y)
+{
+	(*Floor)--;
 }

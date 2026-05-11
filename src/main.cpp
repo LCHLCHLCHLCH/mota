@@ -3,10 +3,10 @@
 #include "key.h"
 #include "map.h"
 #include "Cursor.h"
-#include "monsterClass.h"
+#include "monster.h"
 #include "regionDisplay.h"
-#include "statusBarClass.h"
-#include "event.h"
+#include "statusBar.h"
+#include "dialog.h"
 #include "backpack.h"
 
 extern uint8_t map[51][13][13];

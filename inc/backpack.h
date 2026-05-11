@@ -2,7 +2,7 @@
 
 #include "item.h"
 #include "regionDisplay.h"
-#include "event.h"
+#include "dialog.h"
 #include "key.h"
 
 class Backpack

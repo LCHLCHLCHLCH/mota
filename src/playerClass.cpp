@@ -364,12 +364,12 @@ void Player::respondToKey(KEY key)
 	case KEY_Q:
 		// 传送：向下到达过的楼层
 		if (hasTeleporter && this->floor > 0)
-			teleportTo(this->floor - 1, 10);
+			teleportTo(this->floor - 1, 9);
 		break;
 	case KEY_E:
 		// 传送：向上到达过的楼层
 		if (hasTeleporter && this->floor < maxFloorVisited)
-			teleportTo(this->floor + 1, 9);
+			teleportTo(this->floor + 1, 10);
 		break;
 	case KEY_1:
 		// 调试：下楼

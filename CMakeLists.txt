@@ -12,4 +12,3 @@ add_executable(${PROJECT_NAME} ${SRC_LIST} ./logo/logo.rc)
 target_link_libraries(${PROJECT_NAME} ncursesw)
 
 add_definitions(-DNCURSES_STATIC)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexec-charset=GBK")

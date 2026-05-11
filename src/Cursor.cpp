@@ -1,3 +1,4 @@
+#include <clocale>
 #include "Cursor.h"
 
 // Map foreground COLOR to curses color constant
@@ -48,6 +49,7 @@ static int color_to_pair(COLOR c) {
 static int current_pair = PAIR_WHITE;
 
 void console_init() {
+	setlocale(LC_ALL, "");
 	initscr();
 	start_color();
 	cbreak();

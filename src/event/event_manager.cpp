@@ -2,19 +2,28 @@
 #include "playerClass.h"
 #include "dialog.h"
 #include "map.h"
+#include <cstring>
 
 // ============================================================
 // 事件动作数据（静态存储，指针指向这些字符串）
 // ============================================================
 
-// 事件 #1: 第3层老人 — 对话后获得怪物手册
+// 事件 #1: 第3层老人 — 对话
 static const char* TEXT_3F_OLD_MAN =
 	"我可以给你一本怪物手册，你可以用它预测该楼层各怪物对你造成的伤害。";
 
 static const EventAction ACT_3F_OLD_MAN[] = {
-	{ ActionType::SAY,      0, TEXT_3F_OLD_MAN },
-	{ ActionType::SET_FLAG, 1, nullptr },
-	{ ActionType::END,      0, nullptr },
+	{ ActionType::SAY,      0, 0, TEXT_3F_OLD_MAN },
+	{ ActionType::SET_FLAG, 1, 0, nullptr },
+	{ ActionType::END,      0, 0, nullptr },
+};
+
+// 事件 #2: 第2层 — 击杀两个中级卫兵后打开牢门
+static const EventAction ACT_2F_PRISON_OPEN[] = {
+	{ ActionType::REPLACE_ALL, 8, 1, nullptr },  // 所有怪物门(8) → 空地(1)
+	{ ActionType::SAY,         0, 0, (const char*)"所有牢门都已打开！" },
+	{ ActionType::SET_FLAG,    2, 0, nullptr },
+	{ ActionType::END,         0, 0, nullptr },
 };
 
 // ============================================================
@@ -23,23 +32,36 @@ static const EventAction ACT_3F_OLD_MAN[] = {
 void EventManager::init()
 {
 	event_count_ = 0;
-	for (uint8_t i = 0; i < MAX_FLAGS; i++)
-		flags_[i] = 0;
+	std::memset(flags_, 0, sizeof(flags_));
+	std::memset(kills_, 0, sizeof(kills_));
 
-	// --- 注册所有事件 ---
+	// --- ON_TILE 事件 ---
 
 	// 第3层 老人(151)
 	addEvent({
 		/* floor_         */ 3,
 		/* trigger        */ EventTrigger::ON_TILE,
-		/* trigger_tile   */ 151,
-		/* condition_flag */ 1,   // flag 1 未设置时才触发
-		/* set_flag       */ 1,   // 完成后设 flag 1
+		/* trigger_param  */ 151,
+		/* trigger_count  */ 0,
+		/* condition_flag */ 1,
+		/* set_flag       */ 1,
 		/* action_count   */ 2,
 		/* actions        */ ACT_3F_OLD_MAN,
 	});
 
-	// TODO: 更多事件在此注册
+	// --- ON_KILL 事件 ---
+
+	// 第2层：击杀 2 个中级卫兵(121) → 牢门全开
+	addEvent({
+		/* floor_         */ 2,
+		/* trigger        */ EventTrigger::ON_KILL,
+		/* trigger_param  */ 121,   // 中级卫兵
+		/* trigger_count  */ 2,     // 需要杀 2 个
+		/* condition_flag */ 2,     // flag 2 未设置时检查
+		/* set_flag       */ 2,     // 完成后设 flag 2
+		/* action_count   */ 3,
+		/* actions        */ ACT_2F_PRISON_OPEN,
+	});
 }
 
 // ============================================================
@@ -59,7 +81,7 @@ void EventManager::setFlag(uint8_t id)
 
 bool EventManager::hasFlag(uint8_t id) const
 {
-	if (id >= MAX_FLAGS) return true;  // 无效 ID 视为已触发
+	if (id >= MAX_FLAGS) return true;
 	return flags_[id] != 0;
 }
 
@@ -73,14 +95,37 @@ void EventManager::checkTile(uint8_t floor, uint8_t tile_id, Player& player)
 		const Event& ev = events_[i];
 		if (ev.trigger != EventTrigger::ON_TILE) continue;
 		if (ev.floor_ != floor) continue;
-		if (ev.trigger_tile != tile_id) continue;
-
-		// 检查条件：condition_flag 为 0 则总是触发，否则需标记未设置
-		if (ev.condition_flag != 0 && hasFlag(ev.condition_flag))
-			continue;
+		if (ev.trigger_param != tile_id) continue;
+		if (ev.condition_flag != 0 && hasFlag(ev.condition_flag)) continue;
 
 		executeEvent(ev, player);
-		return;  // 一帧只触发一个事件
+		return;
+	}
+}
+
+void EventManager::checkKill(uint8_t floor, uint8_t monster_id)
+{
+	if (floor >= 51 || monster_id >= 256) return;
+
+	kills_[floor][monster_id]++;
+
+	for (uint8_t i = 0; i < event_count_; i++)
+	{
+		const Event& ev = events_[i];
+		if (ev.trigger != EventTrigger::ON_KILL) continue;
+		if (ev.floor_ != floor) continue;
+		if (ev.trigger_param != monster_id) continue;
+		if (ev.condition_flag != 0 && hasFlag(ev.condition_flag)) continue;
+
+		// 检查击杀数是否达标
+		if (kills_[floor][monster_id] < ev.trigger_count) continue;
+
+		// 需要 player 引用，但 kill 回调时没有上下文
+		// 折中：只执行非 player 相关动作
+		Player dummy;
+		dummy.init();
+		executeEvent(ev, dummy);
+		return;
 	}
 }
 
@@ -92,7 +137,6 @@ void EventManager::executeEvent(const Event& ev, Player& player)
 		if (act.type == ActionType::END) break;
 		executeAction(act, player, ev.floor_);
 	}
-	// 事件完成后设置标记，防止重复触发
 	if (ev.set_flag != 0)
 		setFlag(ev.set_flag);
 }
@@ -118,21 +162,20 @@ void EventManager::executeAction(const EventAction& act, Player& player, uint8_t
 		break;
 
 	case ActionType::GIVE_POTION:
-		if (act.param == 0)  // 红血瓶
+		if (act.param == 0)
 			player.health += get_Red_Health_Potion_Value(player.floor);
-		else                 // 蓝血瓶
+		else
 			player.health += get_Blue_Health_Potion_Value(player.floor);
 		break;
 
 	case ActionType::GIVE_GEM:
-		if (act.param == 0)  // 红宝石
+		if (act.param == 0)
 			player.attack += get_Gem_Stone_Value(player.floor);
-		else                 // 蓝宝石
+		else
 			player.defence += get_Gem_Stone_Value(player.floor);
 		break;
 
 	case ActionType::GIVE_EQUIP: {
-		// act.param = 道具 ID (58=铁剑, 59=铁盾, ... 67=神圣盾)
 		uint8_t id = act.param;
 		if      (id == 58) player.attack  += 10;
 		else if (id == 59) player.defence += 10;
@@ -152,10 +195,12 @@ void EventManager::executeAction(const EventAction& act, Player& player, uint8_t
 			player.money -= act.param;
 		break;
 
-	case ActionType::CHANGE_TILE:
-		// act.param 编码：高 4 位 = y 偏移, 低 4 位 = x 偏移
-		// 实际 tile 位置：以事件所在楼层和触发点为基准
-		// 暂未实现具体定位逻辑
+	case ActionType::REPLACE_ALL:
+		// 将 ev_floor 层所有 from_id(param) 替换为 to_id(param2)
+		for (uint8_t y = 0; y < 13; y++)
+			for (uint8_t x = 0; x < 13; x++)
+				if (map_get(ev_floor, x, y) == act.param)
+					map_set(ev_floor, x, y, act.param2);
 		break;
 
 	default:

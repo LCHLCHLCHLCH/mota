@@ -23,6 +23,7 @@ int main()
 	Backpack backpack;
 	EventManager events;
 	events.init();
+	player.events = &events;
 
 	SetColor(WHITE);
 

@@ -6,6 +6,8 @@
 #include "calc.h"
 #include "dialog.h"
 
+class EventManager;
+
 enum PREDICTION
 {
 	DIE,
@@ -31,6 +33,8 @@ public:
 	uint8_t floor;
 
 	uint32_t hurt = 0;
+
+	EventManager* events = nullptr;
 
 	void init();
 	PREDICTION PredictAttack(Monster monster);

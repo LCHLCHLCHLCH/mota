@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include "playerClass.h"
 #include "monster.h"
+#include "event/event_manager.h"
 
 /**
  * @brief 初始化函数
@@ -102,6 +103,9 @@ void Player::reactToMonster(uint8_t floor_going, uint8_t x_going, uint8_t y_goin
 		this->health = this->health - this->hurt;
 		// 加钱
 		this->money += m->money;
+			// 通知事件系统
+			if (this->events != nullptr)
+				this->events->checkKill(floor_going, id);
 	}
 	// 如果打不过的话,就什么都不干
 }

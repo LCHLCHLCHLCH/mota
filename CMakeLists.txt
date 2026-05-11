@@ -19,4 +19,5 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
 	"$<TARGET_FILE_DIR:${PROJECT_NAME}>/ncursesw.dll"
 )
 
+add_definitions(-D_XOPEN_SOURCE_EXTENDED)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexec-charset=GBK")

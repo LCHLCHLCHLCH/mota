@@ -1,4 +1,6 @@
 #include <clocale>
+#include <cstring>
+#include <windows.h>
 #include "Cursor.h"
 
 // Map foreground COLOR to curses color constant
@@ -110,10 +112,23 @@ void SetColor(COLOR a) {
 	attr_set(0, current_pair, nullptr);
 }
 
+// 用 Windows API 将 GBK 字符串转为宽字符，避免依赖 C 运行时的 mbtowc()
+// （MinGW 的 mbtowc 对 CJK 支持不完整，导致 cmd 下汉字只显示一半）
+void addstr_gbk(const char* s) {
+	int len = (int)std::strlen(s);
+	if (len == 0) return;
+	int wlen = MultiByteToWideChar(936, 0, s, len, NULL, 0);
+	if (wlen <= 0) { addstr(s); return; }  // 转换失败，回退
+	wchar_t* buf = (wchar_t*)alloca((wlen + 1) * sizeof(wchar_t));
+	MultiByteToWideChar(936, 0, s, len, buf, wlen);
+	buf[wlen] = 0;
+	addwstr(buf);
+}
+
 void colorPrint(COLOR c, char *s) {
 	int pair = color_to_pair(c);
 	attron(COLOR_PAIR(pair));
-	addstr(s);
+	addstr_gbk(s);
 	attroff(COLOR_PAIR(pair));
 	attr_set(0, current_pair, nullptr);
 }

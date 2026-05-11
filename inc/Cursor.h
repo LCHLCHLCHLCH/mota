@@ -27,3 +27,4 @@ void hideCursor();
 void SetConsoleColor(int attr);
 void SetColor(COLOR a);
 void colorPrint(COLOR c, char *s);
+void addstr_gbk(const char* s);

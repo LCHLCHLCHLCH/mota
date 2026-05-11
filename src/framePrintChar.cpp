@@ -17,11 +17,11 @@ void framePrintChar(uint8_t ch)
 	{
 	// 实体的部分
 	case 1:
-		addstr("  ");
+		addstr_gbk("  ");
 		break;
 	case 2:
 		SetConsoleColor(7 * 16 | 7);
-		addstr("  ");
+		addstr_gbk("  ");
 		SetColor(WHITE);
 		break;
 	case 3:
@@ -35,27 +35,27 @@ void framePrintChar(uint8_t ch)
 		break;
 	case 6:
 		SetConsoleColor(64 | 7);
-		addstr("  ");
+		addstr_gbk("  ");
 		SetColor(WHITE);
 		break;
 	case 7:
 		SetConsoleColor(1 * 16 | 7);
 		clearRightHalf();
-		addstr("★");
+		addstr_gbk("★");
 		SetColor(WHITE);
 		break;
 	case 8:
-		addstr("〓");
+		addstr_gbk("〓");
 		break;
 	case 9:
-		addstr("△");
+		addstr_gbk("△");
 		break;
 	case 10:
-		addstr("▽");
+		addstr_gbk("▽");
 		break;
 	case 11:
 		SetConsoleColor(7 * 16 | 7);
-		addstr("  ");
+		addstr_gbk("  ");
 		SetColor(WHITE);
 		break;
 	// 道具
@@ -249,7 +249,7 @@ void framePrintChar(uint8_t ch)
 	// 显示错误
 	default:
 		clearRightHalf();
-		addstr("？");
+		addstr_gbk("？");
 		break;
 	}
 }

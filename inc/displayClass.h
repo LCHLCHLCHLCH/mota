@@ -14,8 +14,8 @@ public:
 	uint8_t last_frame[13][13];
 	uint8_t temp_frame[13][13];
 
-	void init(Player ply);
+	void init(const Player& ply);
 	void store_frame();
-	void generateFrame(Player ply);
+	void generateFrame(const Player& ply);
 	void printDifferentia();
 };

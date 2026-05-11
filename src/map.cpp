@@ -1,6 +1,6 @@
 #include "map.h"
 
-uint8_t map[51][13][13] = {
+static uint8_t map[51][13][13] = {
 	{
 		//floor0
 		{2,2,2,2,2,2,2,2,2,2,2,2,2},
@@ -818,3 +818,11 @@ uint8_t map[51][13][13] = {
 		{7,7,7,7,7,7,7,7,7,7,7,7,7}
 	}
 };
+
+uint8_t map_get(uint8_t floor, uint8_t x, uint8_t y) {
+	return map[floor][y][x];
+}
+
+void map_set(uint8_t floor, uint8_t x, uint8_t y, uint8_t value) {
+	map[floor][y][x] = value;
+}

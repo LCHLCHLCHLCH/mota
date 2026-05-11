@@ -7,7 +7,7 @@
 /**
  * @brief 初始化函数
  */
-void Display::init(Player ply)
+void Display::init(const Player& ply)
 {
 	for (uint8_t i = 0; i < 13; i++)
 	{
@@ -20,7 +20,7 @@ void Display::init(Player ply)
 	{
 		for (uint8_t j = 0; j < 13; j++)
 		{
-			temp_frame[i][j] = map[ply.floor][i][j];
+			temp_frame[i][j] = map_get(ply.floor, j, i);
 			temp_frame[ply.y][ply.x] = 255;
 		}
 	}
@@ -46,13 +46,13 @@ void Display::store_frame()
  * @param 提供player
  * @attention 可优化
  */
-void Display::generateFrame(Player ply)
+void Display::generateFrame(const Player& ply)
 {
 	for (uint8_t i = 0; i < 13; i++)
 	{
 		for (uint8_t j = 0; j < 13; j++)
 		{
-			temp_frame[i][j] = map[ply.floor][i][j];
+			temp_frame[i][j] = map_get(ply.floor, j, i);
 			temp_frame[ply.y][ply.x] = 255;
 		}
 	}

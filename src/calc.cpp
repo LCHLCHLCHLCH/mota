@@ -1,28 +1,22 @@
 #include "calc.h"
 
-/**
- * @brief 根据楼层计算红血瓶的值
- */
-uint16_t get_Red_Health_Potion_Value(uint8_t floor)
-{
-	uint8_t region = (floor-1) / 10 + 1;
-	return (region*50);
+namespace {
+	constexpr uint16_t RED_POTION_PER_REGION  = 50;
+	constexpr uint16_t BLUE_POTION_PER_REGION = 200;
+
+	uint8_t getRegion(uint8_t floor) {
+		return (floor - 1) / 10 + 1;
+	}
 }
 
-/**
- * @brief 根据楼层计算蓝血瓶的值
- */
-uint16_t get_Blue_Health_Potion_Value(uint8_t floor)
-{
-	uint8_t region = (floor-1) / 10 + 1;
-	return (region*200);
+uint16_t get_Red_Health_Potion_Value(uint8_t floor) {
+	return getRegion(floor) * RED_POTION_PER_REGION;
 }
 
-/**
- * @brief 根据楼层计算宝石的值
- */
-uint8_t get_Gem_Stone_Value(uint8_t floor)
-{
-	uint8_t region = (floor-1) / 10 + 1;
-	return (region);
+uint16_t get_Blue_Health_Potion_Value(uint8_t floor) {
+	return getRegion(floor) * BLUE_POTION_PER_REGION;
+}
+
+uint8_t get_Gem_Stone_Value(uint8_t floor) {
+	return getRegion(floor);
 }

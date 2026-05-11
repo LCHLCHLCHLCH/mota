@@ -4,7 +4,7 @@
  * @brief 右侧状态边栏初始化
  * @param Player 传入一个player对象,将player对象的初始属性显示在侧面
  */
-void StatusBar::firstShow(Player ply)
+void StatusBar::firstShow(const Player& ply)
 {
 	// show the UI
 	// gotoxy(28, 0);
@@ -51,7 +51,7 @@ void StatusBar::firstShow(Player ply)
 	// printf("%d", ply.health);
 }
 
-void StatusBar::updateAll(Player ply)
+void StatusBar::updateAll(const Player& ply)
 {
 	gotoxy(32, 0);
 	printf("    ");

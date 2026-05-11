@@ -67,13 +67,13 @@ PREDICTION Player::PredictAttack(Monster monster)
 void Player::respondToMap(uint8_t floor_going, uint8_t x_going, uint8_t y_going)
 {
 	// 如果将要到达的格子的ID在1-50之间,就调用处理object的函数
-	if (map[floor_going][y_going][x_going] >= 1 && map[floor_going][y_going][x_going] <= 50)
+	if (map_get(floor_going, x_going, y_going) >= 1 && map_get(floor_going, x_going, y_going) <= 50)
 		reactToObject(floor_going, x_going, y_going);
 	// 如果将要到达的格子的ID在51-100之间,就调用处理prop的函数
-	if (map[floor_going][y_going][x_going] >= 51 && map[floor_going][y_going][x_going] <= 100)
+	if (map_get(floor_going, x_going, y_going) >= 51 && map_get(floor_going, x_going, y_going) <= 100)
 		reactToProp(floor_going, x_going, y_going);
 	// 如果将要到达的格子的ID在101-150之间,就调用处理Monster的函数
-	if (map[floor_going][y_going][x_going] >= 101 && map[floor_going][y_going][x_going] <= 150)
+	if (map_get(floor_going, x_going, y_going) >= 101 && map_get(floor_going, x_going, y_going) <= 150)
 		reactToMonster(floor_going, x_going, y_going);
 }
 
@@ -82,7 +82,7 @@ void Player::respondToMap(uint8_t floor_going, uint8_t x_going, uint8_t y_going)
  */
 void Player::reactToMonster(uint8_t floor_going, uint8_t x_going, uint8_t y_going)
 {
-	uint8_t id = map[floor_going][y_going][x_going];
+	uint8_t id = map_get(floor_going, x_going, y_going);
 	Monster *m = getMonsterType(id);
 	PREDICTION prd = this->PredictAttack(*m);
 	if (prd == LIVE)
@@ -91,7 +91,7 @@ void Player::reactToMonster(uint8_t floor_going, uint8_t x_going, uint8_t y_goin
 		this->x = x_going;
 		this->y = y_going;
 		// 清除怪物
-		map[floor_going][y_going][x_going] = 1;
+		map_set(floor_going, x_going, y_going, 1);
 		// 受到伤害
 		this->health = this->health - this->hurt;
 		// 加钱
@@ -105,7 +105,7 @@ void Player::reactToMonster(uint8_t floor_going, uint8_t x_going, uint8_t y_goin
  */
 void Player::reactToObject(uint8_t floor_going, uint8_t x_going, uint8_t y_going)
 {
-	switch (map[floor_going][y_going][x_going])
+	switch (map_get(floor_going, x_going, y_going))
 	{
 	case 1: // 空地
 		this->x = x_going;
@@ -116,21 +116,21 @@ void Player::reactToObject(uint8_t floor_going, uint8_t x_going, uint8_t y_going
 	case 3: // 黄门
 		if (this->yellowKey > 0)
 		{
-			map[floor_going][y_going][x_going] = 1;
+			map_set(floor_going, x_going, y_going, 1);
 			yellowKey--;
 		}
 		break;
 	case 4: // 蓝门
 		if (this->blueKey > 0)
 		{
-			map[floor_going][y_going][x_going] = 1;
+			map_set(floor_going, x_going, y_going, 1);
 			blueKey--;
 		}
 		break;
 	case 5: // 红门
 		if (this->redKey > 0)
 		{
-			map[floor_going][y_going][x_going] = 1;
+			map_set(floor_going, x_going, y_going, 1);
 			redKey--;
 		}
 		break;
@@ -151,7 +151,7 @@ void Player::reactToObject(uint8_t floor_going, uint8_t x_going, uint8_t y_going
 		downStair(&(this->floor), &(this->x), &(this->y));
 		break;
 	case 11:
-		map[floor_going][y_going][x_going] = 1;
+		map_set(floor_going, x_going, y_going, 1);
 		break;
 	default:
 		this->x = x_going;
@@ -165,108 +165,108 @@ void Player::reactToObject(uint8_t floor_going, uint8_t x_going, uint8_t y_going
  */
 void Player::reactToProp(uint8_t floor_going, uint8_t x_going, uint8_t y_going)
 {
-	switch (map[floor_going][y_going][x_going])
+	switch (map_get(floor_going, x_going, y_going))
 	{
 	case 51: // 黄钥匙
 		this->x = x_going;
 		this->y = y_going;
-		map[floor_going][y_going][x_going] = 1;
+		map_set(floor_going, x_going, y_going, 1);
 		this->yellowKey++;
 		break;
 	case 52: // 蓝钥匙
 		this->x = x_going;
 		this->y = y_going;
-		map[floor_going][y_going][x_going] = 1;
+		map_set(floor_going, x_going, y_going, 1);
 		this->blueKey++;
 		break;
 	case 53: // 红钥匙
 		this->x = x_going;
 		this->y = y_going;
-		map[floor_going][y_going][x_going] = 1;
+		map_set(floor_going, x_going, y_going, 1);
 		this->redKey++;
 		break;
 	case 54: // 红血瓶
 		this->x = x_going;
 		this->y = y_going;
-		map[floor_going][y_going][x_going] = 1;
+		map_set(floor_going, x_going, y_going, 1);
 		this->health = this->health + get_Red_Health_Potion_Value(this->floor);
 		break;
 	case 55: // 蓝血瓶
 		this->x = x_going;
 		this->y = y_going;
-		map[floor_going][y_going][x_going] = 1;
+		map_set(floor_going, x_going, y_going, 1);
 		this->health = this->health + get_Blue_Health_Potion_Value(this->floor);
 		break;
 	case 56: // 红宝石
 		this->x = x_going;
 		this->y = y_going;
-		map[floor_going][y_going][x_going] = 1;
+		map_set(floor_going, x_going, y_going, 1);
 		this->attack = this->attack + get_Gem_Stone_Value(this->floor);
 		break;
 	case 57: // 蓝宝石
 		this->x = x_going;
 		this->y = y_going;
-		map[floor_going][y_going][x_going] = 1;
+		map_set(floor_going, x_going, y_going, 1);
 		this->defence = this->defence + get_Gem_Stone_Value(this->floor);
 		break;
 	case 58: // 铁剑
 		this->x = x_going;
 		this->y = y_going;
-		map[floor_going][y_going][x_going] = 1;
+		map_set(floor_going, x_going, y_going, 1);
 		this->attack = this->attack + 10;
 		break;
 	case 59: // 铁盾
 		this->x = x_going;
 		this->y = y_going;
-		map[floor_going][y_going][x_going] = 1;
+		map_set(floor_going, x_going, y_going, 1);
 		this->defence = this->defence + 10;
 		break;
 	case 60: // 银剑
 		this->x = x_going;
 		this->y = y_going;
-		map[floor_going][y_going][x_going] = 1;
+		map_set(floor_going, x_going, y_going, 1);
 		this->attack = this->attack + 20;
 		break;
 	case 61: // 银盾
 		this->x = x_going;
 		this->y = y_going;
-		map[floor_going][y_going][x_going] = 1;
+		map_set(floor_going, x_going, y_going, 1);
 		this->defence = this->defence + 20;
 		break;
 	case 62: // 骑士剑
 		this->x = x_going;
 		this->y = y_going;
-		map[floor_going][y_going][x_going] = 1;
+		map_set(floor_going, x_going, y_going, 1);
 		this->attack = this->attack + 40;
 		break;
 	case 63: // 骑士盾
 		this->x = x_going;
 		this->y = y_going;
-		map[floor_going][y_going][x_going] = 1;
+		map_set(floor_going, x_going, y_going, 1);
 		this->defence = this->defence + 40;
 		break;
 	case 64: // 圣剑
 		this->x = x_going;
 		this->y = y_going;
-		map[floor_going][y_going][x_going] = 1;
+		map_set(floor_going, x_going, y_going, 1);
 		this->attack = this->attack + 50;
 		break;
 	case 65: // 圣盾
 		this->x = x_going;
 		this->y = y_going;
-		map[floor_going][y_going][x_going] = 1;
+		map_set(floor_going, x_going, y_going, 1);
 		this->defence = this->defence + 50;
 		break;
 	case 66: // 神圣剑
 		this->x = x_going;
 		this->y = y_going;
-		map[floor_going][y_going][x_going] = 1;
+		map_set(floor_going, x_going, y_going, 1);
 		this->attack = this->attack + 100;
 		break;
 	case 67: // 神圣盾
 		this->x = x_going;
 		this->y = y_going;
-		map[floor_going][y_going][x_going] = 1;
+		map_set(floor_going, x_going, y_going, 1);
 		this->defence = this->defence + 100;
 		break;
 	}
@@ -282,23 +282,23 @@ void Player::freezeLava()
 
 	target_x = this->x + 1;
 	target_y = this->y;
-	if (map[this->floor][target_y][target_x] == 6)
-		map[this->floor][target_y][target_x] = 1;
+	if (map_get(this->floor, target_x, target_y) == 6)
+		map_set(this->floor, target_x, target_y, 1);
 
 	target_x = this->x - 1;
 	target_y = this->y;
-	if (map[this->floor][target_y][target_x] == 6)
-		map[this->floor][target_y][target_x] = 1;
+	if (map_get(this->floor, target_x, target_y) == 6)
+		map_set(this->floor, target_x, target_y, 1);
 
 	target_x = this->x;
 	target_y = this->y + 1;
-	if (map[this->floor][target_y][target_x] == 6)
-		map[this->floor][target_y][target_x] = 1;
+	if (map_get(this->floor, target_x, target_y) == 6)
+		map_set(this->floor, target_x, target_y, 1);
 
 	target_x = this->x;
 	target_y = this->y - 1;
-	if (map[this->floor][target_y][target_x] == 6)
-		map[this->floor][target_y][target_x] = 1;
+	if (map_get(this->floor, target_x, target_y) == 6)
+		map_set(this->floor, target_x, target_y, 1);
 }
 
 /**

@@ -9,11 +9,9 @@
 #include "dialog.h"
 #include "backpack.h"
 
-extern uint8_t map[51][13][13];
-KEY key;
-
 int main()
 {
+	KEY key;
 	system("cls");
 
 	// player init

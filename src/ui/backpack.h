@@ -1,9 +1,9 @@
 #pragma once
 
-#include "item.h"
-#include "regionDisplay.h"
-#include "dialog.h"
-#include "key.h"
+#include "game/item.h"
+#include "render/region_display.h"
+#include "event/dialog.h"
+#include "render/key.h"
 
 class Backpack
 {

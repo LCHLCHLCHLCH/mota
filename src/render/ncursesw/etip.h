@@ -118,7 +118,7 @@
 #  include <generic.h>
 #endif
 
-#include <ncursesw/curses.h>
+#include <render/ncursesw/curses.h>
 
 extern "C" {
 #if HAVE_VALUES_H

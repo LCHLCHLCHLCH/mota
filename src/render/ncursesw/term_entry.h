@@ -47,7 +47,7 @@
 extern "C" {
 #endif
 
-#include <ncursesw/curses.h>
+#include <render/ncursesw/curses.h>
 #include <ncursesw/term.h>
 
 /*

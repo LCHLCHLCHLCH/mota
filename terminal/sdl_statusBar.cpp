@@ -1,6 +1,6 @@
 // SDL3 版本的 StatusBar（替代 src/statusBar.cpp）
 #include <cstdio>
-#include "statusBar.h"
+#include "render/status_bar.h"
 #include "sdl_terminal.h"
 
 // 替代 printw：snprintf + addstr_gbk

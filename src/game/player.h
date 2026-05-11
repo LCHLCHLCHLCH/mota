@@ -1,10 +1,10 @@
 #pragma once
 #include <stdint.h>
-#include "map.h"
-#include "key.h"
-#include "monster.h"
-#include "calc.h"
-#include "dialog.h"
+#include "game/map.h"
+#include "render/key.h"
+#include "game/monster.h"
+#include "game/calc.h"
+#include "event/dialog.h"
 
 class EventManager;
 

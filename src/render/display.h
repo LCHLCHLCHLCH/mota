@@ -1,6 +1,6 @@
 #pragma once
 
-#include "playerClass.h"
+#include "game/player.h"
 
 class Display
 {

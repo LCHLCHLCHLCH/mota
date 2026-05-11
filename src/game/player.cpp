@@ -1,6 +1,6 @@
 #include <stdint.h>
-#include "playerClass.h"
-#include "monster.h"
+#include "game/player.h"
+#include "game/monster.h"
 #include "event/event_manager.h"
 
 /**

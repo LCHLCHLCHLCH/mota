@@ -1,8 +1,8 @@
 #pragma once
 
 #include <stdio.h>
-#include <Cursor.h>
-#include "playerClass.h"
+#include <render/cursor.h>
+#include "game/player.h"
 
 class StatusBar
 {

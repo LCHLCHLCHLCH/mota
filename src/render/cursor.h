@@ -2,10 +2,10 @@
 
 #ifdef SDL3_BUILD
 // SDL3 版本：使用 sdl_terminal 提供的函数
-#include <sdl_terminal.h>
+#include <../terminal/sdl_terminal.h>
 #else
 // ncurses 版本
-#include <ncursesw/curses.h>
+#include <render/ncursesw/curses.h>
 #endif
 
 enum COLOR {

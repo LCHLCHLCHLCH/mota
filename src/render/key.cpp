@@ -1,5 +1,5 @@
-#include "key.h"
-#include <ncursesw/curses.h>
+#include "render/key.h"
+#include <render/ncursesw/curses.h>
 
 KEY getKey() {
 	int ch = getch();

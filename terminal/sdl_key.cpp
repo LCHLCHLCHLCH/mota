@@ -1,5 +1,5 @@
 // SDL3 键盘输入（替代 src/key.cpp）
-#include "key.h"
+#include "render/key.h"
 #include "sdl_terminal.h"
 
 KEY getKey() {

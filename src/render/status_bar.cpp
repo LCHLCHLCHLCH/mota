@@ -1,4 +1,4 @@
-#include "statusBar.h"
+#include "render/status_bar.h"
 
 void StatusBar::draw(const Player& ply)
 {

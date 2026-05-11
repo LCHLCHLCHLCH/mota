@@ -1,4 +1,4 @@
-#include "map.h"
+#include "game/map.h"
 
 static uint8_t map[51][13][13] = {
 	{

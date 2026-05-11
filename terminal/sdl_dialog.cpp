@@ -1,8 +1,8 @@
 // SDL3 版本的对话框（替代 src/dialog.cpp）
 #include <cstring>
 #include <cstdio>
-#include "key.h"
-#include "regionDisplay.h"
+#include "render/key.h"
+#include "render/region_display.h"
 #include "sdl_terminal.h"
 
 void saySomething(char *s) {

@@ -1,6 +1,6 @@
 /****************************************************************************
  * Copyright 2020 Thomas E. Dickey                                          *
- * Copyright 1998-2009,2017 Free Software Foundation, Inc.                  *
+ * Copyright 1998-2001,2009 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -28,73 +28,41 @@
  ****************************************************************************/
 
 /****************************************************************************
- *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1995                    *
+ *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995               *
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
- *     and: Juergen Pfeifer                         1996-1999,2008          *
  ****************************************************************************/
 
-/* $Id: panel.h,v 1.14 2020/07/04 20:38:43 tom Exp $ */
+/*
+ * unctrl.h
+ *
+ * Display a printable version of a control character.
+ * Control characters are displayed in caret notation (^x), DELETE is displayed
+ * as ^?. Printable characters are displayed as is.
+ */
 
-/* panel.h -- interface file for panels library */
+/* $Id: unctrl.h.in,v 1.12 2020/02/02 23:34:34 tom Exp $ */
 
-#ifndef NCURSES_PANEL_H_incl
-#define NCURSES_PANEL_H_incl 1
+#ifndef NCURSES_UNCTRL_H_incl
+#define NCURSES_UNCTRL_H_incl	1
 
-#include <ncursesw/curses.h>
+#undef  NCURSES_VERSION
+#define NCURSES_VERSION "6.5"
 
-typedef struct panel
-#if !NCURSES_OPAQUE_PANEL
-{
-  WINDOW *win;
-  struct panel *below;
-  struct panel *above;
-  NCURSES_CONST void *user;
-}
-#endif /* !NCURSES_OPAQUE_PANEL */
-PANEL;
-
-#if	defined(__cplusplus)
+#ifdef __cplusplus
 extern "C" {
 #endif
 
-#if defined(BUILDING_PANEL)
-# define PANEL_IMPEXP NCURSES_EXPORT_GENERAL_EXPORT
-#else
-# define PANEL_IMPEXP NCURSES_EXPORT_GENERAL_IMPORT
+#include <render/ncursesw/curses.h>
+
+#undef unctrl
+NCURSES_EXPORT(NCURSES_CONST char *) unctrl (chtype);
+
+#if 1
+NCURSES_EXPORT(NCURSES_CONST char *) NCURSES_SP_NAME(unctrl) (SCREEN*, chtype);
 #endif
 
-#define PANEL_WRAPPED_VAR(type,name) extern PANEL_IMPEXP type NCURSES_PUBLIC_VAR(name)(void)
-
-#define PANEL_EXPORT(type) PANEL_IMPEXP type NCURSES_API
-#define PANEL_EXPORT_VAR(type) PANEL_IMPEXP type
-
-extern PANEL_EXPORT(WINDOW*) panel_window (const PANEL *);
-extern PANEL_EXPORT(void)    update_panels (void);
-extern PANEL_EXPORT(int)     hide_panel (PANEL *);
-extern PANEL_EXPORT(int)     show_panel (PANEL *);
-extern PANEL_EXPORT(int)     del_panel (PANEL *);
-extern PANEL_EXPORT(int)     top_panel (PANEL *);
-extern PANEL_EXPORT(int)     bottom_panel (PANEL *);
-extern PANEL_EXPORT(PANEL*)  new_panel (WINDOW *);
-extern PANEL_EXPORT(PANEL*)  panel_above (const PANEL *);
-extern PANEL_EXPORT(PANEL*)  panel_below (const PANEL *);
-extern PANEL_EXPORT(int)     set_panel_userptr (PANEL *, NCURSES_CONST void *);
-extern PANEL_EXPORT(NCURSES_CONST void*) panel_userptr (const PANEL *);
-extern PANEL_EXPORT(int)     move_panel (PANEL *, int, int);
-extern PANEL_EXPORT(int)     replace_panel (PANEL *,WINDOW *);
-extern PANEL_EXPORT(int)     panel_hidden (const PANEL *);
-
-#if NCURSES_SP_FUNCS
-extern PANEL_EXPORT(PANEL *) ground_panel(SCREEN *);
-extern PANEL_EXPORT(PANEL *) ceiling_panel(SCREEN *);
-
-extern PANEL_EXPORT(void)    NCURSES_SP_NAME(update_panels) (SCREEN*);
-#endif
-
-#if	defined(__cplusplus)
+#ifdef __cplusplus
 }
 #endif
 
-#endif /* NCURSES_PANEL_H_incl */
-
-/* end of panel.h */
+#endif /* NCURSES_UNCTRL_H_incl */

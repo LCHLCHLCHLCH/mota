@@ -2,15 +2,15 @@
 #include "sdl_terminal.h"
 
 // 游戏逻辑头文件（stubs 目录会提供不依赖 ncurses 的 Cursor.h）
-#include "playerClass.h"
-#include "displayClass.h"
-#include "key.h"
-#include "map.h"
-#include "monster.h"
-#include "regionDisplay.h"
-#include "statusBar.h"
-#include "dialog.h"
-#include "backpack.h"
+#include "game/player.h"
+#include "render/display.h"
+#include "render/key.h"
+#include "game/map.h"
+#include "game/monster.h"
+#include "render/region_display.h"
+#include "render/status_bar.h"
+#include "event/dialog.h"
+#include "ui/backpack.h"
 #include "event/event_manager.h"
 
 int main(int argc, char** argv) {

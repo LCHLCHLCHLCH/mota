@@ -40,7 +40,7 @@
 #define TEXT TEXT_ncurses
 #endif
 
-#include <ncursesw/curses.h>
+#include <render/ncursesw/curses.h>
 #include <ncursesw/eti.h>
 
 #ifdef __cplusplus

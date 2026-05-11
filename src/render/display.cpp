@@ -1,7 +1,7 @@
-#include "displayClass.h"
-#include "framePrintChar.h"
-#include <Cursor.h>
-#include "map.h"
+#include "render/display.h"
+#include "render/frame_print.h"
+#include <render/cursor.h>
+#include "game/map.h"
 
 void Display::init(const Player&) {}
 

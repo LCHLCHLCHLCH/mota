@@ -1,4 +1,4 @@
-#include "dialog.h"
+#include "event/dialog.h"
 
 /**
  * @brief 显示一段对话

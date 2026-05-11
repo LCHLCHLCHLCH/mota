@@ -1,4 +1,4 @@
-#include "regionDisplay.h"
+#include "render/region_display.h"
 
 void regionPrint(uint8_t start_place_x, uint8_t start_place_y, uint8_t line_width, char *s) {
 	gotoxy(start_place_x, start_place_y);

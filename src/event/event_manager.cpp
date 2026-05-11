@@ -1,8 +1,8 @@
 #include "event/event_manager.h"
-#include "playerClass.h"
-#include "dialog.h"
-#include "map.h"
-#include <Cursor.h>
+#include "game/player.h"
+#include "event/dialog.h"
+#include "game/map.h"
+#include <render/cursor.h>
 #include <cstring>
 #include <cstdio>
 

@@ -35,7 +35,7 @@
 // $Id: cursesw.h,v 1.59 2022/08/20 20:52:15 tom Exp $
 
 extern "C" {
-#  include   <ncursesw/curses.h>
+#  include   <render/ncursesw/curses.h>
 }
 
 #if defined(BUILDING_NCURSES_CXX)

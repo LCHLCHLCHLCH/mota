@@ -1,13 +1,13 @@
-#include "playerClass.h"
-#include "displayClass.h"
-#include "key.h"
-#include "map.h"
-#include <Cursor.h>
-#include "monster.h"
-#include "regionDisplay.h"
-#include "statusBar.h"
-#include "dialog.h"
-#include "backpack.h"
+#include "game/player.h"
+#include "render/display.h"
+#include "render/key.h"
+#include "game/map.h"
+#include <render/cursor.h>
+#include "game/monster.h"
+#include "render/region_display.h"
+#include "render/status_bar.h"
+#include "event/dialog.h"
+#include "ui/backpack.h"
 #include "event/event_manager.h"
 
 int main()

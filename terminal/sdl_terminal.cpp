@@ -1,5 +1,5 @@
 #include "sdl_terminal.h"
-#include <Cursor.h>
+#include <render/cursor.h>
 #include <windows.h>
 #include <cstdio>
 #include <cstring>

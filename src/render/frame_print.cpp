@@ -1,5 +1,5 @@
-#include "framePrintChar.h"
-#include <Cursor.h>
+#include "render/frame_print.h"
+#include <render/cursor.h>
 
 // Clear the right half of the current 2-column cell, then move back.
 // This guarantees no residual from a previous 2-col char can survive.

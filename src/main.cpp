@@ -44,14 +44,30 @@ int main()
 		}
 		else
 		{
+			// 保存移动前位置，用于 NPC 碰壁回弹
+			uint8_t prev_x = player.x;
+			uint8_t prev_y = player.y;
+
 			player.respondToKey(key);
 
-			// 检测当前位置的 NPC 事件
+			// 检测目标位置的交互
 			uint8_t tile = map_get(player.floor, player.x, player.y);
 			if (tile == 155)
+			{
 				events.checkAltar(player.floor, player);
+				// NPC / 祭坛 不可穿越，弹回原位
+				player.x = prev_x;
+				player.y = prev_y;
+			}
 			else if (tile >= 151 && tile <= 154)
+			{
 				events.checkTile(player.floor, tile, player);
+				player.x = prev_x;
+				player.y = prev_y;
+			}
+
+			// 清除事件内部残留的输入，防止菜单关闭后角色自动移动
+			flushinp();
 		}
 	}
 

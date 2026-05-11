@@ -17,6 +17,15 @@ static const EventAction ACT_3F_OLD_MAN[] = {
 	{ ActionType::END,      0, 0, nullptr },
 };
 
+static const char* TEXT_4F_OLD_MAN =
+	"有些门不能用钥匙打开，只有当你击败它的守卫后才会自动打开。";
+
+static const EventAction ACT_4F_OLD_MAN[] = {
+	{ ActionType::SAY,      0, 0, TEXT_4F_OLD_MAN },
+	{ ActionType::SET_FLAG, 3, 0, nullptr },
+	{ ActionType::END,      0, 0, nullptr },
+};
+
 static const char* TEXT_2F_PRISON =
 	"所有牢门都已打开！";
 
@@ -37,6 +46,7 @@ void EventManager::init()
 
 	// --- ON_TILE ---
 	addEvent({ 3, EventTrigger::ON_TILE, 151, 1, 1, 2, ACT_3F_OLD_MAN });
+	addEvent({ 4, EventTrigger::ON_TILE, 151, 3, 3, 2, ACT_4F_OLD_MAN });
 
 	// --- ON_CLEAR ---
 	// 第2层：当该层怪物全部死亡，打开所有怪物看护的门

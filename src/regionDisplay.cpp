@@ -2,62 +2,26 @@
 
 void regionPrint(uint8_t start_place_x, uint8_t start_place_y, uint8_t line_width, char *s) {
 	gotoxy(start_place_x, start_place_y);
-	uint8_t column = 0;
-	uint8_t line = 0;
-	char *ptr = s;
-	while (*ptr) {
-		addch(*ptr);
-		ptr++;
-		column++;
-		if (column == line_width * 2) {
-			line++;
-			column = 0;
-			gotoxy(start_place_x, start_place_y + line);
-		}
-	}
+	addstr(s);
 }
 
 void regionErase(uint8_t start_place_x, uint8_t start_place_y, uint8_t line_width, uint16_t len) {
 	gotoxy(start_place_x, start_place_y);
-	uint8_t column = 0;
-	uint8_t line = 0;
 	for (uint16_t i = 0; i < len; i++) {
 		addch(' ');
-		column++;
-		if (column == line_width * 2) {
-			line++;
-			column = 0;
-			gotoxy(start_place_x, start_place_y + line);
-		}
 	}
 }
 
 void regionEmphasize(uint8_t start_place_x, uint8_t start_place_y, uint8_t line_width, char* s) {
 	SetConsoleColor(9 * 16 | 7);
 	gotoxy(start_place_x, start_place_y);
-	uint8_t column = 0;
-	uint8_t line = 0;
-	char *ptr = s;
-	while (*ptr) {
-		addch(*ptr);
-		ptr++;
-		column++;
-		if (column == line_width * 2) {
-			line++;
-			column = 0;
-			gotoxy(start_place_x, start_place_y + line);
-		}
-	}
+	addstr(s);
 	SetColor(WHITE);
 }
 
 void regionPrint(uint8_t start_place_x, uint8_t start_place_y, char *s) {
 	gotoxy(start_place_x, start_place_y);
-	char *ptr = s;
-	while (*ptr) {
-		addch(*ptr);
-		ptr++;
-	}
+	addstr(s);
 }
 
 void regionErase(uint8_t start_place_x, uint8_t start_place_y, uint16_t len) {
@@ -72,10 +36,6 @@ void regionErase(uint8_t start_place_x, uint8_t start_place_y, uint16_t len) {
 void regionEmphasize(uint8_t start_place_x, uint8_t start_place_y, char* s) {
 	SetConsoleColor(9 * 16 | 7);
 	gotoxy(start_place_x, start_place_y);
-	char *ptr = s;
-	while (*ptr) {
-		addch(*ptr);
-		ptr++;
-	}
+	addstr(s);
 	SetColor(WHITE);
 }

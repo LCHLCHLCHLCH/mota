@@ -1,6 +1,16 @@
 #include "framePrintChar.h"
 #include "Cursor.h"
 
+static void padTo2Cols() {
+	int y, x;
+	getyx(stdscr, y, x);
+	// If we're at an odd column (character only took 1 col), fill with space
+	if (x & 1) {
+		SetColor(WHITE);
+		addch(' ');
+	}
+}
+
 void framePrintChar(uint8_t ch)
 {
 	switch (ch)
@@ -8,6 +18,7 @@ void framePrintChar(uint8_t ch)
 	// 实体的部分
 	case 1:
 		addstr("·");
+		padTo2Cols();
 		break;
 	case 2:
 		SetConsoleColor(7 * 16 | 7);
@@ -29,10 +40,9 @@ void framePrintChar(uint8_t ch)
 		SetColor(WHITE);
 		break;
 	case 7:
-		SetConsoleColor(1 * 16 | 7); // 蓝底,白背景
+		SetConsoleColor(1 * 16 | 7);
 		addstr("★");
-		// if(k == 1)addstr("★");
-		// else addstr("  ");
+		padTo2Cols();
 		SetColor(WHITE);
 		break;
 	case 8:
@@ -61,15 +71,19 @@ void framePrintChar(uint8_t ch)
 		break;
 	case 54:
 		colorPrint(RED, (char *)"★");
+		padTo2Cols();
 		break;
 	case 55:
 		colorPrint(BLUE, (char *)"★");
+		padTo2Cols();
 		break;
 	case 56:
 		colorPrint(RED, (char *)"◆");
+		padTo2Cols();
 		break;
 	case 57:
 		colorPrint(BLUE, (char *)"◆");
+		padTo2Cols();
 		break;
 	case 58:
 		colorPrint(GREY, (char *)"剑");
@@ -104,9 +118,11 @@ void framePrintChar(uint8_t ch)
 	// 这一区域是怪物
 	case 101:
 		colorPrint(GREEN, (char *)"⊙");
+		padTo2Cols();
 		break;
 	case 102:
 		colorPrint(RED, (char *)"⊙");
+		padTo2Cols();
 		break;
 	case 103:
 		colorPrint(PURPLE, (char *)"蝠");
@@ -128,6 +144,7 @@ void framePrintChar(uint8_t ch)
 		break;
 	case 109:
 		colorPrint(PURPLE, (char *)"⊙");
+		padTo2Cols();
 		break;
 	case 110:
 		colorPrint(RED, (char *)"蝠");
@@ -185,6 +202,7 @@ void framePrintChar(uint8_t ch)
 		break;
 	case 128:
 		colorPrint(GREEN, (char*)"Θ");
+		padTo2Cols();
 		break;
 	case 129:
 		colorPrint(RED, (char*)"蝠");
@@ -229,6 +247,7 @@ void framePrintChar(uint8_t ch)
 	// 显示错误
 	default:
 		addstr("？");
+		padTo2Cols();
 		break;
 	}
 }

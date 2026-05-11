@@ -23,7 +23,7 @@ private:
 	uint8_t altar_times_;  // 全局祭坛使用次数
 
 	static uint8_t countMonsters(uint8_t floor);
-	uint8_t getAltarCost() const;
+	uint16_t getAltarCost() const;
 
 	void executeEvent(const Event& ev, Player& player);
 	void executeAction(const EventAction& act, Player& player, uint8_t ev_floor);

@@ -207,17 +207,17 @@ void EventManager::executeAction(const EventAction& act, Player& player, uint8_t
 // ============================================================
 // 祭坛系统（数据来源: 51/events.js "商店"）
 // ============================================================
-uint8_t EventManager::getAltarCost() const
+uint16_t EventManager::getAltarCost() const
 {
 	// 20 + 10 * (times + 1) * times
-	uint8_t t = altar_times_;
+	uint16_t t = altar_times_;
 	return 20 + 10 * (t + 1) * t;
 }
 
 void EventManager::checkAltar(uint8_t floor, Player& player)
 {
-	uint8_t ratio = (floor - 1) / 10 + 1;   // 区域 1-5
-	uint8_t cost  = getAltarCost();
+	uint8_t  ratio = (floor - 1) / 10 + 1;   // 区域 1-5
+	uint16_t cost  = getAltarCost();
 	uint16_t atk_gain = 2 * ratio;
 	uint16_t def_gain = 4 * ratio;
 	uint16_t hp_gain  = 100 * (altar_times_ + 1);

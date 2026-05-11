@@ -5,8 +5,7 @@ project(MagicalTower)
 aux_source_directory(./src SRC_LIST)
 
 include_directories(./inc)
-include_directories(C:/mingw64/opt/include)
-link_directories(C:/mingw64/opt/lib)
+link_directories(./lib)
 
 add_executable(${PROJECT_NAME} ${SRC_LIST} ./logo/logo.rc)
 

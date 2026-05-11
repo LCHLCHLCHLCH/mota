@@ -12,7 +12,7 @@
 int main()
 {
 	KEY key;
-	system("cls");
+	console_init();
 
 	// player init
 	Player player;
@@ -35,6 +35,7 @@ int main()
 	display.printDifferentia();
 	statusBar.firstShow(player);
 	hideCursor();
+	refresh();
 
 	while (1)
 	{
@@ -60,7 +61,11 @@ int main()
 		// 右边栏更新显示
 		statusBar.updateAll(player);
 
-		// 隐藏光标
+		// 隐藏光标并刷新
 		hideCursor();
+		refresh();
 	}
+
+	console_shutdown();
+	return 0;
 }

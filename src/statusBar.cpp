@@ -8,7 +8,7 @@ void StatusBar::firstShow(const Player& ply)
 {
 	// show the UI
 	// gotoxy(28, 0);
-	// printf("楼层");
+	// printw("楼层");
 	gotoxy(28, 2);
 	colorPrint(RED, (char *)"血");
 	gotoxy(28, 4);
@@ -30,67 +30,67 @@ void StatusBar::firstShow(const Player& ply)
 
 	// show the num
 	// gotoxy(32, 0);
-	// printf("%d", ply.floor);
+	// printw("%d", ply.floor);
 	gotoxy(31, 2);
-	printf("%d", ply.health);
+	printw("%d", ply.health);
 	gotoxy(31, 4);
-	printf("%d", ply.yellowKey);
+	printw("%d", ply.yellowKey);
 	gotoxy(31, 5);
-	printf("%d", ply.blueKey);
+	printw("%d", ply.blueKey);
 	gotoxy(31, 6);
-	printf("%d", ply.redKey);
+	printw("%d", ply.redKey);
 	gotoxy(31, 8);
-	printf("%d", ply.attack);
+	printw("%d", ply.attack);
 	gotoxy(31, 9);
-	printf("%d", ply.defence);
+	printw("%d", ply.defence);
 	gotoxy(31, 11);
-	printf("%d", ply.money);
+	printw("%d", ply.money);
 	// gotoxy(33, 11);
-	// printf("%d", ply.health);
+	// printw("%d", ply.health);
 	// gotoxy(33, 12);
-	// printf("%d", ply.health);
+	// printw("%d", ply.health);
 }
 
 void StatusBar::updateAll(const Player& ply)
 {
 	gotoxy(32, 0);
-	printf("    ");
+	printw("    ");
 	gotoxy(32, 0);
-	printf("%d", ply.floor);
+	printw("%d", ply.floor);
 	gotoxy(31, 2);
-	printf("         ");
+	printw("         ");
 	gotoxy(31, 2);
-	printf("%d", ply.health);
+	printw("%d", ply.health);
 	gotoxy(31, 4);
-	printf("    ");
+	printw("    ");
 	gotoxy(31, 4);
-	printf("%d", ply.yellowKey);
+	printw("%d", ply.yellowKey);
 	gotoxy(31, 5);
-	printf("    ");
+	printw("    ");
 	gotoxy(31, 5);
-	printf("%d", ply.blueKey);
+	printw("%d", ply.blueKey);
 	gotoxy(31, 6);
-	printf("    ");
+	printw("    ");
 	gotoxy(31, 6);
-	printf("%d", ply.redKey);
+	printw("%d", ply.redKey);
 	gotoxy(31, 8);
-	printf("    ");
+	printw("    ");
 	gotoxy(31, 8);
-	printf("%d", ply.attack);
+	printw("%d", ply.attack);
 	gotoxy(31, 9);
-	printf("    ");
+	printw("    ");
 	gotoxy(31, 9);
-	printf("%d", ply.defence);
+	printw("%d", ply.defence);
 	gotoxy(31, 11);
-	printf("    ");
+	printw("    ");
 	gotoxy(31, 11);
-	printf("%d", ply.money);
+	printw("%d", ply.money);
 	// gotoxy(33, 11);
-	// printf("    ");
+	// printw("    ");
 	// gotoxy(33, 11);
-	// printf("%d", ply.health);
+	// printw("%d", ply.health);
 	// gotoxy(33, 12);
-	// printf("    ");
+	// printw("    ");
 	// gotoxy(33, 12);
-	// printf("%d", ply.health);
+	// printw("%d", ply.health);
 }

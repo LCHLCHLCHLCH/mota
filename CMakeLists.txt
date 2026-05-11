@@ -1,16 +1,16 @@
 cmake_minimum_required(VERSION 3.28.1)
 
-# project name
 project(MagicalTower)
 
-# SRC_LIST
 aux_source_directory(./src SRC_LIST)
 
-#include directory
 include_directories(./inc)
+include_directories(C:/mingw64/opt/include)
+link_directories(C:/mingw64/opt/lib)
 
-# executable
 add_executable(${PROJECT_NAME} ${SRC_LIST} ./logo/logo.rc)
 
-# compile option
+target_link_libraries(${PROJECT_NAME} ncursesw)
+
+add_definitions(-DNCURSES_STATIC)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexec-charset=GBK")

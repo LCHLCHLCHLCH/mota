@@ -3,16 +3,15 @@
 
 void framePrintChar(uint8_t ch)
 {
-	uint8_t k=rand()%10;
 	switch (ch)
 	{
 	// 实体的部分
 	case 1:
-		printf("·");
+		addstr("·");
 		break;
 	case 2:
 		SetConsoleColor(7 * 16 | 7);
-		printf("  ");
+		addstr("  ");
 		SetColor(WHITE);
 		break;
 	case 3:
@@ -26,28 +25,28 @@ void framePrintChar(uint8_t ch)
 		break;
 	case 6:
 		SetConsoleColor(64 | 7);
-		printf("  ");
+		addstr("  ");
 		SetColor(WHITE);
 		break;
 	case 7:
 		SetConsoleColor(1 * 16 | 7); // 蓝底,白背景
-		printf("★");
-		// if(k == 1)printf("★");
-		// else printf("  ");
+		addstr("★");
+		// if(k == 1)addstr("★");
+		// else addstr("  ");
 		SetColor(WHITE);
 		break;
 	case 8:
-		printf("〓");
+		addstr("〓");
 		break;
 	case 9:
-		printf("△");
+		addstr("△");
 		break;
 	case 10:
-		printf("▽");
+		addstr("▽");
 		break;
 	case 11:
 		SetConsoleColor(7 * 16 | 7);
-		printf("  ");
+		addstr("  ");
 		SetColor(WHITE);
 		break;
 	// 道具
@@ -229,7 +228,7 @@ void framePrintChar(uint8_t ch)
 		break;
 	// 显示错误
 	default:
-		printf("？");
+		addstr("？");
 		break;
 	}
 }

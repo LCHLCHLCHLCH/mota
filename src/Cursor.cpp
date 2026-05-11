@@ -1,105 +1,111 @@
 #include "Cursor.h"
 
-#define WINDOWS
-
-#ifdef WINDOWS
-#include <windows.h>
-#include <stdio.h>
-#include <string>
-
-/**
- * @brief 移动控制台的光标
- * @param x:横坐标
- * @param y:纵坐标
- */
-void gotoxy(int x, int y)
-{
-	COORD position;
-	position.X = x;
-	position.Y = y;
-	SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), position);
+// Map foreground COLOR to curses color constant
+static int curses_fg(COLOR c) {
+	switch (c) {
+		case RED:    return COLOR_RED;
+		case YELLOW: return COLOR_YELLOW;
+		case BLUE:   return COLOR_BLUE;
+		case WHITE:  return COLOR_WHITE;
+		case GREEN:  return COLOR_GREEN;
+		case PURPLE: return COLOR_MAGENTA;
+		case GREY:   return COLOR_WHITE;   // curses has no grey
+		case LIGHT_GREEN: return COLOR_CYAN;
+		default:     return COLOR_WHITE;
+	}
 }
 
-/**
- * @brief 隐藏控制台光标
- */
-void hideCursor()
-{
-	HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
-	CONSOLE_CURSOR_INFO CursorInfo;
-	GetConsoleCursorInfo(handle, &CursorInfo); // 获取控制台光标信息
-	CursorInfo.bVisible = false;			   // 隐藏控制台光标
-	SetConsoleCursorInfo(handle, &CursorInfo); // 设置控制台光标状态
+// Color pair IDs
+enum {
+	PAIR_WHITE = 1,
+	PAIR_RED,
+	PAIR_YELLOW,
+	PAIR_BLUE,
+	PAIR_GREEN,
+	PAIR_MAGENTA,
+	PAIR_CYAN,
+	PAIR_GREY,
+	PAIR_LAVA,       // white on red
+	PAIR_WALL,       // white on white
+	PAIR_STAR,       // white on blue
+	PAIR_EMPHASIS,   // white on blue (same bg, different purpose)
+};
+
+static int color_to_pair(COLOR c) {
+	switch (c) {
+		case RED:    return PAIR_RED;
+		case YELLOW: return PAIR_YELLOW;
+		case BLUE:   return PAIR_BLUE;
+		case WHITE:  return PAIR_WHITE;
+		case GREEN:  return PAIR_GREEN;
+		case PURPLE: return PAIR_MAGENTA;
+		case GREY:   return PAIR_GREY;
+		case LIGHT_GREEN: return PAIR_CYAN;
+		default:     return PAIR_WHITE;
+	}
 }
 
-/**
- * @brief 设置控制台显示的颜色
- */
-void SetConsoleColor(int color)
-{
-	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-	SetConsoleTextAttribute(hConsole, color);
+static int current_pair = PAIR_WHITE;
+
+void console_init() {
+	initscr();
+	start_color();
+	cbreak();
+	noecho();
+	keypad(stdscr, TRUE);
+	curs_set(0);
+
+	// Foreground-color pairs (on black)
+	init_pair(PAIR_WHITE,   COLOR_WHITE,   COLOR_BLACK);
+	init_pair(PAIR_RED,     COLOR_RED,     COLOR_BLACK);
+	init_pair(PAIR_YELLOW,  COLOR_YELLOW,  COLOR_BLACK);
+	init_pair(PAIR_BLUE,    COLOR_BLUE,    COLOR_BLACK);
+	init_pair(PAIR_GREEN,   COLOR_GREEN,   COLOR_BLACK);
+	init_pair(PAIR_MAGENTA, COLOR_MAGENTA, COLOR_BLACK);
+	init_pair(PAIR_CYAN,    COLOR_CYAN,    COLOR_BLACK);
+	init_pair(PAIR_GREY,    COLOR_WHITE,   COLOR_BLACK);
+
+	// Special background pairs
+	init_pair(PAIR_LAVA,     COLOR_WHITE, COLOR_RED);
+	init_pair(PAIR_WALL,     COLOR_WHITE, COLOR_WHITE);
+	init_pair(PAIR_STAR,     COLOR_WHITE, COLOR_BLUE);
+	init_pair(PAIR_EMPHASIS, COLOR_WHITE, COLOR_BLUE);
 }
 
-/**
- * @brief 设置具体的颜色
- */
-void SetColor(COLOR a)
-{
-	switch (a)
-	{
-	case RED:
-		SetConsoleColor(FOREGROUND_INTENSITY | 4);
-		break;
-	case BLUE:
-		SetConsoleColor(FOREGROUND_INTENSITY | 1);
-		break;
-	case YELLOW:
-		SetConsoleColor(FOREGROUND_INTENSITY | 6);
-		break;
-	case WHITE:
-		SetConsoleColor(FOREGROUND_INTENSITY | 7);
-		break;
-	case GREEN:
-		SetConsoleColor(FOREGROUND_INTENSITY | 2);
-		break;
-	case GREY:
-		SetConsoleColor(FOREGROUND_INTENSITY | 8);
-		break;
-	case PURPLE:
-		SetConsoleColor(FOREGROUND_INTENSITY | 13);
-		break;
-	case LIGHT_GREEN:
-		SetConsoleColor(FOREGROUND_INTENSITY | 11);
-		break;
-	};
+void console_shutdown() {
+	endwin();
 }
 
-/**
- * @brief 以某个具体的颜色输出
- */
-// void colorPrint(COLOR c, const char* s)
-void colorPrint(COLOR c, char *s)
-// void colorPrint(COLOR c, std::string s)
-{
-	SetColor(c);
-	printf("%s", s);
-	SetColor(WHITE);
+void gotoxy(int x, int y) {
+	move(y, x);
 }
 
-#endif
-
-#ifdef LINUX
-#include <stdio.h>
-
-void gotoxy(int x, int y)
-{
-	printf("\033[%d;%dH", y, x);
+void hideCursor() {
+	curs_set(0);
 }
 
-void hideCursor()
-{
-	printf("\e[?25l");
+void SetConsoleColor(int attr) {
+	int pair = PAIR_WHITE;
+	switch (attr) {
+		case 7 * 16 | 7:  pair = PAIR_WALL;  break;  // white bg white fg
+		case 64 | 7:      pair = PAIR_LAVA;   break;  // red bg white fg
+		case 1 * 16 | 7:  pair = PAIR_STAR;   break;  // blue bg white fg
+		case 9 * 16 | 7:  pair = PAIR_EMPHASIS; break; // blue bg white fg
+		default:          pair = PAIR_WHITE;  break;
+	}
+	current_pair = pair;
+	attron(COLOR_PAIR(pair));
 }
 
-#endif
+void SetColor(COLOR a) {
+	current_pair = color_to_pair(a);
+	attr_set(0, current_pair, nullptr);
+}
+
+void colorPrint(COLOR c, char *s) {
+	int pair = color_to_pair(c);
+	attron(COLOR_PAIR(pair));
+	addstr(s);
+	attroff(COLOR_PAIR(pair));
+	attr_set(0, current_pair, nullptr);
+}

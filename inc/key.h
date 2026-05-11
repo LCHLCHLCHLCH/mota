@@ -1,9 +1,8 @@
 #pragma once
 
-#include <conio.h>
 #include <stdint.h>
 
-enum KEY{
+enum KEY {
 	UP,
 	DOWN,
 	LEFT,

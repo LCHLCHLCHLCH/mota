@@ -14,56 +14,32 @@ int main()
 	KEY key;
 	console_init();
 
-	// player init
 	Player player;
 	player.init();
 
-	// display init
 	Display display;
-	display.init(player);
-
-	// status bar init
 	StatusBar statusBar;
-
-	// backpack init
 	Backpack backpack;
 
-	// 显示颜色设为白色
 	SetColor(WHITE);
-
-	// 显示最初的内容
-	display.printDifferentia();
-	statusBar.firstShow(player);
-	hideCursor();
-	refresh();
 
 	while (1)
 	{
-		// 按键检测
+		// clear() 重置 ncurses 缓冲区，消除双宽度字符的
+		// continuation-column 脏标记
+		clear();
+
+		display.generateFrame(player);
+		statusBar.updateAll(player);
+		hideCursor();
+		refresh();
+
 		key = getKey();
 
 		if (key == KEY_X)
-		{
-			// 打开背包
 			backpack.selectItem();
-		}
 		else
-		{
-			// 玩家移动
 			player.respondToKey(key);
-		}
-
-		// 画面更新
-		display.store_frame();
-		display.generateFrame(player);
-		display.printDifferentia();
-
-		// 右边栏更新显示
-		statusBar.updateAll(player);
-
-		// 隐藏光标并刷新
-		hideCursor();
-		refresh();
 	}
 
 	console_shutdown();

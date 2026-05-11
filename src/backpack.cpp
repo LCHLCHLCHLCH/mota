@@ -66,6 +66,7 @@ Item *Backpack::selectItem()
 	if (this->isEmpty == true)
 	{
 		saySomething((char *)"背包里没有道具!");
+		return nullptr;
 	}
 	else // 背包里有道具
 	{
@@ -90,7 +91,7 @@ Item *Backpack::selectItem()
 			// extract
 			choosed = (returnValue >> 15) & 0x01;
 			returnType = (returnValue >> 8) & 0x7F;
-			chosenOption = (uint8_t)((returnValue >> 15) & 0x01);
+			chosenOption = (uint8_t)(returnValue & 0xFF);
 
 			if (choosed) // 按下了z,做出了选择
 			{

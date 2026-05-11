@@ -66,8 +66,10 @@ int main()
 				player.y = prev_y;
 			}
 
-			// 清除事件内部残留的输入，防止菜单关闭后角色自动移动
-			flushinp();
+			// 排空输入缓冲，防止菜单方向键残留导致角色自动移动
+			nodelay(stdscr, TRUE);
+			while (getch() != ERR) {}
+			nodelay(stdscr, FALSE);
 		}
 	}
 

@@ -11,6 +11,8 @@ KEY getKey() {
 		case 'v': case 'V': return KEY_V;
 		case 'z': case 'Z': return KEY_Z;
 		case 'x': case 'X': return KEY_X;
+		case 'q': case 'Q': return KEY_Q;
+		case 'e': case 'E': return KEY_E;
 		case '1': return KEY_1;
 		case '2': return KEY_2;
 		default:   return NOTHING;

@@ -343,6 +343,14 @@ void Player::respondToKey(KEY key)
 		// 冰冻
 		freezeLava();
 		break;
+	case KEY_Q:
+		// 调试：上楼
+		this->floor++;
+		break;
+	case KEY_E:
+		// 调试：下楼
+		this->floor--;
+		break;
 	case KEY_1:
 		this->floor--;
 		break;

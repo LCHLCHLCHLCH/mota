@@ -17,6 +17,7 @@ void saySomething(char *s)
 	}
 	regionErase(2, 13, strlen(s));
 	refresh();  // 清除残留
+	drainInput();
 }
 
 /**

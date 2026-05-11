@@ -21,6 +21,7 @@ enum COLOR {
 
 void console_init();
 void console_shutdown();
+void drainInput();
 void gotoxy(int x, int y);
 void hideCursor();
 void SetConsoleColor(int attr);

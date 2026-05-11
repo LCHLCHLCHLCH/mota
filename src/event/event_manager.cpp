@@ -2,6 +2,7 @@
 #include "playerClass.h"
 #include "dialog.h"
 #include "map.h"
+#include "Cursor.h"
 #include <cstring>
 #include <cstdio>
 
@@ -255,4 +256,5 @@ void EventManager::checkAltar(uint8_t floor, Player& player)
 	}
 
 	altar_times_++;
+	drainInput();
 }

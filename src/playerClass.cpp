@@ -76,11 +76,17 @@ void Player::respondToMap(uint8_t floor_going, uint8_t x_going, uint8_t y_going)
 	// 如果将要到达的格子的ID在101-150之间,就调用处理Monster的函数
 	if (map_get(floor_going, x_going, y_going) >= 101 && map_get(floor_going, x_going, y_going) <= 150)
 		reactToMonster(floor_going, x_going, y_going);
-	// NPC: 151-155 — 走到 NPC 格子，事件由主循环检测
+	// NPC / 祭坛：触发事件，但不穿越
 	if (map_get(floor_going, x_going, y_going) >= 151 && map_get(floor_going, x_going, y_going) <= 155)
 	{
-		this->x = x_going;
-		this->y = y_going;
+		if (this->events)
+		{
+			uint8_t id = map_get(floor_going, x_going, y_going);
+			if (id == 155)
+				this->events->checkAltar(floor_going, *this);
+			else
+				this->events->checkTile(floor_going, id, *this);
+		}
 	}
 }
 

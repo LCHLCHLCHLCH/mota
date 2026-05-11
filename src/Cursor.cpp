@@ -48,6 +48,12 @@ static int color_to_pair(COLOR c) {
 
 static int current_pair = PAIR_WHITE;
 
+void drainInput() {
+	nodelay(stdscr, TRUE);
+	while (getch() != ERR) {}
+	nodelay(stdscr, FALSE);
+}
+
 void console_init() {
 	setlocale(LC_ALL, "");
 	initscr();

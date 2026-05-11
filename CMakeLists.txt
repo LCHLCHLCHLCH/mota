@@ -14,4 +14,3 @@ add_executable(${PROJECT_NAME} ${SRC_LIST} ./logo/logo.rc)
 
 # compile option
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexec-charset=GBK")
-

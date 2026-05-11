@@ -1,12 +1,10 @@
-#ifndef PLAYER_CLASS_H
-#define PLAYER_CLASS_H
+#pragma once
 #include <stdint.h>
+#include "map.h"
 #include "key.h"
 #include "monsterClass.h"
 #include "calc.h"
 #include "event.h"
-
-extern uint8_t map[51][13][13];
 
 enum PREDICTION
 {
@@ -45,5 +43,3 @@ public:
 
 	void freezeLava();
 };
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef _KEY_H
-#define _KEY_H
+#pragma once
 
 #include <conio.h>
 #include <stdint.h>
@@ -19,5 +18,3 @@ enum KEY{
 };
 
 KEY getKey();
-
-#endif

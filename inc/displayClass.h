@@ -1,14 +1,12 @@
-#ifndef DISPLAY_CLASS_H
-#define DISPLAY_CLASS_H
+#pragma once
 
 #include "Cursor.h"
 #include "framePrintChar.h"
 #include "playerClass.h"
+#include "map.h"
 #include <stdint.h>
 
 #define BLANK 0
-
-extern uint8_t map[51][13][13];
 
 class Display
 {
@@ -21,6 +19,3 @@ public:
 	void generateFrame(Player ply);
 	void printDifferentia();
 };
-
-#endif
-

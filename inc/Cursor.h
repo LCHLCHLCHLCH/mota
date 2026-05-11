@@ -1,5 +1,4 @@
-#ifndef CURSOR_H
-#define CURSOR_H
+#pragma once
 
 #include <string>
 
@@ -20,8 +19,6 @@ void SetConsoleColor(int color);
 void SetColor(COLOR a);
 void colorPrint(COLOR c, char * s);
 // void colorPrint(COLOR c, std::string s);
-
-#endif
 
 /*
 0 = 黑色 8 = 灰色

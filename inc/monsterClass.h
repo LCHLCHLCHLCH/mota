@@ -1,5 +1,4 @@
-#ifndef MONSTER_CLASS_H
-#define MONSTER_CLASS_H
+#pragma once
 
 #include <stdint.h>
 
@@ -13,5 +12,3 @@ public:
 };
 
 Monster* getMonsterType(uint8_t id);
-
-#endif

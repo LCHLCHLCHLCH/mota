@@ -1,5 +1,4 @@
-#ifndef STATUS_BAR_H
-#define STATUS_BAR_H
+#pragma once
 
 #include <stdio.h>
 #include "Cursor.h"
@@ -11,5 +10,3 @@ class StatusBar
 	void firstShow(Player ply);
 	void updateAll(Player ply);
 };
-
-#endif

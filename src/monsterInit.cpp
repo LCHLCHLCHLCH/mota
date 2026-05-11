@@ -109,6 +109,108 @@ Monster GreatMagicMaster = {4500, 560, 310, 1000};
 Monster GhostSoldier = {220, 180, 30, 35};
 
 /**
+ * @brief 战士
+ * @note id = 119
+ */
+Monster Soldier = {210, 200, 65, 45};
+
+/**
+ * @brief 幽灵
+ * @note id = 120
+ */
+Monster SlimeMan = {320, 140, 20, 30};
+
+/**
+ * @brief 中级卫兵
+ * @note id = 121
+ */
+Monster BlueGuard = {100, 180, 110, 50};
+
+/**
+ * @brief 双手剑士
+ * @note id = 122
+ */
+Monster Swordsman = {100, 680, 50, 55};
+
+/**
+ * @brief 魔龙
+ * @note id = 123
+ */
+Monster MagicDragon = {1500, 600, 250, 800};
+
+/**
+ * @brief 骑士
+ * @note id = 124
+ */
+Monster RedKnight = {160, 230, 105, 65};
+
+/**
+ * @brief 骑士队长
+ * @note id = 125
+ */
+Monster YellowKnight = {120, 150, 50, 100};
+
+/**
+ * @brief 初级巫师
+ * @note id = 126
+ */
+Monster BrownWizard = {220, 370, 110, 80};
+
+/**
+ * @brief 高级巫师
+ * @note id = 127
+ */
+Monster RedWizard = {200, 380, 130, 90};
+
+/**
+ * @brief 史莱姆王
+ * @note id = 128
+ */
+Monster SlimeLord = {360, 310, 20, 40};
+
+/**
+ * @brief 吸血蝙蝠
+ * @note id = 129
+ */
+Monster RedBat = {200, 390, 90, 50};
+
+/**
+ * @brief 黑暗骑士
+ * @note id = 130
+ */
+Monster DarkKnight = {180, 430, 210, 120};
+
+/**
+ * @brief 魔法警卫
+ * @note id = 131
+ */
+Monster WhiteKing = {230, 450, 100, 100};
+
+/**
+ * @brief 高级卫兵
+ * @note id = 132
+ */
+Monster RedGuard = {180, 460, 360, 200};
+
+/**
+ * @brief 假魔王
+ * @note id = 133
+ */
+Monster BlackKing = {1000, 500, 0, 1000};
+
+/**
+ * @brief 假魔王(被封印)
+ * @note id = 134
+ */
+Monster SealedBlackKing = {1000, 500, 0, 1000};
+
+/**
+ * @brief 真魔王
+ * @note id = 135
+ */
+Monster RedKing = {8000, 5000, 1000, 500};
+
+/**
  * @brief 要是能碰到这个怪物说明出问题了
  * @note id = 150
  */
@@ -175,6 +277,57 @@ Monster * getMonsterType(uint8_t id)
 			break;
 		case 118:
 			a = &GhostSoldier;
+			break;
+		case 119:
+			a = &Soldier;
+			break;
+		case 120:
+			a = &SlimeMan;
+			break;
+		case 121:
+			a = &BlueGuard;
+			break;
+		case 122:
+			a = &Swordsman;
+			break;
+		case 123:
+			a = &MagicDragon;
+			break;
+		case 124:
+			a = &RedKnight;
+			break;
+		case 125:
+			a = &YellowKnight;
+			break;
+		case 126:
+			a = &BrownWizard;
+			break;
+		case 127:
+			a = &RedWizard;
+			break;
+		case 128:
+			a = &SlimeLord;
+			break;
+		case 129:
+			a = &RedBat;
+			break;
+		case 130:
+			a = &DarkKnight;
+			break;
+		case 131:
+			a = &WhiteKing;
+			break;
+		case 132:
+			a = &RedGuard;
+			break;
+		case 133:
+			a = &BlackKing;
+			break;
+		case 134:
+			a = &SealedBlackKing;
+			break;
+		case 135:
+			a = &RedKing;
 			break;
 		default:
 			a = &ErrMaster;

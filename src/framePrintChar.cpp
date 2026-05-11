@@ -11,7 +11,9 @@ void framePrintChar(uint8_t ch)
 		printf("·");
 		break;
 	case 2:
-		printf("■");
+		SetConsoleColor(7 * 16 | 7);
+		printf("  ");
+		SetColor(WHITE);
 		break;
 	case 3:
 		colorPrint(YELLOW, (char *)"〓");
@@ -44,7 +46,9 @@ void framePrintChar(uint8_t ch)
 		printf("▽");
 		break;
 	case 11:
-		printf("■");
+		SetConsoleColor(7 * 16 | 7);
+		printf("  ");
+		SetColor(WHITE);
 		break;
 	// 道具
 	case 51:

@@ -114,6 +114,9 @@ void framePrintChar(uint8_t ch)
 	case 67:
 		colorPrint(RED, (char *)"盾");
 		break;
+	case 68:
+		colorPrint(YELLOW, (char *)"杖");
+		break;
 	// 这一区域是怪物
 	case 101:
 		clearRightHalf();

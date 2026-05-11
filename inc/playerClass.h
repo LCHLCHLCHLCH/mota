@@ -34,6 +34,9 @@ public:
 
 	uint32_t hurt = 0;
 
+	bool     hasTeleporter = false;
+	uint8_t  maxFloorVisited = 1;
+
 	EventManager* events = nullptr;
 
 	void init();
@@ -46,6 +49,13 @@ public:
 	void reactToMonster(uint8_t floor_going, uint8_t x_going, uint8_t y_going);
 
 	void freezeLava();
+
+private:
+	// 在目标楼层找到指定楼梯(9=上,10=下)，未找到则设为(1,1)
+	void findStair(uint8_t target_floor, uint8_t stair_id,
+	               uint8_t& out_x, uint8_t& out_y);
+	// 传送至目标楼层
+	void teleportTo(uint8_t target_floor, uint8_t stair_id);
 };
 
 void upStair(uint8_t *Floor, uint8_t *X, uint8_t *Y);

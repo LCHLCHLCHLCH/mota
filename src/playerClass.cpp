@@ -154,6 +154,8 @@ void Player::reactToObject(uint8_t floor_going, uint8_t x_going, uint8_t y_going
 		this->x = x_going;
 		this->y = y_going;
 		upStair(&(this->floor), &(this->x), &(this->y));
+		if (this->floor > maxFloorVisited)
+			maxFloorVisited = this->floor;
 		break;
 	case 10: // 下行楼梯
 		this->x = x_going;
@@ -279,6 +281,12 @@ void Player::reactToProp(uint8_t floor_going, uint8_t x_going, uint8_t y_going)
 		map_set(floor_going, x_going, y_going, 1);
 		this->defence = this->defence + 100;
 		break;
+	case 68: // 楼层传送器
+		this->x = x_going;
+		this->y = y_going;
+		map_set(floor_going, x_going, y_going, 1);
+		this->hasTeleporter = true;
+		break;
 	}
 }
 
@@ -354,18 +362,23 @@ void Player::respondToKey(KEY key)
 		freezeLava();
 		break;
 	case KEY_Q:
-		// 调试：上楼
-		this->floor++;
+		// 传送：向下到达过的楼层
+		if (hasTeleporter && this->floor > 0)
+			teleportTo(this->floor - 1, 10);
 		break;
 	case KEY_E:
+		// 传送：向上到达过的楼层
+		if (hasTeleporter && this->floor < maxFloorVisited)
+			teleportTo(this->floor + 1, 9);
+		break;
+	case KEY_1:
 		// 调试：下楼
 		this->floor--;
 		break;
-	case KEY_1:
-		this->floor--;
-		break;
 	case KEY_2:
+		// 调试：上楼
 		this->floor++;
+		break;
 		break;
 	case NOTHING:
 		// 按下了不相关的键
@@ -388,4 +401,26 @@ void upStair(uint8_t *Floor, uint8_t *X, uint8_t *Y)
 void downStair(uint8_t *Floor, uint8_t *X, uint8_t *Y)
 {
 	(*Floor)--;
+}
+
+void Player::findStair(uint8_t target_floor, uint8_t stair_id,
+                       uint8_t& out_x, uint8_t& out_y)
+{
+	for (uint8_t y = 0; y < 13; y++)
+		for (uint8_t x = 0; x < 13; x++)
+			if (map_get(target_floor, x, y) == stair_id)
+			{
+				out_x = x;
+				out_y = y;
+				return;
+			}
+	// 未找到楼梯：放到左上角空地
+	out_x = 1;
+	out_y = 1;
+}
+
+void Player::teleportTo(uint8_t target_floor, uint8_t stair_id)
+{
+	this->floor = target_floor;
+	findStair(target_floor, stair_id, this->x, this->y);
 }

@@ -14,6 +14,8 @@ KEY key;
 
 int main()
 {
+	system("cls");
+
 	// player init
 	Player player;
 	player.init();

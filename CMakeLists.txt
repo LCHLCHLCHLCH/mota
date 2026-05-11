@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.28.1)
 project(MagicalTower)
 
 aux_source_directory(./src SRC_LIST)
+aux_source_directory(./src/event SRC_LIST)
 
 include_directories(./inc)
 link_directories(./lib)

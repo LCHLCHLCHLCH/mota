@@ -242,6 +242,8 @@ void EventManager::executeAction(const EventAction& act, Player& player, uint8_t
 			for (uint8_t x = 0; x < 13; x++)
 				if (map_get(ev_floor, x, y) == act.param)
 					map_set(ev_floor, x, y, act.param2);
+		if (act.param == 8 && act.param2 == 1)
+			term_set_message("守卫门已打开");
 		break;
 
 	default:

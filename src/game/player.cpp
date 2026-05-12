@@ -2,6 +2,7 @@
 #include "game/player.h"
 #include "game/monster.h"
 #include "event/event_manager.h"
+#include <render/cursor.h>
 
 /**
  * @brief 初始化函数
@@ -109,11 +110,17 @@ void Player::reactToMonster(uint8_t floor_going, uint8_t x_going, uint8_t y_goin
 		this->health = this->health - this->hurt;
 		// 加钱
 		this->money += m->money;
-			// 通知事件系统
-						if (this->events != nullptr) {
-					this->events->checkClear(floor_going);
-					this->events->checkGuardKill(floor_going, x_going, y_going, *this);
-				}
+		// 消息
+		{
+			char _m[32];
+			snprintf(_m, sizeof(_m), "获得%d金币", (int)m->money);
+			term_set_message(_m);
+		}
+		// 通知事件系统
+		if (this->events != nullptr) {
+			this->events->checkClear(floor_going);
+			this->events->checkGuardKill(floor_going, x_going, y_going, *this);
+		}
 	}
 	// 如果打不过的话,就什么都不干
 }
@@ -136,6 +143,7 @@ void Player::reactToObject(uint8_t floor_going, uint8_t x_going, uint8_t y_going
 		{
 			map_set(floor_going, x_going, y_going, 1);
 			yellowKey--;
+			term_set_message("使用黄钥匙打开了门。");
 		}
 		break;
 	case 4: // 蓝门
@@ -143,6 +151,7 @@ void Player::reactToObject(uint8_t floor_going, uint8_t x_going, uint8_t y_going
 		{
 			map_set(floor_going, x_going, y_going, 1);
 			blueKey--;
+			term_set_message("使用蓝钥匙打开了门。");
 		}
 		break;
 	case 5: // 红门
@@ -150,6 +159,7 @@ void Player::reactToObject(uint8_t floor_going, uint8_t x_going, uint8_t y_going
 		{
 			map_set(floor_going, x_going, y_going, 1);
 			redKey--;
+			term_set_message("使用红钥匙打开了门。");
 		}
 		break;
 	case 6: // 岩浆块
@@ -192,108 +202,146 @@ void Player::reactToProp(uint8_t floor_going, uint8_t x_going, uint8_t y_going)
 		this->y = y_going;
 		map_set(floor_going, x_going, y_going, 1);
 		this->yellowKey++;
+		term_set_message("获得黄钥匙");
 		break;
 	case 52: // 蓝钥匙
 		this->x = x_going;
 		this->y = y_going;
 		map_set(floor_going, x_going, y_going, 1);
 		this->blueKey++;
+		term_set_message("获得蓝钥匙");
 		break;
 	case 53: // 红钥匙
 		this->x = x_going;
 		this->y = y_going;
 		map_set(floor_going, x_going, y_going, 1);
 		this->redKey++;
+		term_set_message("获得红钥匙");
 		break;
 	case 54: // 红血瓶
 		this->x = x_going;
 		this->y = y_going;
 		map_set(floor_going, x_going, y_going, 1);
 		this->health = this->health + get_Red_Health_Potion_Value(this->floor);
+		{
+			char _m[32];
+			snprintf(_m, sizeof(_m), "获得红血瓶，生命增加%d",
+				get_Red_Health_Potion_Value(this->floor));
+			term_set_message(_m);
+		}
 		break;
 	case 55: // 蓝血瓶
 		this->x = x_going;
 		this->y = y_going;
 		map_set(floor_going, x_going, y_going, 1);
 		this->health = this->health + get_Blue_Health_Potion_Value(this->floor);
+		{
+			char _m[32];
+			snprintf(_m, sizeof(_m), "获得蓝血瓶，生命增加%d",
+				get_Blue_Health_Potion_Value(this->floor));
+			term_set_message(_m);
+		}
 		break;
 	case 56: // 红宝石
 		this->x = x_going;
 		this->y = y_going;
 		map_set(floor_going, x_going, y_going, 1);
 		this->attack = this->attack + get_Gem_Stone_Value(this->floor);
+		{
+			char _m[32];
+			snprintf(_m, sizeof(_m), "获得红宝石，攻击增加%d",
+				get_Gem_Stone_Value(this->floor));
+			term_set_message(_m);
+		}
 		break;
 	case 57: // 蓝宝石
 		this->x = x_going;
 		this->y = y_going;
 		map_set(floor_going, x_going, y_going, 1);
 		this->defence = this->defence + get_Gem_Stone_Value(this->floor);
+		{
+			char _m[32];
+			snprintf(_m, sizeof(_m), "获得蓝宝石，防御增加%d",
+				get_Gem_Stone_Value(this->floor));
+			term_set_message(_m);
+		}
 		break;
 	case 58: // 铁剑
 		this->x = x_going;
 		this->y = y_going;
 		map_set(floor_going, x_going, y_going, 1);
 		this->attack = this->attack + 10;
+		term_set_message("获得铁剑，攻击增加10");
 		break;
 	case 59: // 铁盾
 		this->x = x_going;
 		this->y = y_going;
 		map_set(floor_going, x_going, y_going, 1);
 		this->defence = this->defence + 10;
+		term_set_message("获得铁盾，防御增加10");
 		break;
 	case 60: // 银剑
 		this->x = x_going;
 		this->y = y_going;
 		map_set(floor_going, x_going, y_going, 1);
 		this->attack = this->attack + 20;
+		term_set_message("获得银剑，攻击增加20");
 		break;
 	case 61: // 银盾
 		this->x = x_going;
 		this->y = y_going;
 		map_set(floor_going, x_going, y_going, 1);
 		this->defence = this->defence + 20;
+		term_set_message("获得银盾，防御增加20");
 		break;
 	case 62: // 骑士剑
 		this->x = x_going;
 		this->y = y_going;
 		map_set(floor_going, x_going, y_going, 1);
 		this->attack = this->attack + 40;
+		term_set_message("获得骑士剑，攻击增加40");
 		break;
 	case 63: // 骑士盾
 		this->x = x_going;
 		this->y = y_going;
 		map_set(floor_going, x_going, y_going, 1);
 		this->defence = this->defence + 40;
+		term_set_message("获得骑士盾，防御增加40");
 		break;
 	case 64: // 圣剑
 		this->x = x_going;
 		this->y = y_going;
 		map_set(floor_going, x_going, y_going, 1);
 		this->attack = this->attack + 50;
+		term_set_message("获得圣剑，攻击增加50");
 		break;
 	case 65: // 圣盾
 		this->x = x_going;
 		this->y = y_going;
 		map_set(floor_going, x_going, y_going, 1);
 		this->defence = this->defence + 50;
+		term_set_message("获得圣盾，防御增加50");
 		break;
 	case 66: // 神圣剑
 		this->x = x_going;
 		this->y = y_going;
 		map_set(floor_going, x_going, y_going, 1);
 		this->attack = this->attack + 100;
+		term_set_message("获得神圣剑，攻击增加100");
 		break;
 	case 67: // 神圣盾
 		this->x = x_going;
 		this->y = y_going;
 		map_set(floor_going, x_going, y_going, 1);
 		this->defence = this->defence + 100;
+		term_set_message("获得神圣盾，防御增加100");
 		break;
 	case 68: // 楼层传送器
 		this->x = x_going;
 		this->y = y_going;
 		map_set(floor_going, x_going, y_going, 1);
 		this->hasTeleporter = true;
+		term_set_message("获得楼层传送器");
 		break;
 	}
 }
@@ -343,24 +391,28 @@ void Player::respondToKey(KEY key)
 	{
 	case UP:
 		// y--;
+		term_clear_message();
 		X_going = this->x;
 		Y_going = this->y - 1;
 		respondToMap(floor, X_going, Y_going);
 		break;
 	case DOWN:
 		// y++;
+		term_clear_message();
 		X_going = this->x;
 		Y_going = this->y + 1;
 		respondToMap(floor, X_going, Y_going);
 		break;
 	case LEFT:
 		// x--;
+		term_clear_message();
 		X_going = this->x - 1;
 		Y_going = this->y;
 		respondToMap(floor, X_going, Y_going);
 		break;
 	case RIGHT:
 		// x++;
+		term_clear_message();
 		X_going = this->x + 1;
 		Y_going = this->y;
 		respondToMap(floor, X_going, Y_going);

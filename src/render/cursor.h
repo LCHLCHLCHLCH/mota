@@ -6,6 +6,8 @@
 #else
 // ncurses 版本
 #include <render/ncursesw/curses.h>
+inline void term_set_message(const char*) {}
+inline void term_clear_message() {}
 #endif
 
 enum COLOR {

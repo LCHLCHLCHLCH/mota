@@ -38,6 +38,9 @@ static int g_cursor_y = 0;
 // 退出标志
 static bool g_quit = false;
 
+// 底部消息
+static char g_message[128] = "";
+
 // Cell 缓冲
 struct Cell {
 	wchar_t ch;
@@ -312,14 +315,35 @@ void term_present() {
 	}
 	g_deferred_count = 0;
 
-	// 4. 确保 GDI 写入完成
+	// 4. 底部消息
+	if (g_message[0]) {
+		int msg_y = (g_rows - 1) * g_cell_h;
+		RECT rect = { 0, msg_y, g_win_w, msg_y + g_cell_h };
+		HBRUSH brush = CreateSolidBrush(RGB(0, 0, 0));
+		FillRect(g_mem_dc, &rect, brush);
+		DeleteObject(brush);
+
+		int wlen = MultiByteToWideChar(936, 0, g_message, -1, NULL, 0);
+		if (wlen > 0) {
+			wchar_t* wbuf = new wchar_t[wlen];
+			MultiByteToWideChar(936, 0, g_message, -1, wbuf, wlen);
+			SetTextColor(g_mem_dc, RGB(255, 255, 255));
+			SetBkMode(g_mem_dc, TRANSPARENT);
+			SelectObject(g_mem_dc, g_font);
+			DrawTextW(g_mem_dc, wbuf, wlen - 1, &rect,
+				DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+			delete[] wbuf;
+		}
+	}
+
+	// 5. 确保 GDI 写入完成
 	GdiFlush();
 
-	// 5. 修复 alpha 通道
+	// 6. 修复 alpha 通道
 	for (int i = 0; i < total_pixels; i++)
 		g_dib_bits[i * 4 + 3] = 255;
 
-	// 6. 上传并呈现
+	// 7. 上传并呈现
 	SDL_UpdateTexture(g_texture, NULL, g_dib_bits, g_row_bytes);
 	SDL_RenderTexture(g_renderer, g_texture, NULL, NULL);
 	SDL_RenderPresent(g_renderer);
@@ -370,6 +394,15 @@ void drainInput() {}
 
 bool term_quit_requested() {
 	return g_quit;
+}
+
+void term_set_message(const char* msg) {
+	strncpy(g_message, msg, 127);
+	g_message[127] = 0;
+}
+
+void term_clear_message() {
+	g_message[0] = 0;
 }
 
 void SetConsoleColor(int attr) {

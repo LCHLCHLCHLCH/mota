@@ -7,6 +7,7 @@
 #include "event/dialog.h"
 
 class EventManager;
+class Backpack;
 
 enum PREDICTION
 {
@@ -35,10 +36,10 @@ public:
 	uint32_t hurt = 0;
 
 	bool     hasTeleporter = false;
-	bool     hasIceMagic   = false;
 	uint8_t  maxFloorVisited = 1;
 
 	EventManager* events = nullptr;
+	Backpack*     backpack = nullptr;
 
 	void init();
 	PREDICTION PredictAttack(Monster monster);
@@ -50,13 +51,10 @@ public:
 	void reactToMonster(uint8_t floor_going, uint8_t x_going, uint8_t y_going);
 
 	void freezeLava();
-		void freezeAllLava();
 
 private:
-	// 在目标楼层找到指定楼梯(9=上,10=下)，未找到则设为(1,1)
 	void findStair(uint8_t target_floor, uint8_t stair_id,
 	               uint8_t& out_x, uint8_t& out_y);
-	// 传送至目标楼层
 	void teleportTo(uint8_t target_floor, uint8_t stair_id);
 };
 

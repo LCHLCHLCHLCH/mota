@@ -3,6 +3,7 @@
 #include "game/monster.h"
 #include "event/event_manager.h"
 #include <render/cursor.h>
+#include "ui/backpack.h"
 
 /**
  * @brief 初始化函数
@@ -356,8 +357,13 @@ void Player::reactToProp(uint8_t floor_going, uint8_t x_going, uint8_t y_going)
 		this->x = x_going;
 		this->y = y_going;
 		map_set(floor_going, x_going, y_going, 1);
-		this->hasIceMagic = true;
-		term_set_message("获得冰霜魔法！按V使用，可消除整层岩浆");
+		if (this->backpack) {
+			static Item iceItem;
+			static char iceName[] = "冰霜魔法";
+			iceItem.name = iceName;
+			this->backpack->addItem(&iceItem);
+		}
+		term_set_message("获得冰霜魔法！进入背包按Z使用");
 		break;
 	}
 }
@@ -389,26 +395,6 @@ void Player::freezeLava()
 	target_y = this->y - 1;
 	if (map_get(this->floor, target_x, target_y) == 6)
 		map_set(this->floor, target_x, target_y, 1);
-}
-
-/**
- * @brief 冰霜魔法：消除当前楼层所有岩浆
- */
-void Player::freezeAllLava()
-{
-	int count = 0;
-	for (uint8_t y = 0; y < 13; y++)
-		for (uint8_t x = 0; x < 13; x++)
-			if (map_get(this->floor, x, y) == 6)
-			{
-				map_set(this->floor, x, y, 1);
-				count++;
-			}
-	{
-		char _m[32];
-		snprintf(_m, sizeof(_m), "冰霜魔法消除了%d块岩浆", count);
-		term_set_message(_m);
-	}
 }
 
 /**
@@ -454,13 +440,8 @@ void Player::respondToKey(KEY key)
 		respondToMap(floor, X_going, Y_going);
 		break;
 	case KEY_V:
-		if (hasIceMagic)
-			freezeAllLava();
-		else
-			if (hasIceMagic)
-			freezeAllLava();
-		else
-			freezeLava();
+		// 冰冻
+		freezeLava();
 		break;
 	case KEY_Q:
 		// 传送：向下到达过的楼层

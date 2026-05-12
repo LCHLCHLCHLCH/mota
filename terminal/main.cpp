@@ -11,6 +11,7 @@
 #include "event/dialog.h"
 #include "ui/backpack.h"
 #include "event/event_manager.h"
+#include <cstring>
 
 int main(int argc, char** argv) {
 	(void)argc; (void)argv;
@@ -29,6 +30,7 @@ int main(int argc, char** argv) {
 	EventManager events;
 	events.init();
 	player.events = &events;
+	player.backpack = &backpack;
 
 	SetColor(WHITE);
 
@@ -44,10 +46,14 @@ int main(int argc, char** argv) {
 		KEY key = getKey();
 		if (term_quit_requested()) break;
 
-		if (key == KEY_X)
-			backpack.selectItem();
-		else
+		if (key == KEY_X) {
+			Item* chosen = backpack.selectItem();
+			if (chosen && strcmp(chosen->name, "冰霜魔法") == 0) {
+				player.freezeLava();
+			}
+		} else {
 			player.respondToKey(key);
+		}
 	}
 
 	console_cmd_shutdown();

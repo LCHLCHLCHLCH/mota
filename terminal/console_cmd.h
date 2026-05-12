@@ -2,8 +2,11 @@
 
 class Player;
 
-// 启动时显示欢迎信息
+// 启动欢迎信息和控制台输入线程
 void console_welcome();
 
-// 非阻塞处理控制台输入（每帧调用）
+// 关闭控制台线程
+void console_cmd_shutdown();
+
+// 主线程轮询（每帧调用，处理已排队的命令）
 void console_poll(Player& player);

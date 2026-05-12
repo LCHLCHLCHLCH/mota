@@ -2,22 +2,85 @@
 #include "game/player.h"
 #include "game/map.h"
 #include <windows.h>
-#include <conio.h>
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
+#include <process.h>
 
-static char g_input_buf[256];
-static int  g_input_len = 0;
+// ============================================================
+// 线程安全的命令队列
+// ============================================================
+static CRITICAL_SECTION g_cs;
+static char  g_cmd_queue[8][256];
+static int   g_cmd_head = 0;
+static int   g_cmd_tail = 0;
+static bool  g_cmd_thread_running = false;
+
+static void cmd_push(const char* cmd) {
+	EnterCriticalSection(&g_cs);
+	int next = (g_cmd_tail + 1) % 8;
+	if (next != g_cmd_head) {
+		strncpy(g_cmd_queue[g_cmd_tail], cmd, 255);
+		g_cmd_queue[g_cmd_tail][255] = 0;
+		g_cmd_tail = next;
+	}
+	LeaveCriticalSection(&g_cs);
+}
+
+static bool cmd_pop(char* out) {
+	EnterCriticalSection(&g_cs);
+	if (g_cmd_head == g_cmd_tail) {
+		LeaveCriticalSection(&g_cs);
+		return false;
+	}
+	strcpy(out, g_cmd_queue[g_cmd_head]);
+	g_cmd_head = (g_cmd_head + 1) % 8;
+	LeaveCriticalSection(&g_cs);
+	return true;
+}
+
+// ============================================================
+// 后台输入线程
+// ============================================================
+static unsigned __stdcall console_thread(void* param) {
+	(void)param;
+	char buf[256];
+	printf("> ");
+	fflush(stdout);
+	while (g_cmd_thread_running) {
+		if (fgets(buf, sizeof(buf), stdin)) {
+			// 去掉行尾换行
+			size_t len = strlen(buf);
+			while (len > 0 && (buf[len-1] == '\n' || buf[len-1] == '\r'))
+				buf[--len] = 0;
+			if (len > 0) {
+				cmd_push(buf);
+			}
+			if (g_cmd_thread_running) {
+				printf("> ");
+				fflush(stdout);
+			}
+		} else {
+			// stdin closed or error
+			Sleep(100);
+		}
+	}
+	return 0;
+}
 
 // ============================================================
 // 欢迎信息
 // ============================================================
 void console_welcome() {
+	InitializeCriticalSection(&g_cs);
+
 	printf("========================================\n");
 	printf("  魔塔 SDL3 - 调试控制台\n");
 	printf("  输入 help 查看可用命令\n");
 	printf("========================================\n\n");
+
+	g_cmd_thread_running = true;
+	_beginthreadex(NULL, 0, console_thread, NULL, 0, NULL);
 }
 
 // ============================================================
@@ -26,21 +89,22 @@ void console_welcome() {
 static void print_help() {
 	printf("\n");
 	printf("==== 可用命令 ====\n");
-	printf("  help                     显示此帮助\n");
-	printf("  set health   <value>     设置生命值\n");
-	printf("  set attack   <value>     设置攻击力\n");
-	printf("  set defence  <value>     设置防御力\n");
-	printf("  set money    <value>     设置金币\n");
-	printf("  set yellow   <value>     设置黄钥匙数量\n");
-	printf("  set blue     <value>     设置蓝钥匙数量\n");
-	printf("  set red      <value>     设置红钥匙数量\n");
-	printf("  set floor    <value>     设置当前楼层\n");
-	printf("  set x        <value>     设置玩家 X 坐标\n");
-	printf("  set y        <value>     设置玩家 Y 坐标\n");
-	printf("  give equip   <id>        给予装备 (58-67)\n");
-	printf("  give item    <id>        给予道具 (51-68)\n");
-	printf("  tpfloor      <floor>     传送到指定楼层\n");
-	printf("  killall                 清除当前楼层所有怪物\n");
+	printf("  help / h / ?             显示此帮助\n");
+	printf("  info / status            显示玩家状态\n");
+	printf("  set health <value>       设置生命值\n");
+	printf("  set attack <value>       设置攻击力\n");
+	printf("  set defence <value>      设置防御力\n");
+	printf("  set money  <value>       设置金币\n");
+	printf("  set yellow <value>       设置黄钥匙\n");
+	printf("  set blue   <value>       设置蓝钥匙\n");
+	printf("  set red    <value>       设置红钥匙\n");
+	printf("  set floor  <value>       设置当前楼层\n");
+	printf("  set x      <value>       设置X坐标\n");
+	printf("  set y      <value>       设置Y坐标\n");
+	printf("  give equip <id>          给予装备 (58-67)\n");
+	printf("  give item  <id>          给予道具 (51-68)\n");
+	printf("  tpfloor    <floor>       传送到指定楼层\n");
+	printf("  killall                  清除当前楼层所有怪物\n");
 	printf("\n");
 }
 
@@ -98,8 +162,6 @@ static void set_attr(Player& player, const char* attr, int value) {
 }
 
 static void give_item(Player& player, int id) {
-	printf("给予道具 ID %d\n", id);
-	// 直接修改属性
 	switch (id) {
 		case 51: player.yellowKey++; printf("获得黄钥匙\n"); break;
 		case 52: player.blueKey++;   printf("获得蓝钥匙\n"); break;
@@ -115,12 +177,11 @@ static void give_item(Player& player, int id) {
 		case 66: player.attack += 100;  printf("攻击+100\n"); break;
 		case 67: player.defence += 100; printf("防御+100\n"); break;
 		case 68: player.hasTeleporter = true; printf("获得楼层传送器\n"); break;
-		default: printf("未知道具 ID\n"); break;
+		default: printf("未知道具 ID (51-68)\n"); break;
 	}
 }
 
 static void process_command(const char* cmd, Player& player) {
-	// 跳过前导空白
 	while (*cmd == ' ' || *cmd == '\t') cmd++;
 	if (*cmd == 0) return;
 
@@ -131,18 +192,16 @@ static void process_command(const char* cmd, Player& player) {
 		print_help();
 	}
 	else if (strcmp(word1, "set") == 0) {
-		if (word2[0] == 0) {
+		if (word2[0] == 0)
 			printf("用法: set <属性> <值>\n");
-		} else {
+		else
 			set_attr(player, word2, atoi(word3));
-		}
 	}
 	else if (strcmp(word1, "give") == 0) {
-		if (strcmp(word2, "equip") == 0 || strcmp(word2, "item") == 0) {
+		if (strcmp(word2, "equip") == 0 || strcmp(word2, "item") == 0)
 			give_item(player, atoi(word3));
-		} else {
+		else
 			printf("用法: give equip <id>  或  give item <id>\n");
-		}
 	}
 	else if (strcmp(word1, "tpfloor") == 0 || strcmp(word1, "tp") == 0) {
 		int f = atoi(word2);
@@ -184,32 +243,19 @@ static void process_command(const char* cmd, Player& player) {
 }
 
 // ============================================================
-// 非阻塞轮询
+// 主线程轮询（从队列取命令执行）
 // ============================================================
+void console_cmd_shutdown() {
+	g_cmd_thread_running = false;
+	// 发送一个空命令来唤醒 fgets 阻塞
+	cmd_push("");
+	DeleteCriticalSection(&g_cs);
+}
+
 void console_poll(Player& player) {
-	while (_kbhit()) {
-		char ch = (char)_getch();
-		if (ch == '\r' || ch == '\n') {
-			if (g_input_len > 0) {
-				g_input_buf[g_input_len] = 0;
-				printf("\n");
-				process_command(g_input_buf, player);
-				g_input_len = 0;
-				printf("\n> ");
-				fflush(stdout);
-			}
-		}
-		else if (ch == '\b') {
-			if (g_input_len > 0) {
-				g_input_len--;
-				printf("\b \b");
-				fflush(stdout);
-			}
-		}
-		else if (ch >= ' ' && g_input_len < 255) {
-			g_input_buf[g_input_len++] = ch;
-			putchar(ch);
-			fflush(stdout);
-		}
+	char cmd[256];
+	while (cmd_pop(cmd)) {
+		if (cmd[0] == 0) continue; // 空命令（来自 shutdown 唤醒）
+		process_command(cmd, player);
 	}
 }

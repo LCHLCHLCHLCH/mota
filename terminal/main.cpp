@@ -11,7 +11,6 @@
 #include "event/dialog.h"
 #include "ui/backpack.h"
 #include "event/event_manager.h"
-#include <cstdio>
 
 int main(int argc, char** argv) {
 	(void)argc; (void)argv;
@@ -33,9 +32,6 @@ int main(int argc, char** argv) {
 
 	SetColor(WHITE);
 
-	printf("> ");
-	fflush(stdout);
-
 	while (!term_quit_requested()) {
 		touchwin_term();
 		display.generateFrame(player);
@@ -54,6 +50,7 @@ int main(int argc, char** argv) {
 			player.respondToKey(key);
 	}
 
+	console_cmd_shutdown();
 	term_shutdown();
 	return 0;
 }

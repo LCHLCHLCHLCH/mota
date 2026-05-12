@@ -45,8 +45,6 @@ static bool cmd_pop(char* out) {
 static unsigned __stdcall console_thread(void* param) {
 	(void)param;
 	char buf[256];
-	printf("> ");
-	fflush(stdout);
 	while (g_cmd_thread_running) {
 		if (fgets(buf, sizeof(buf), stdin)) {
 			// 去掉行尾换行
@@ -81,6 +79,8 @@ void console_welcome() {
 
 	g_cmd_thread_running = true;
 	_beginthreadex(NULL, 0, console_thread, NULL, 0, NULL);
+	printf("> ");
+	fflush(stdout);
 }
 
 // ============================================================
@@ -255,7 +255,9 @@ void console_cmd_shutdown() {
 void console_poll(Player& player) {
 	char cmd[256];
 	while (cmd_pop(cmd)) {
-		if (cmd[0] == 0) continue; // 空命令（来自 shutdown 唤醒）
+		if (cmd[0] == 0) continue;
 		process_command(cmd, player);
+		printf("> ");
+		fflush(stdout);
 	}
 }

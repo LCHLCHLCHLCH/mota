@@ -1,7 +1,5 @@
 // SDL3 魔塔终端版本
 #include "sdl_terminal.h"
-
-// 游戏逻辑头文件（stubs 目录会提供不依赖 ncurses 的 Cursor.h）
 #include "game/player.h"
 #include "render/display.h"
 #include "render/key.h"
@@ -16,7 +14,7 @@
 int main(int argc, char** argv) {
 	(void)argc; (void)argv;
 
-	if (!term_init("魔塔 - SDL3", 40, 16, 16, 24))
+	if (!term_init("魔塔 - SDL3", 28, 22, 22, 22))
 		return 1;
 
 	Player player;

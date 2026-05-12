@@ -22,11 +22,19 @@ void framePrintChar(uint8_t ch)
 	{
 	// 实体的部分
 	case 1:
+#ifdef SDL3_BUILD
+		addstr_gbk(" ");
+#else
 		addstr_gbk("  ");
+#endif
 		break;
 	case 2:
 		SetConsoleColor(7 * 16 | 7);
+#ifdef SDL3_BUILD
+		addstr_gbk(" ");
+#else
 		addstr_gbk("  ");
+#endif
 		SetColor(WHITE);
 		break;
 	case 3:
@@ -40,7 +48,11 @@ void framePrintChar(uint8_t ch)
 		break;
 	case 6:
 		SetConsoleColor(64 | 7);
+#ifdef SDL3_BUILD
+		addstr_gbk(" ");
+#else
 		addstr_gbk("  ");
+#endif
 		SetColor(WHITE);
 		break;
 	case 7:
@@ -60,7 +72,11 @@ void framePrintChar(uint8_t ch)
 		break;
 	case 11:
 		SetConsoleColor(7 * 16 | 7);
+#ifdef SDL3_BUILD
+		addstr_gbk(" ");
+#else
 		addstr_gbk("  ");
+#endif
 		SetColor(WHITE);
 		break;
 	// 道具

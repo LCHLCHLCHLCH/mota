@@ -453,7 +453,7 @@ void addch(char ch) {
 int getch_term() {
 	for (;;) {
 		SDL_Event ev;
-		if (!SDL_WaitEvent(&ev)) continue;
+		if (!SDL_WaitEventTimeout(&ev, 100)) { return -1; }
 
 		switch (ev.type) {
 		case SDL_EVENT_QUIT:

@@ -352,6 +352,13 @@ void Player::reactToProp(uint8_t floor_going, uint8_t x_going, uint8_t y_going)
 		this->hasTeleporter = true;
 		term_set_message("获得楼层传送器");
 		break;
+	case 69: // 冰霜魔法
+		this->x = x_going;
+		this->y = y_going;
+		map_set(floor_going, x_going, y_going, 1);
+		this->hasIceMagic = true;
+		term_set_message("获得冰霜魔法！按V使用，可消除整层岩浆");
+		break;
 	}
 }
 
@@ -382,6 +389,26 @@ void Player::freezeLava()
 	target_y = this->y - 1;
 	if (map_get(this->floor, target_x, target_y) == 6)
 		map_set(this->floor, target_x, target_y, 1);
+}
+
+/**
+ * @brief 冰霜魔法：消除当前楼层所有岩浆
+ */
+void Player::freezeAllLava()
+{
+	int count = 0;
+	for (uint8_t y = 0; y < 13; y++)
+		for (uint8_t x = 0; x < 13; x++)
+			if (map_get(this->floor, x, y) == 6)
+			{
+				map_set(this->floor, x, y, 1);
+				count++;
+			}
+	{
+		char _m[32];
+		snprintf(_m, sizeof(_m), "冰霜魔法消除了%d块岩浆", count);
+		term_set_message(_m);
+	}
 }
 
 /**
@@ -427,8 +454,13 @@ void Player::respondToKey(KEY key)
 		respondToMap(floor, X_going, Y_going);
 		break;
 	case KEY_V:
-		// 冰冻
-		freezeLava();
+		if (hasIceMagic)
+			freezeAllLava();
+		else
+			if (hasIceMagic)
+			freezeAllLava();
+		else
+			freezeLava();
 		break;
 	case KEY_Q:
 		// 传送：向下到达过的楼层

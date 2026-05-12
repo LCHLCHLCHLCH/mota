@@ -35,6 +35,7 @@ public:
 	uint32_t hurt = 0;
 
 	bool     hasTeleporter = false;
+	bool     hasIceMagic   = false;
 	uint8_t  maxFloorVisited = 1;
 
 	EventManager* events = nullptr;
@@ -49,6 +50,7 @@ public:
 	void reactToMonster(uint8_t floor_going, uint8_t x_going, uint8_t y_going);
 
 	void freezeLava();
+		void freezeAllLava();
 
 private:
 	// 在目标楼层找到指定楼梯(9=上,10=下)，未找到则设为(1,1)

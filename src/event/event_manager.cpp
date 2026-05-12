@@ -28,24 +28,16 @@ static const EventAction ACT_4F_OLD_MAN[] = {
 	{ ActionType::END,      0, 0, nullptr },
 };
 
-static const char* TEXT_2F_PRISON =
-	"所有牢门都已打开！";
-
 static const EventAction ACT_2F_PRISON_OPEN[] = {
-	{ ActionType::REPLACE_ALL, 8, 1, nullptr },
-	{ ActionType::SAY,         0, 0, TEXT_2F_PRISON },
-	{ ActionType::SET_FLAG,    2, 0, nullptr },
-	{ ActionType::END,         0, 0, nullptr },
+		{ ActionType::REPLACE_ALL, 8, 1, nullptr },
+		{ ActionType::SET_FLAG,    2, 0, nullptr },
+		{ ActionType::END,         0, 0, nullptr },
 };
 
-static const char* TEXT_11F_WIZARD_DOOR =
-	"法师看守的门已打开！";
-
 static const EventAction ACT_11F_WIZARD_DOOR[] = {
-	{ ActionType::REPLACE_ALL, 8, 1, nullptr },
-	{ ActionType::SAY,         0, 0, TEXT_11F_WIZARD_DOOR },
-	{ ActionType::SET_FLAG,    4, 0, nullptr },
-	{ ActionType::END,         0, 0, nullptr },
+		{ ActionType::REPLACE_ALL, 8, 1, nullptr },
+		{ ActionType::SET_FLAG,    4, 0, nullptr },
+		{ ActionType::END,         0, 0, nullptr },
 };
 
 // ============================================================
@@ -63,11 +55,11 @@ void EventManager::init()
 
 	// --- ON_CLEAR ---
 	// 第2层：当该层怪物全部死亡，打开所有怪物看护的门
-	addEvent({ 2, EventTrigger::ON_CLEAR, 0, 2, 2, 3, ACT_2F_PRISON_OPEN });
+	addEvent({ 2, EventTrigger::ON_CLEAR, 0, 2, 2, 2, ACT_2F_PRISON_OPEN });
 
 	// --- ON_GUARD_KILL ---
 	// 第11层：击败左上角(1,5)和(3,5)两个红色法师后，开启它们看守的门
-	addEvent({ 11, EventTrigger::ON_GUARD_KILL, 2, 4, 4, 3,
+	addEvent({ 11, EventTrigger::ON_GUARD_KILL, 2, 4, 4, 2,
 		ACT_11F_WIZARD_DOOR, {1, 3}, {5, 5} });
 }
 

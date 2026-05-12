@@ -112,8 +112,13 @@ void Player::reactToMonster(uint8_t floor_going, uint8_t x_going, uint8_t y_goin
 		this->money += m->money;
 		// 消息
 		{
-			char _m[32];
-			snprintf(_m, sizeof(_m), "获得%d金币", (int)m->money);
+			char _m[64];
+			if (this->hurt > 0)
+				snprintf(_m, sizeof(_m), "击败%s，损失%d生命，获得%d金币",
+					getMonsterName(id), (int)this->hurt, (int)m->money);
+			else
+				snprintf(_m, sizeof(_m), "击败%s，获得%d金币",
+					getMonsterName(id), (int)m->money);
 			term_set_message(_m);
 		}
 		// 通知事件系统

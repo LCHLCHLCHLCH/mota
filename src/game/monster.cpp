@@ -336,3 +336,44 @@ Monster * getMonsterType(uint8_t id)
 	//返回获取的怪物的地址
 	return a;
 }
+
+const char* getMonsterName(uint8_t id) {
+	switch (id) {
+		case 101: return "绿史莱姆";
+		case 102: return "红史莱姆";
+		case 103: return "小蝙蝠";
+		case 104: return "初级法师";
+		case 105: return "骷髅";
+		case 106: return "骷髅士兵";
+		case 107: return "初级卫兵";
+		case 108: return "骷髅队长";
+		case 109: return "大史莱姆";
+		case 110: return "大蝙蝠";
+		case 111: return "高级法师";
+		case 112: return "兽人";
+		case 113: return "兽人武士";
+		case 114: return "石头人";
+		case 115: return "巨型章鱼";
+		case 116: return "吸血鬼";
+		case 117: return "大法师";
+		case 118: return "鬼战士";
+		case 119: return "战士";
+		case 120: return "幽灵";
+		case 121: return "中级卫兵";
+		case 122: return "双手剑士";
+		case 123: return "魔龙";
+		case 124: return "骑士";
+		case 125: return "骑士队长";
+		case 126: return "初级巫师";
+		case 127: return "高级巫师";
+		case 128: return "史莱姆王";
+		case 129: return "吸血蝙蝠";
+		case 130: return "黑暗骑士";
+		case 131: return "魔法警卫";
+		case 132: return "高级卫兵";
+		case 133: return "假魔王";
+		case 134: return "假魔王(封印)";
+		case 135: return "真魔王";
+		default:  return "未知怪物";
+	}
+}

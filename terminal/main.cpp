@@ -29,7 +29,7 @@ int main(int argc, char** argv) {
 
 	SetColor(WHITE);
 
-	while (1) {
+	while (!term_quit_requested()) {
 		touchwin_term();
 		display.generateFrame(player);
 		statusBar.draw(player);
@@ -37,6 +37,7 @@ int main(int argc, char** argv) {
 		term_present();
 
 		KEY key = getKey();
+		if (term_quit_requested()) break;
 
 		if (key == KEY_X)
 			backpack.selectItem();

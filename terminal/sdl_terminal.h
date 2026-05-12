@@ -31,6 +31,7 @@ void erase_term();
 // 键盘输入（替代 ncurses getch）
 // ============================================================
 int  getch_term();
+bool term_quit_requested();
 
 // ============================================================
 // printf 风格输出（替代 ncurses printw）

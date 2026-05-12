@@ -35,6 +35,9 @@ static int g_cur_bg = 0;
 static int g_cursor_x = 0;
 static int g_cursor_y = 0;
 
+// 退出标志
+static bool g_quit = false;
+
 // Cell 缓冲
 struct Cell {
 	wchar_t ch;
@@ -51,6 +54,21 @@ struct DeferredDraw {
 };
 static DeferredDraw g_deferred[16];
 static int          g_deferred_count = 0;
+
+// ============================================================
+// GBK → UTF-8 转换（用于窗口标题等 SDL API）
+// ============================================================
+static char* gbk_to_utf8(const char* gbk) {
+	int wlen = MultiByteToWideChar(936, 0, gbk, -1, NULL, 0);
+	if (wlen <= 0) return NULL;
+	wchar_t* wbuf = new wchar_t[wlen];
+	MultiByteToWideChar(936, 0, gbk, -1, wbuf, wlen);
+	int ulen = WideCharToMultiByte(CP_UTF8, 0, wbuf, wlen, NULL, 0, NULL, NULL);
+	char* utf8 = new char[ulen];
+	WideCharToMultiByte(CP_UTF8, 0, wbuf, wlen, utf8, ulen, NULL, NULL);
+	delete[] wbuf;
+	return utf8;
+}
 
 // ============================================================
 // 调色板
@@ -193,7 +211,9 @@ bool term_init(const char* title, int cols, int rows, int cell_w, int cell_h) {
 		return false;
 	}
 
-	g_window = SDL_CreateWindow(title, g_win_w, g_win_h, 0);
+	char* title_utf8 = gbk_to_utf8(title);
+	g_window = SDL_CreateWindow(title_utf8 ? title_utf8 : title, g_win_w, g_win_h, 0);
+	delete[] title_utf8;
 	if (!g_window) {
 		fprintf(stderr, "SDL_CreateWindow failed: %s\n", SDL_GetError());
 		return false;
@@ -348,6 +368,10 @@ void hideCursor() {}
 
 void drainInput() {}
 
+bool term_quit_requested() {
+	return g_quit;
+}
+
 void SetConsoleColor(int attr) {
 	attr_to_colors(attr, g_cur_fg, g_cur_bg);
 }
@@ -400,7 +424,8 @@ int getch_term() {
 
 		switch (ev.type) {
 		case SDL_EVENT_QUIT:
-			return 'q';
+			g_quit = true;
+			return 0;
 
 		case SDL_EVENT_KEY_DOWN: {
 			int code = (int)ev.key.key;

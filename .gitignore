@@ -16,6 +16,7 @@
 *.dylib
 *.dll
 !lib/*.dll
+!terminal/sdl3/**/*.dll
 *.def
 !lib/*.def
 
@@ -29,6 +30,8 @@
 *.a
 *.lib
 !lib/*.a
+!terminal/sdl3/**/*.a
+!terminal/sdl3/**/*.lib
 
 # Executables
 *.exe

@@ -159,6 +159,9 @@ uint16_t chooseFromPage(uint8_t num, Item **list)
 		else
 			regionPrint(2, 13 + i, list[i]->name);
 	}
+#ifdef SDL3_BUILD
+	term_present();
+#endif
 	while (1)
 	{
 		key = getKey();
@@ -224,5 +227,8 @@ uint16_t chooseFromPage(uint8_t num, Item **list)
 		// 更新显示
 		regionPrint(2, 13 + lastOption, list[lastOption]->name);
 		regionEmphasize(2, 13 + chosenOption, list[chosenOption]->name);
+#ifdef SDL3_BUILD
+	term_present();
+#endif
 	}
 }

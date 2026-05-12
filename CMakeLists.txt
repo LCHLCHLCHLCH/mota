@@ -4,6 +4,9 @@ project(MagicalTower)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexec-charset=GBK")
 add_definitions(-D_XOPEN_SOURCE_EXTENDED)
 
+# MinGW 运行时 DLL 路径
+get_filename_component(MINGW_BIN "${CMAKE_CXX_COMPILER}" DIRECTORY)
+
 # 共享的游戏逻辑源文件（不含渲染层）
 set(GAME_SOURCES
 	src/game/map.cpp src/game/monster.cpp src/game/player.cpp
@@ -31,6 +34,21 @@ add_custom_command(TARGET MagicalTower POST_BUILD
 	"${CMAKE_SOURCE_DIR}/lib/ncursesw.dll"
 	"$<TARGET_FILE_DIR:MagicalTower>/ncursesw.dll"
 )
+add_custom_command(TARGET MagicalTower POST_BUILD
+	COMMAND ${CMAKE_COMMAND} -E copy_if_different
+	"${MINGW_BIN}/libstdc++-6.dll"
+	"$<TARGET_FILE_DIR:MagicalTower>/libstdc++-6.dll"
+)
+add_custom_command(TARGET MagicalTower POST_BUILD
+	COMMAND ${CMAKE_COMMAND} -E copy_if_different
+	"${MINGW_BIN}/libgcc_s_seh-1.dll"
+	"$<TARGET_FILE_DIR:MagicalTower>/libgcc_s_seh-1.dll"
+)
+add_custom_command(TARGET MagicalTower POST_BUILD
+	COMMAND ${CMAKE_COMMAND} -E copy_if_different
+	"${MINGW_BIN}/libwinpthread-1.dll"
+	"$<TARGET_FILE_DIR:MagicalTower>/libwinpthread-1.dll"
+)
 
 # ============================================================
 # 目标 2: SDL3 终端版本
@@ -55,4 +73,19 @@ add_custom_command(TARGET MotaSDL POST_BUILD
 	COMMAND ${CMAKE_COMMAND} -E copy_if_different
 	"${SDL3_ROOT}/bin/SDL3.dll"
 	"$<TARGET_FILE_DIR:MotaSDL>/SDL3.dll"
+)
+add_custom_command(TARGET MotaSDL POST_BUILD
+	COMMAND ${CMAKE_COMMAND} -E copy_if_different
+	"${MINGW_BIN}/libstdc++-6.dll"
+	"$<TARGET_FILE_DIR:MotaSDL>/libstdc++-6.dll"
+)
+add_custom_command(TARGET MotaSDL POST_BUILD
+	COMMAND ${CMAKE_COMMAND} -E copy_if_different
+	"${MINGW_BIN}/libgcc_s_seh-1.dll"
+	"$<TARGET_FILE_DIR:MotaSDL>/libgcc_s_seh-1.dll"
+)
+add_custom_command(TARGET MotaSDL POST_BUILD
+	COMMAND ${CMAKE_COMMAND} -E copy_if_different
+	"${MINGW_BIN}/libwinpthread-1.dll"
+	"$<TARGET_FILE_DIR:MotaSDL>/libwinpthread-1.dll"
 )

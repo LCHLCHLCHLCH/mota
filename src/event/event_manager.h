@@ -11,6 +11,7 @@ public:
 	void init();
 	void checkTile(uint8_t floor, uint8_t tile_id, Player& player);
 	void checkClear(uint8_t floor);
+	void checkGuardKill(uint8_t floor, uint8_t killed_x, uint8_t killed_y, Player& player);
 	void checkAltar(uint8_t floor, Player& player);
 
 	bool hasFlag(uint8_t id) const;

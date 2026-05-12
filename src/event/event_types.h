@@ -5,6 +5,7 @@
 enum class EventTrigger : uint8_t {
 	ON_TILE,       // 玩家踩上指定 tile
 	ON_CLEAR,      // 某楼层所有怪物(101-150)被击杀
+	ON_GUARD_KILL, // 指定位置的守卫怪物被击杀后触发
 };
 
 // 动作类型

@@ -64,8 +64,11 @@ void EventManager::init()
 	// --- ON_CLEAR ---
 	// 第2层：当该层怪物全部死亡，打开所有怪物看护的门
 	addEvent({ 2, EventTrigger::ON_CLEAR, 0, 2, 2, 3, ACT_2F_PRISON_OPEN });
-	// 第11层：击败左上角两个红色法师后，开启它们看守的门
-	addEvent({ 11, EventTrigger::ON_CLEAR, 0, 4, 4, 3, ACT_11F_WIZARD_DOOR });
+
+	// --- ON_GUARD_KILL ---
+	// 第11层：击败左上角(1,5)和(3,5)两个红色法师后，开启它们看守的门
+	addEvent({ 11, EventTrigger::ON_GUARD_KILL, 2, 4, 4, 3,
+		ACT_11F_WIZARD_DOOR, {1, 3}, {5, 5} });
 }
 
 void EventManager::addEvent(const Event& ev)
@@ -105,7 +108,6 @@ void EventManager::checkTile(uint8_t floor, uint8_t tile_id, Player& player)
 
 void EventManager::checkClear(uint8_t floor)
 {
-	// 先检查该层是否还有活着的怪物
 	if (countMonsters(floor) > 0) return;
 
 	for (uint8_t i = 0; i < event_count_; i++)
@@ -118,6 +120,45 @@ void EventManager::checkClear(uint8_t floor)
 		Player dummy;
 		dummy.init();
 		executeEvent(ev, dummy);
+		return;
+	}
+}
+
+void EventManager::checkGuardKill(uint8_t floor, uint8_t killed_x, uint8_t killed_y, Player& player)
+{
+	for (uint8_t i = 0; i < event_count_; i++)
+	{
+		const Event& ev = events_[i];
+		if (ev.trigger != EventTrigger::ON_GUARD_KILL) continue;
+		if (ev.floor_ != floor) continue;
+		if (ev.condition_flag != 0 && hasFlag(ev.condition_flag)) continue;
+
+		// 检查被杀死的怪物是否在守卫列表中
+		uint8_t count = ev.trigger_param;
+		bool is_guard = false;
+		for (uint8_t g = 0; g < count; g++)
+		{
+			if (ev.guard_x[g] == killed_x && ev.guard_y[g] == killed_y)
+			{
+				is_guard = true;
+				break;
+			}
+		}
+		if (!is_guard) continue;
+
+		// 检查所有守卫是否都已被清除（tile == 1）
+		bool all_cleared = true;
+		for (uint8_t g = 0; g < count; g++)
+		{
+			if (map_get(floor, ev.guard_x[g], ev.guard_y[g]) != 1)
+			{
+				all_cleared = false;
+				break;
+			}
+		}
+		if (!all_cleared) continue;
+
+		executeEvent(ev, player);
 		return;
 	}
 }
@@ -217,18 +258,17 @@ void EventManager::executeAction(const EventAction& act, Player& player, uint8_t
 }
 
 // ============================================================
-// 祭坛系统（数据来源: 51/events.js "商店"）
+// 祭坛系统
 // ============================================================
 uint16_t EventManager::getAltarCost() const
 {
-	// 20 + 10 * (times + 1) * times
 	uint16_t t = altar_times_;
 	return 20 + 10 * (t + 1) * t;
 }
 
 void EventManager::checkAltar(uint8_t floor, Player& player)
 {
-	uint8_t  ratio = (floor - 1) / 10 + 1;   // 区域 1-5
+	uint8_t  ratio = (floor - 1) / 10 + 1;
 	uint16_t cost  = getAltarCost();
 	uint16_t atk_gain = 2 * ratio;
 	uint16_t def_gain = 4 * ratio;
@@ -243,14 +283,13 @@ void EventManager::checkAltar(uint8_t floor, Player& player)
 	snprintf(choice_def, sizeof(choice_def), "防御+%d", def_gain);
 	snprintf(choice_leave, sizeof(choice_leave), "离开");
 
-	// 先显示提示
 	saySomething(text_buf);
 
 	char* list[4] = { choice_hp, choice_atk, choice_def, choice_leave };
 	uint8_t choice = chooseFromSomething(4, list);
 
 	if (choice == 3 || choice == 255)
-		return;  // 离开或取消
+		return;
 
 	if (player.money < cost)
 	{

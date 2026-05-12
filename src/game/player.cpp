@@ -127,7 +127,11 @@ void Player::reactToMonster(uint8_t floor_going, uint8_t x_going, uint8_t y_goin
 			this->events->checkGuardKill(floor_going, x_going, y_going, *this);
 		}
 	}
-	// 如果打不过的话,就什么都不干
+	else
+	{
+		term_set_message("你还不能击败它！");
+	}
+
 }
 
 /**

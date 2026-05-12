@@ -39,3 +39,7 @@
 *.app
 
 build/
+
+# IDE / editor
+.claude/
+.vscode/

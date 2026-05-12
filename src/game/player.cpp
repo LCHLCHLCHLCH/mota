@@ -455,41 +455,76 @@ void Player::respondToKey(KEY key)
 	}
 }
 /**
- * @brief 处理上楼梯事件的函数
- * @param 玩家所在楼层及其坐标的地址
+ * @brief 在目标楼层寻找指定楼梯，找到则返回 true 并设置坐标
  */
-void upStair(uint8_t *Floor, uint8_t *X, uint8_t *Y)
+static bool findStairOnFloor(uint8_t floor, uint8_t stair_id,
+                             uint8_t& out_x, uint8_t& out_y)
 {
-	(*Floor)++;
+	for (uint8_t y = 0; y < 13; y++)
+		for (uint8_t x = 0; x < 13; x++)
+			if (map_get(floor, x, y) == stair_id)
+			{
+				out_x = x;
+				out_y = y;
+				return true;
+			}
+	return false;
 }
 
 /**
- * @brief 处理下楼梯事件的函数
- * @param 玩家所在楼层及其坐标的地址
+ * @brief 处理上楼梯：前往上一层的下行楼梯处
+ * @note 第44层为隐藏楼层，43→45 直接相连
+ * @note 若上一层无下行楼梯则保持坐标不变
+ */
+void upStair(uint8_t *Floor, uint8_t *X, uint8_t *Y)
+{
+	uint8_t target = (*Floor) + 1;
+	if (target == 44) target = 45;  // 跳过隐藏楼层
+
+	uint8_t nx, ny;
+	if (findStairOnFloor(target, 10, nx, ny))
+	{
+		*X = nx;
+		*Y = ny;
+	}
+	*Floor = target;
+}
+
+/**
+ * @brief 处理下楼梯：前往下一层的上行楼梯处
+ * @note 第44层为隐藏楼层，45→43 直接相连
+ * @note 若下一层无上行楼梯则保持坐标不变
  */
 void downStair(uint8_t *Floor, uint8_t *X, uint8_t *Y)
 {
-	(*Floor)--;
+	uint8_t target = (*Floor) - 1;
+	if (target == 44) target = 43;  // 跳过隐藏楼层
+
+	uint8_t nx, ny;
+	if (findStairOnFloor(target, 9, nx, ny))
+	{
+		*X = nx;
+		*Y = ny;
+	}
+	*Floor = target;
 }
 
 void Player::findStair(uint8_t target_floor, uint8_t stair_id,
                        uint8_t& out_x, uint8_t& out_y)
 {
-	for (uint8_t y = 0; y < 13; y++)
-		for (uint8_t x = 0; x < 13; x++)
-			if (map_get(target_floor, x, y) == stair_id)
-			{
-				out_x = x;
-				out_y = y;
-				return;
-			}
-	// 未找到楼梯：放到左上角空地
-	out_x = 1;
-	out_y = 1;
+	if (!findStairOnFloor(target_floor, stair_id, out_x, out_y))
+	{
+		out_x = 1;
+		out_y = 1;
+	}
 }
 
 void Player::teleportTo(uint8_t target_floor, uint8_t stair_id)
 {
 	this->floor = target_floor;
-	findStair(target_floor, stair_id, this->x, this->y);
+	if (!findStairOnFloor(target_floor, stair_id, this->x, this->y))
+	{
+		this->x = 1;
+		this->y = 1;
+	}
 }

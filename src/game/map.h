@@ -1,20 +1,17 @@
 #pragma once
 #include <stdint.h>
 
-// 地图 tile 分类边界
-#define TILE_OBJECT_MIN    1
-#define TILE_OBJECT_MAX    50
-#define TILE_PROP_MIN      51
-#define TILE_PROP_MAX      100
-#define TILE_MONSTER_MIN   101
-#define TILE_MONSTER_MAX   150
-#define TILE_NPC_MIN       151
-#define TILE_NPC_MAX       155
+// 地图 tile 分类
+enum TileCategory : uint8_t {
+	TILE_OBJECT  = 0,  // 地形/实体 (空地, 墙, 门, 楼梯, 岩浆等)
+	TILE_PROP    = 1,  // 可拾取道具 (钥匙, 血瓶, 宝石, 装备等)
+	TILE_MONSTER = 2,  // 怪物
+	TILE_NPC     = 3,  // NPC / 祭坛
+	TILE_NONE    = 4,  // 未使用
+};
 
-#define TILE_IS_OBJECT(t)   ((t) >= TILE_OBJECT_MIN  && (t) <= TILE_OBJECT_MAX)
-#define TILE_IS_PROP(t)     ((t) >= TILE_PROP_MIN    && (t) <= TILE_PROP_MAX)
-#define TILE_IS_MONSTER(t)  ((t) >= TILE_MONSTER_MIN && (t) <= TILE_MONSTER_MAX)
-#define TILE_IS_NPC(t)      ((t) >= TILE_NPC_MIN     && (t) <= TILE_NPC_MAX)
+// 根据 tile ID 返回分类
+TileCategory tile_category(uint8_t id);
 
 uint8_t map_get(uint8_t floor, uint8_t x, uint8_t y);
 void    map_set(uint8_t floor, uint8_t x, uint8_t y, uint8_t value);

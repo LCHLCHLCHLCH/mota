@@ -71,18 +71,26 @@ void Player::respondToMap(uint8_t floor_going, uint8_t x_going, uint8_t y_going)
 {
 	uint8_t tile = map_get(floor_going, x_going, y_going);
 
-	if (TILE_IS_OBJECT(tile))
+	switch (tile_category(tile)) {
+	case TILE_OBJECT:
 		reactToObject(floor_going, x_going, y_going);
-	else if (TILE_IS_PROP(tile))
+		break;
+	case TILE_PROP:
 		reactToProp(floor_going, x_going, y_going);
-	else if (TILE_IS_MONSTER(tile))
+		break;
+	case TILE_MONSTER:
 		reactToMonster(floor_going, x_going, y_going);
-	else if (TILE_IS_NPC(tile) && this->events)
-	{
-		if (tile == 155)
-			this->events->checkAltar(floor_going, *this);
-		else
-			this->events->checkTile(floor_going, tile, *this);
+		break;
+	case TILE_NPC:
+		if (this->events) {
+			if (tile == 155)
+				this->events->checkAltar(floor_going, *this);
+			else
+				this->events->checkTile(floor_going, tile, *this);
+		}
+		break;
+	default:
+		break;
 	}
 }
 

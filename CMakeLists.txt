@@ -63,6 +63,7 @@ add_executable(MotaSDL
 	terminal/sdl_statusBar.cpp terminal/sdl_terminal.cpp
 	terminal/console_cmd.cpp
 	terminal/save_system.cpp
+	logo/sdl_logo.rc
 )
 target_include_directories(MotaSDL PRIVATE
 	src src/render terminal ${SDL3_ROOT}/include ${SDL3_ROOT}/include/SDL3

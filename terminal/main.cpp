@@ -32,6 +32,8 @@ int main(int argc, char** argv) {
 	player.events = &events;
 	player.backpack = &backpack;
 
+	map_init_default();
+
 	SetColor(WHITE);
 
 	while (!term_quit_requested()) {
@@ -41,7 +43,7 @@ int main(int argc, char** argv) {
 		hideCursor();
 		term_present();
 
-		console_poll(player);
+		console_poll(player, events);
 
 		KEY key = getKey();
 		if (term_quit_requested()) break;

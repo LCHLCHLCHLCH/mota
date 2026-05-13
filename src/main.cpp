@@ -25,6 +25,8 @@ int main()
 	events.init();
 	player.events = &events;
 
+	map_init_default();
+
 	SetColor(WHITE);
 
 	while (1)

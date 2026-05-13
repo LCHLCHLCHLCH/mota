@@ -1,6 +1,8 @@
 #include "console_cmd.h"
+#include "save_system.h"
 #include "game/player.h"
 #include "game/map.h"
+#include "event/event_manager.h"
 #include <windows.h>
 #include <cstdio>
 #include <cstring>
@@ -47,7 +49,6 @@ static unsigned __stdcall console_thread(void* param) {
 	char buf[256];
 	while (g_cmd_thread_running) {
 		if (fgets(buf, sizeof(buf), stdin)) {
-			// 去掉行尾换行
 			size_t len = strlen(buf);
 			while (len > 0 && (buf[len-1] == '\n' || buf[len-1] == '\r'))
 				buf[--len] = 0;
@@ -59,7 +60,6 @@ static unsigned __stdcall console_thread(void* param) {
 				fflush(stdout);
 			}
 		} else {
-			// stdin closed or error
 			Sleep(100);
 		}
 	}
@@ -105,6 +105,8 @@ static void print_help() {
 	printf("  give item  <id>          给予道具 (51-68)\n");
 	printf("  tpfloor    <floor>       传送到指定楼层\n");
 	printf("  killall                  清除当前楼层所有怪物\n");
+	printf("  save   <name>            保存游戏\n");
+	printf("  load   <name>            读取存档\n");
 	printf("\n");
 }
 
@@ -181,7 +183,7 @@ static void give_item(Player& player, int id) {
 	}
 }
 
-static void process_command(const char* cmd, Player& player) {
+static void process_command(const char* cmd, Player& player, EventManager& events) {
 	while (*cmd == ' ' || *cmd == '\t') cmd++;
 	if (*cmd == 0) return;
 
@@ -237,6 +239,18 @@ static void process_command(const char* cmd, Player& player) {
 		printf("传送器: %s\n", player.hasTeleporter ? "有" : "无");
 		printf("\n");
 	}
+	else if (strcmp(word1, "save") == 0) {
+		if (word2[0])
+			save_game(word2, player, events);
+		else
+			printf("用法: save <名字>\n");
+	}
+	else if (strcmp(word1, "load") == 0) {
+		if (word2[0])
+			load_game(word2, player, events);
+		else
+			printf("用法: load <名字>\n");
+	}
 	else {
 		printf("未知命令: %s (输入 help 查看帮助)\n", word1);
 	}
@@ -247,16 +261,15 @@ static void process_command(const char* cmd, Player& player) {
 // ============================================================
 void console_cmd_shutdown() {
 	g_cmd_thread_running = false;
-	// 发送一个空命令来唤醒 fgets 阻塞
 	cmd_push("");
 	DeleteCriticalSection(&g_cs);
 }
 
-void console_poll(Player& player) {
+void console_poll(Player& player, EventManager& events) {
 	char cmd[256];
 	while (cmd_pop(cmd)) {
 		if (cmd[0] == 0) continue;
-		process_command(cmd, player);
+		process_command(cmd, player, events);
 		printf("> ");
 		fflush(stdout);
 	}

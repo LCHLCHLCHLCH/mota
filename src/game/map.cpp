@@ -1,4 +1,5 @@
 #include "game/map.h"
+#include <cstring>
 
 static uint8_t map[51][13][13] = {
 	{
@@ -819,10 +820,25 @@ static uint8_t map[51][13][13] = {
 	}
 };
 
+static uint8_t map_default[51][13][13];
+static bool    map_default_ready = false;
+
+void map_init_default() {
+	if (map_default_ready) return;
+	memcpy(map_default, map, sizeof(map));
+	map_default_ready = true;
+}
+
+
+
 uint8_t map_get(uint8_t floor, uint8_t x, uint8_t y) {
 	return map[floor][y][x];
 }
 
 void map_set(uint8_t floor, uint8_t x, uint8_t y, uint8_t value) {
 	map[floor][y][x] = value;
+}
+
+uint8_t map_get_default(uint8_t floor, uint8_t x, uint8_t y) {
+	return map_default[floor][y][x];
 }

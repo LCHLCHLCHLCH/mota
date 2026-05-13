@@ -259,6 +259,41 @@ bool term_init(const char* title, int cols, int rows, int cell_w, int cell_h) {
 	ReleaseDC(NULL, screen_dc);
 
 	create_font();
+
+	// 设置窗口图标
+	{
+		HBITMAP hBmp = (HBITMAP)LoadImageW(NULL, L"logo/logo2.png",
+			IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+		if (hBmp) {
+			BITMAP bm;
+			GetObjectW(hBmp, sizeof(bm), &bm);
+			int w = bm.bmWidth, h = bm.bmHeight;
+
+			BITMAPINFOHEADER bi = {};
+			bi.biSize = sizeof(bi);
+			bi.biWidth = w;
+			bi.biHeight = -h;
+			bi.biPlanes = 1;
+			bi.biBitCount = 32;
+			bi.biCompression = BI_RGB;
+
+			int rowBytes = w * 4;
+			BYTE* px = new BYTE[h * rowBytes];
+			HDC hdc = GetDC(NULL);
+			GetDIBits(hdc, hBmp, 0, h, px, (BITMAPINFO*)&bi, DIB_RGB_COLORS);
+			ReleaseDC(NULL, hdc);
+
+			SDL_Surface* surf = SDL_CreateSurfaceFrom(w, h,
+				SDL_PIXELFORMAT_BGRA8888, px, rowBytes);
+			if (surf) {
+				SDL_SetWindowIcon(g_window, surf);
+				SDL_DestroySurface(surf);
+			}
+			delete[] px;
+			DeleteObject(hBmp);
+		}
+	}
+
 	return true;
 }
 

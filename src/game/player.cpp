@@ -69,26 +69,20 @@ PREDICTION Player::PredictAttack(Monster monster)
  */
 void Player::respondToMap(uint8_t floor_going, uint8_t x_going, uint8_t y_going)
 {
-	// 如果将要到达的格子的ID在1-50之间,就调用处理object的函数
-	if (map_get(floor_going, x_going, y_going) >= 1 && map_get(floor_going, x_going, y_going) <= 50)
+	uint8_t tile = map_get(floor_going, x_going, y_going);
+
+	if (TILE_IS_OBJECT(tile))
 		reactToObject(floor_going, x_going, y_going);
-	// 如果将要到达的格子的ID在51-100之间,就调用处理prop的函数
-	if (map_get(floor_going, x_going, y_going) >= 51 && map_get(floor_going, x_going, y_going) <= 100)
+	else if (TILE_IS_PROP(tile))
 		reactToProp(floor_going, x_going, y_going);
-	// 如果将要到达的格子的ID在101-150之间,就调用处理Monster的函数
-	if (map_get(floor_going, x_going, y_going) >= 101 && map_get(floor_going, x_going, y_going) <= 150)
+	else if (TILE_IS_MONSTER(tile))
 		reactToMonster(floor_going, x_going, y_going);
-	// NPC / 祭坛：触发事件，但不穿越
-	if (map_get(floor_going, x_going, y_going) >= 151 && map_get(floor_going, x_going, y_going) <= 155)
+	else if (TILE_IS_NPC(tile) && this->events)
 	{
-		if (this->events)
-		{
-			uint8_t id = map_get(floor_going, x_going, y_going);
-			if (id == 155)
-				this->events->checkAltar(floor_going, *this);
-			else
-				this->events->checkTile(floor_going, id, *this);
-		}
+		if (tile == 155)
+			this->events->checkAltar(floor_going, *this);
+		else
+			this->events->checkTile(floor_going, tile, *this);
 	}
 }
 

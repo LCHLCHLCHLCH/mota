@@ -74,13 +74,13 @@ bool save_game(const char* name, const Player& player, const EventManager& event
 
 	// --- 地图变更 ---
 	fprintf(f, "# map changes: floor.x.y=value\n");
-	for (int f_ = 0; f_ <= 50; f_++) {
+	for (int fl = 0; fl <= 50; fl++) {
 		for (int y = 0; y < 13; y++) {
 			for (int x = 0; x < 13; x++) {
-				uint8_t cur = map_get(f_, x, y);
-				uint8_t def = map_get_default(f_, x, y);
+				uint8_t cur = map_get(fl, x, y);
+				uint8_t def = map_get_default(fl, x, y);
 				if (cur != def) {
-					fprintf(f, "map.%d.%d.%d=%u\n", f_, x, y, cur);
+					fprintf(f, "map.%d.%d.%d=%u\n", fl, x, y, cur);
 				}
 			}
 		}
@@ -108,10 +108,10 @@ bool load_game(const char* name, Player& player, EventManager& events) {
 	}
 
 	// 先恢复所有地图为默认状态
-	for (int f_ = 0; f_ <= 50; f_++)
+	for (int fl = 0; fl <= 50; fl++)
 		for (int y = 0; y < 13; y++)
 			for (int x = 0; x < 13; x++)
-				map_set(f_, x, y, map_get_default(f_, x, y));
+				map_set(fl, x, y, map_get_default(fl, x, y));
 
 	// 重置玩家
 	player.init();
@@ -162,10 +162,10 @@ bool load_game(const char* name, Player& player, EventManager& events) {
 
 		// map.*
 		else {
-			unsigned int f_, x, y;
-			if (sscanf(line, "map.%u.%u.%u=%u", &f_, &x, &y, &val) == 4) {
-				if (f_ <= 50 && x < 13 && y < 13)
-					map_set((uint8_t)f_, (uint8_t)x, (uint8_t)y, (uint8_t)val);
+			unsigned int fl, x, y;
+			if (sscanf(line, "map.%u.%u.%u=%u", &fl, &x, &y, &val) == 4) {
+				if (fl <= 50 && x < 13 && y < 13)
+					map_set((uint8_t)fl, (uint8_t)x, (uint8_t)y, (uint8_t)val);
 			}
 		}
 	}

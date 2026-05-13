@@ -2,6 +2,7 @@
 #include "game/player.h"
 #include "game/map.h"
 #include "event/event_manager.h"
+#include "ui/backpack.h"
 #include <windows.h>
 #include <cstdio>
 #include <cstring>
@@ -10,14 +11,13 @@
 // 辅助：确保 saves/ 目录存在
 // ============================================================
 static bool ensure_save_dir(char* path_out, size_t size) {
-	// 获取 exe 所在目录
 	char exe_path[MAX_PATH];
 	GetModuleFileNameA(NULL, exe_path, MAX_PATH);
 	char* last_slash = strrchr(exe_path, '\\');
 	if (last_slash) *last_slash = 0;
 
 	snprintf(path_out, size, "%s\\saves", exe_path);
-	CreateDirectoryA(path_out, NULL);  // 如果已存在则不操作
+	CreateDirectoryA(path_out, NULL);
 	return true;
 }
 
@@ -61,7 +61,18 @@ bool save_game(const char* name, const Player& player, const EventManager& event
 	}
 	fprintf(f, "event.altar_times=%u\n", events.getAltarTimes());
 
-	// --- 地图变更（只保存与原始地图不同的格子） ---
+	// --- 背包 ---
+	if (player.backpack && !player.backpack->isEmpty) {
+		Item* it = player.backpack->headPtr;
+		int idx = 0;
+		while (it) {
+			fprintf(f, "backpack.item.%d=%s\n", idx, it->name);
+			it = it->nextItem;
+			idx++;
+		}
+	}
+
+	// --- 地图变更 ---
 	fprintf(f, "# map changes: floor.x.y=value\n");
 	for (int f_ = 0; f_ <= 50; f_++) {
 		for (int y = 0; y < 13; y++) {
@@ -106,10 +117,13 @@ bool load_game(const char* name, Player& player, EventManager& events) {
 	player.init();
 	events.init();
 
+	// 临时的背包物品名称列表（加载时重建）
+	char  bp_names[16][32];
+	int   bp_count = 0;
+
 	// 逐行解析
 	char line[256];
 	while (fgets(line, sizeof(line), f)) {
-		// 去掉换行
 		size_t len = strlen(line);
 		while (len > 0 && (line[len-1] == '\n' || line[len-1] == '\r'))
 			line[--len] = 0;
@@ -137,6 +151,15 @@ bool load_game(const char* name, Player& player, EventManager& events) {
 		else if (sscanf(line, "event.flag.%63[0-9]=%u", key, &val) == 2) events.setFlag((uint8_t)atoi(key));
 		else if (sscanf(line, "event.altar_times=%u", &val) == 1) events.setAltarTimes((uint8_t)val);
 
+		// backpack.*
+		else if (sscanf(line, "backpack.item.%d=%31[^\n]", (int*)&val, key) == 2) {
+			if (val < 16 && bp_count < 16) {
+				strncpy(bp_names[bp_count], key, 31);
+				bp_names[bp_count][31] = 0;
+				bp_count++;
+			}
+		}
+
 		// map.*
 		else {
 			unsigned int f_, x, y;
@@ -144,6 +167,24 @@ bool load_game(const char* name, Player& player, EventManager& events) {
 				if (f_ <= 50 && x < 13 && y < 13)
 					map_set((uint8_t)f_, (uint8_t)x, (uint8_t)y, (uint8_t)val);
 			}
+		}
+	}
+
+	// 重建背包
+	if (player.backpack) {
+		// 清空现有背包
+		player.backpack->isEmpty = true;
+		player.backpack->headPtr = nullptr;
+		player.backpack->tailPtr = nullptr;
+
+		for (int i = 0; i < bp_count; i++) {
+			Item* it = new Item();
+			char* name_copy = new char[strlen(bp_names[i]) + 1];
+			strcpy(name_copy, bp_names[i]);
+			it->name = name_copy;
+			it->lastItem = nullptr;
+			it->nextItem = nullptr;
+			player.backpack->addItem(it);
 		}
 	}
 

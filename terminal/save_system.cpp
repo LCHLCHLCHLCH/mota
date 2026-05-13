@@ -61,12 +61,12 @@ bool save_game(const char* name, const Player& player, const EventManager& event
 	}
 	fprintf(f, "event.altar_times=%u\n", events.getAltarTimes());
 
-	// --- 背包 ---
+	// --- 背包（存储物品 ID） ---
 	if (player.backpack && !player.backpack->isEmpty) {
 		Item* it = player.backpack->headPtr;
 		int idx = 0;
 		while (it) {
-			fprintf(f, "backpack.item.%d=%s\n", idx, it->name);
+			fprintf(f, "backpack.item.%d=%u\n", idx, it->id);
 			it = it->nextItem;
 			idx++;
 		}
@@ -117,9 +117,9 @@ bool load_game(const char* name, Player& player, EventManager& events) {
 	player.init();
 	events.init();
 
-	// 临时的背包物品名称列表（加载时重建）
-	char  bp_names[16][32];
-	int   bp_count = 0;
+	// 背包物品 ID 列表
+	uint8_t bp_ids[16];
+	int     bp_count = 0;
 
 	// 逐行解析
 	char line[256];
@@ -130,7 +130,7 @@ bool load_game(const char* name, Player& player, EventManager& events) {
 		if (len == 0 || line[0] == '#') continue;
 
 		char key[64] = "";
-		unsigned int val = 0;
+		unsigned int val = 0, val2 = 0;
 
 		// player.*
 		if (sscanf(line, "player.health=%u", &val) == 1) player.health = val;
@@ -152,12 +152,9 @@ bool load_game(const char* name, Player& player, EventManager& events) {
 		else if (sscanf(line, "event.altar_times=%u", &val) == 1) events.setAltarTimes((uint8_t)val);
 
 		// backpack.*
-		else if (sscanf(line, "backpack.item.%d=%31[^\n]", (int*)&val, key) == 2) {
-			if (val < 16 && bp_count < 16) {
-				strncpy(bp_names[bp_count], key, 31);
-				bp_names[bp_count][31] = 0;
-				bp_count++;
-			}
+		else if (sscanf(line, "backpack.item.%d=%u", (int*)&val, &val2) == 2) {
+			if (val < 16 && bp_count < 16)
+				bp_ids[bp_count++] = (uint8_t)val2;
 		}
 
 		// map.*
@@ -172,16 +169,14 @@ bool load_game(const char* name, Player& player, EventManager& events) {
 
 	// 重建背包
 	if (player.backpack) {
-		// 清空现有背包
 		player.backpack->isEmpty = true;
 		player.backpack->headPtr = nullptr;
 		player.backpack->tailPtr = nullptr;
 
 		for (int i = 0; i < bp_count; i++) {
 			Item* it = new Item();
-			char* name_copy = new char[strlen(bp_names[i]) + 1];
-			strcpy(name_copy, bp_names[i]);
-			it->name = name_copy;
+			it->id = bp_ids[i];
+			it->name = (char*)getItemName(bp_ids[i]);
 			it->lastItem = nullptr;
 			it->nextItem = nullptr;
 			player.backpack->addItem(it);

@@ -10,6 +10,7 @@ get_filename_component(MINGW_BIN "${CMAKE_CXX_COMPILER}" DIRECTORY)
 # 共享的游戏逻辑源文件（不含渲染层）
 set(GAME_SOURCES
 	src/game/map.cpp src/game/monster.cpp src/game/player.cpp
+	src/game/item.cpp
 	src/event/event_manager.cpp
 	src/render/display.cpp src/render/frame_print.cpp
 	src/render/region_display.cpp src/ui/backpack.cpp

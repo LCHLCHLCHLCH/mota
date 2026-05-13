@@ -363,6 +363,7 @@ void Player::reactToProp(uint8_t floor_going, uint8_t x_going, uint8_t y_going)
 			static Item iceItem;
 			static char iceName[] = "冰霜魔法";
 			iceItem.name = iceName;
+			iceItem.id = 69;
 			this->backpack->addItem(&iceItem);
 		}
 		term_set_message("获得冰霜魔法！进入背包按Z使用");

@@ -50,7 +50,7 @@ int main(int argc, char** argv) {
 
 		if (key == KEY_X) {
 			Item* chosen = backpack.selectItem();
-			if (chosen && strcmp(chosen->name, "冰霜魔法") == 0) {
+			if (chosen && chosen->id == 69) {
 				player.freezeLava();
 			}
 		} else {

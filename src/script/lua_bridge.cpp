@@ -173,6 +173,19 @@ static int l_light(lua_State* L) {
 	return 0;
 }
 
+static int l_restart(lua_State* L) {
+	(void)L;
+	g_ply->init();
+	if (g_ev) g_ev->init();
+	for (int fl = 0; fl <= 50; fl++)
+		for (int y = 0; y < 13; y++)
+			for (int x = 0; x < 13; x++)
+				map_set((uint8_t)fl, (uint8_t)x, (uint8_t)y,
+					map_get_default((uint8_t)fl, (uint8_t)x, (uint8_t)y));
+	printf("游戏已重启\n");
+	return 0;
+}
+
 // ============================================================
 // 注册所有 API
 // ============================================================
@@ -207,4 +220,5 @@ void lua_register_game_api(lua_State* L, Player* player, EventManager* events) {
 	lua_register(L, "light", l_light);
 	lua_register(L, "save",  l_save_cmd);
 	lua_register(L, "load",  l_load_cmd);
+	lua_register(L, "restart", l_restart);
 }

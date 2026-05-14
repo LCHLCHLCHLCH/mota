@@ -20,6 +20,7 @@ int main(int argc, char** argv) {
 		return 1;
 
 	console_welcome();
+	script_init();
 
 	Player player;
 	player.init();
@@ -33,7 +34,7 @@ int main(int argc, char** argv) {
 	player.backpack = &backpack;
 
 	map_init();
-		map_init_default();
+	map_init_default();
 
 	SetColor(WHITE);
 
@@ -57,30 +58,28 @@ int main(int argc, char** argv) {
 			else if (chosen && chosen->id == 70) {
 				int killed = 0;
 				uint8_t px = player.x, py = player.y;
-				uint8_t adj[4][2] = {
-					{px, (uint8_t)(py - 1)},
-					{px, (uint8_t)(py + 1)},
-					{(uint8_t)(px - 1), py},
-					{(uint8_t)(px + 1), py}
-				};
+				uint8_t dirs[4][2] = {{px, (uint8_t)(py-1)}, {px, (uint8_t)(py+1)}, {(uint8_t)(px-1), py}, {(uint8_t)(px+1), py}};
 				for (int i = 0; i < 4; i++) {
-					uint8_t t = map_get(player.floor, adj[i][0], adj[i][1]);
+					uint8_t tx = dirs[i][0], ty = dirs[i][1];
+					uint8_t t = map_get(player.floor, tx, ty);
 					if (t >= 101 && t <= 150 && !isBossMonster(t)) {
-						map_set(player.floor, adj[i][0], adj[i][1], 1);
+						map_set(player.floor, tx, ty, 1);
 						player.money += getMonsterType(t)->money;
+						if (player.events)
+							player.events->checkGuardKill(player.floor, tx, ty, player);
 						killed++;
 					}
 				}
-				if (killed > 0 && player.events)
-					player.events->checkClear(player.floor);
+				backpack.delItem(chosen);
 				if (killed > 0) {
+					if (player.events)
+						player.events->checkClear(player.floor);
 					char _m[64];
 					snprintf(_m, sizeof(_m), "炸药炸死了%d个怪物", killed);
 					term_set_message(_m);
 				} else {
 					term_set_message("炸药没有效果");
 				}
-				backpack.delItem(chosen);
 			}
 		} else {
 			player.respondToKey(key);

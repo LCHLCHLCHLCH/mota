@@ -88,8 +88,9 @@ int map_kill_monster(uint8_t floor, uint8_t x, uint8_t y, Player* player) {
 
 		// C++ 内联守卫检查（双保险）
 		lua_State* L = script_init();
+		int _top = 0;
 		if (L) {
-			int _top = lua_gettop(L);
+			_top = lua_gettop(L);
 			char file[32];
 			snprintf(file, sizeof(file), "floor_%d", floor);
 			lua_getglobal(L, "require");

@@ -3,7 +3,6 @@ project(MotaSDL)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexec-charset=GBK")
 
-# MinGW 运行时 DLL 路径
 get_filename_component(MINGW_BIN "${CMAKE_CXX_COMPILER}" DIRECTORY)
 
 set(SDL3_ROOT "${CMAKE_SOURCE_DIR}/lib/SDL3-3.4.8/x86_64-w64-mingw32")
@@ -12,6 +11,14 @@ set(SDL3_TTF_ROOT "${CMAKE_SOURCE_DIR}/lib/SDL3_ttf-3.2.2/x86_64-w64-mingw32")
 add_executable(MotaSDL
 	src/game/map.cpp src/game/monster.cpp src/game/player.cpp
 	src/game/item.cpp src/game/tile_data.cpp
+	lua-5.5.0/lapi.c lua-5.5.0/lauxlib.c lua-5.5.0/lbaselib.c lua-5.5.0/lcode.c
+	lua-5.5.0/lcorolib.c lua-5.5.0/lctype.c lua-5.5.0/ldblib.c lua-5.5.0/ldebug.c
+	lua-5.5.0/ldo.c lua-5.5.0/ldump.c lua-5.5.0/lfunc.c lua-5.5.0/lgc.c
+	lua-5.5.0/linit.c lua-5.5.0/liolib.c lua-5.5.0/llex.c lua-5.5.0/lmathlib.c
+	lua-5.5.0/lmem.c lua-5.5.0/loadlib.c lua-5.5.0/lobject.c lua-5.5.0/lopcodes.c
+	lua-5.5.0/loslib.c lua-5.5.0/lparser.c lua-5.5.0/lstate.c lua-5.5.0/lstring.c
+	lua-5.5.0/lstrlib.c lua-5.5.0/ltable.c lua-5.5.0/ltablib.c lua-5.5.0/ltm.c
+	lua-5.5.0/lundump.c lua-5.5.0/lutf8lib.c lua-5.5.0/lvm.c lua-5.5.0/lzio.c
 	src/event/event_manager.cpp
 	src/render/display.cpp src/render/frame_print.cpp
 	src/render/region_display.cpp src/ui/backpack.cpp
@@ -22,9 +29,12 @@ add_executable(MotaSDL
 	terminal/save_system.cpp
 	logo/sdl_logo.rc
 )
+set_source_files_properties(lua-5.5.0/onelua.c PROPERTIES LANGUAGE C)
+
 target_include_directories(MotaSDL PRIVATE
 	src src/render terminal ${SDL3_ROOT}/include ${SDL3_ROOT}/include/SDL3
 	${SDL3_TTF_ROOT}/include ${SDL3_TTF_ROOT}/include/SDL3_ttf
+	lua-5.5.0
 )
 target_link_directories(MotaSDL PRIVATE ${SDL3_ROOT}/lib ${SDL3_TTF_ROOT}/lib)
 target_link_libraries(MotaSDL SDL3 SDL3_ttf)

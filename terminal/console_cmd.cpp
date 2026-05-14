@@ -4,20 +4,24 @@
 #include "game/player.h"
 #include "game/map.h"
 #include "event/event_manager.h"
+extern "C" {
+#include "lua.h"
+#include "lauxlib.h"
+#include "lualib.h"
+}
 #include <windows.h>
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
 #include <process.h>
 
-// ============================================================
-// 线程安全的命令队列
-// ============================================================
 static CRITICAL_SECTION g_cs;
 static char  g_cmd_queue[8][256];
 static int   g_cmd_head = 0;
 static int   g_cmd_tail = 0;
 static bool  g_cmd_thread_running = false;
+
+static lua_State* g_L = NULL;
 
 static void cmd_push(const char* cmd) {
 	EnterCriticalSection(&g_cs);
@@ -42,9 +46,6 @@ static bool cmd_pop(char* out) {
 	return true;
 }
 
-// ============================================================
-// 后台输入线程
-// ============================================================
 static unsigned __stdcall console_thread(void* param) {
 	(void)param;
 	char buf[256];
@@ -53,13 +54,8 @@ static unsigned __stdcall console_thread(void* param) {
 			size_t len = strlen(buf);
 			while (len > 0 && (buf[len-1] == '\n' || buf[len-1] == '\r'))
 				buf[--len] = 0;
-			if (len > 0) {
-				cmd_push(buf);
-			}
-			if (g_cmd_thread_running) {
-				printf("> ");
-				fflush(stdout);
-			}
+			if (len > 0) cmd_push(buf);
+			if (g_cmd_thread_running) { printf("> "); fflush(stdout); }
 		} else {
 			Sleep(100);
 		}
@@ -67,29 +63,23 @@ static unsigned __stdcall console_thread(void* param) {
 	return 0;
 }
 
-// ============================================================
-// 欢迎信息
-// ============================================================
 void console_welcome() {
 	InitializeCriticalSection(&g_cs);
-
 	printf("========================================\n");
 	printf("  魔塔 SDL3 - 调试控制台\n");
 	printf("  输入 help 查看可用命令\n");
 	printf("========================================\n\n");
 
+	g_L = luaL_newstate();
+	if (g_L) luaL_openlibs(g_L);
+
 	g_cmd_thread_running = true;
 	_beginthreadex(NULL, 0, console_thread, NULL, 0, NULL);
-	printf("> ");
-	fflush(stdout);
+	printf("> "); fflush(stdout);
 }
 
-// ============================================================
-// 命令处理
-// ============================================================
 static void print_help() {
-	printf("\n");
-	printf("==== 可用命令 ====\n");
+	printf("\n==== 可用命令 ====\n");
 	printf("  help / h / ?             显示此帮助\n");
 	printf("  info / status            显示玩家状态\n");
 	printf("  set health <value>       设置生命值\n");
@@ -102,62 +92,51 @@ static void print_help() {
 	printf("  set floor  <value>       设置当前楼层\n");
 	printf("  set x      <value>       设置X坐标\n");
 	printf("  set y      <value>       设置Y坐标\n");
-	printf("  give equip <id>          给予装备 (58-67)\n");
-	printf("  give item  <id>          给予道具 (51-68)\n");
+	printf("  give equip <id>          给予装备\n");
+	printf("  give item  <id>          给予道具\n");
 	printf("  tpfloor    <floor>       传送到指定楼层\n");
 	printf("  killall                  清除当前楼层所有怪物\n");
 	printf("  save   <name>            保存游戏\n");
 	printf("  load   <name>            读取存档\n");
 	printf("  light  on/off            切换浅色模式\n");
+	printf("  lua   <code>             执行 Lua 代码\n");
 	printf("\n");
 }
 
 static void set_attr(Player& player, const char* attr, int value) {
 	if (strcmp(attr, "health") == 0 || strcmp(attr, "hp") == 0) {
-		player.health = value;
-		printf("生命值已设置为 %d\n", value);
+		player.health = value; printf("生命值已设置为 %d\n", value);
 	}
 	else if (strcmp(attr, "attack") == 0 || strcmp(attr, "atk") == 0) {
-		player.attack = value;
-		printf("攻击力已设置为 %d\n", value);
+		player.attack = value; printf("攻击力已设置为 %d\n", value);
 	}
 	else if (strcmp(attr, "defence") == 0 || strcmp(attr, "def") == 0) {
-		player.defence = value;
-		printf("防御力已设置为 %d\n", value);
+		player.defence = value; printf("防御力已设置为 %d\n", value);
 	}
 	else if (strcmp(attr, "money") == 0 || strcmp(attr, "gold") == 0) {
-		player.money = value;
-		printf("金币已设置为 %d\n", value);
+		player.money = value; printf("金币已设置为 %d\n", value);
 	}
 	else if (strcmp(attr, "yellow") == 0 || strcmp(attr, "yellowkey") == 0) {
-		player.yellowKey = (uint8_t)value;
-		printf("黄钥匙已设置为 %d\n", value);
+		player.yellowKey = (uint8_t)value; printf("黄钥匙已设置为 %d\n", value);
 	}
 	else if (strcmp(attr, "blue") == 0 || strcmp(attr, "bluekey") == 0) {
-		player.blueKey = (uint8_t)value;
-		printf("蓝钥匙已设置为 %d\n", value);
+		player.blueKey = (uint8_t)value; printf("蓝钥匙已设置为 %d\n", value);
 	}
 	else if (strcmp(attr, "red") == 0 || strcmp(attr, "redkey") == 0) {
-		player.redKey = (uint8_t)value;
-		printf("红钥匙已设置为 %d\n", value);
+		player.redKey = (uint8_t)value; printf("红钥匙已设置为 %d\n", value);
 	}
 	else if (strcmp(attr, "floor") == 0) {
 		if (value >= 0 && value <= 50) {
 			player.floor = (uint8_t)value;
-			if (player.floor > player.maxFloorVisited)
-				player.maxFloorVisited = player.floor;
+			if (player.floor > player.maxFloorVisited) player.maxFloorVisited = player.floor;
 			printf("楼层已设置为 %d\n", value);
-		} else {
-			printf("楼层范围: 0-50\n");
-		}
+		} else printf("楼层范围: 0-50\n");
 	}
 	else if (strcmp(attr, "x") == 0) {
-		player.x = (uint8_t)value;
-		printf("X 坐标已设置为 %d\n", value);
+		player.x = (uint8_t)value; printf("X 坐标已设置为 %d\n", value);
 	}
 	else if (strcmp(attr, "y") == 0) {
-		player.y = (uint8_t)value;
-		printf("Y 坐标已设置为 %d\n", value);
+		player.y = (uint8_t)value; printf("Y 坐标已设置为 %d\n", value);
 	}
 	else {
 		printf("未知属性: %s\n", attr);
@@ -196,37 +175,28 @@ static void process_command(const char* cmd, Player& player, EventManager& event
 		print_help();
 	}
 	else if (strcmp(word1, "set") == 0) {
-		if (word2[0] == 0)
-			printf("用法: set <属性> <值>\n");
-		else
-			set_attr(player, word2, atoi(word3));
+		if (word2[0] == 0) printf("用法: set <属性> <值>\n");
+		else set_attr(player, word2, atoi(word3));
 	}
 	else if (strcmp(word1, "give") == 0) {
 		if (strcmp(word2, "equip") == 0 || strcmp(word2, "item") == 0)
 			give_item(player, atoi(word3));
-		else
-			printf("用法: give equip <id>  或  give item <id>\n");
+		else printf("用法: give equip <id>  或  give item <id>\n");
 	}
 	else if (strcmp(word1, "tpfloor") == 0 || strcmp(word1, "tp") == 0) {
 		int f = atoi(word2);
 		if (f >= 0 && f <= 50) {
 			player.floor = (uint8_t)f;
-			if (player.floor > player.maxFloorVisited)
-				player.maxFloorVisited = player.floor;
+			if (player.floor > player.maxFloorVisited) player.maxFloorVisited = player.floor;
 			printf("已传送到楼层 %d\n", f);
-		} else {
-			printf("楼层范围: 0-50\n");
-		}
+		} else printf("楼层范围: 0-50\n");
 	}
 	else if (strcmp(word1, "killall") == 0) {
 		int count = 0;
 		for (uint8_t y = 0; y < 13; y++)
 			for (uint8_t x = 0; x < 13; x++) {
 				uint8_t t = map_get(player.floor, x, y);
-				if (t >= 101 && t <= 150) {
-					map_set(player.floor, x, y, 1);
-					count++;
-				}
+				if (t >= 101 && t <= 150) { map_set(player.floor, x, y, 1); count++; }
 			}
 		printf("已清除 %d 个怪物\n", count);
 	}
@@ -236,32 +206,32 @@ static void process_command(const char* cmd, Player& player, EventManager& event
 		printf("生命: %d\n", player.health);
 		printf("攻击: %d    防御: %d\n", player.attack, player.defence);
 		printf("金币: %d\n", player.money);
-		printf("黄钥匙: %d  蓝钥匙: %d  红钥匙: %d\n",
-			player.yellowKey, player.blueKey, player.redKey);
+		printf("黄钥匙: %d  蓝钥匙: %d  红钥匙: %d\n", player.yellowKey, player.blueKey, player.redKey);
 		printf("传送器: %s\n", player.hasTeleporter ? "有" : "无");
 		printf("\n");
 	}
 	else if (strcmp(word1, "save") == 0) {
-		if (word2[0])
-			save_game(word2, player, events);
-		else
-			printf("用法: save <名字>\n");
+		if (word2[0]) save_game(word2, player, events);
+		else printf("用法: save <名字>\n");
 	}
 	else if (strcmp(word1, "load") == 0) {
-		if (word2[0])
-			load_game(word2, player, events);
-		else
-			printf("用法: load <名字>\n");
+		if (word2[0]) load_game(word2, player, events);
+		else printf("用法: load <名字>\n");
 	}
 	else if (strcmp(word1, "light") == 0) {
-		if (strcmp(word2, "on") == 0 || strcmp(word2, "1") == 0) {
-			term_set_light_mode(true);
-			printf("light mode on\n");
-		} else if (strcmp(word2, "off") == 0 || strcmp(word2, "0") == 0) {
-			term_set_light_mode(false);
-			printf("light mode off\n");
-		} else {
-			printf("usage: light on|off\n");
+		if (strcmp(word2, "on") == 0 || strcmp(word2, "1") == 0)
+			{ term_set_light_mode(true); printf("light mode on\n"); }
+		else if (strcmp(word2, "off") == 0 || strcmp(word2, "0") == 0)
+			{ term_set_light_mode(false); printf("light mode off\n"); }
+		else printf("usage: light on|off\n");
+	}
+	else if (strcmp(word1, "lua") == 0) {
+		if (!g_L) { printf("Lua not initialized\n"); }
+		else {
+			const char* code = cmd + 3;
+			while (*code == ' ') code++;
+			if (luaL_dostring(g_L, code) != LUA_OK)
+				printf("error: %s\n", lua_tostring(g_L, -1));
 		}
 	}
 	else {
@@ -269,13 +239,11 @@ static void process_command(const char* cmd, Player& player, EventManager& event
 	}
 }
 
-// ============================================================
-// 主线程轮询（从队列取命令执行）
-// ============================================================
 void console_cmd_shutdown() {
 	g_cmd_thread_running = false;
 	cmd_push("");
 	DeleteCriticalSection(&g_cs);
+	if (g_L) { lua_close(g_L); g_L = NULL; }
 }
 
 void console_poll(Player& player, EventManager& events) {
@@ -283,7 +251,6 @@ void console_poll(Player& player, EventManager& events) {
 	while (cmd_pop(cmd)) {
 		if (cmd[0] == 0) continue;
 		process_command(cmd, player, events);
-		printf("> ");
-		fflush(stdout);
+		printf("> "); fflush(stdout);
 	}
 }

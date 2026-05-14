@@ -33,11 +33,12 @@ add_executable(MotaSDL
 	terminal/sdl_statusBar.cpp terminal/sdl_terminal.cpp
 	terminal/console_cmd.cpp
 	terminal/save_system.cpp
+		src/script/lua_state.cpp src/script/lua_bridge.cpp
 	logo/sdl_logo.rc
 )
 
 target_include_directories(MotaSDL PRIVATE
-	src src/render terminal ${SDL3_ROOT}/include ${SDL3_ROOT}/include/SDL3
+	src src/render terminal src/script ${SDL3_ROOT}/include ${SDL3_ROOT}/include/SDL3
 	${SDL3_TTF_ROOT}/include ${SDL3_TTF_ROOT}/include/SDL3_ttf
 	lua-5.5.0
 )
@@ -78,5 +79,11 @@ add_custom_command(TARGET MotaSDL POST_BUILD
 add_custom_command(TARGET MotaSDL POST_BUILD
 	COMMAND ${CMAKE_COMMAND} -E copy_if_different
 	"${CMAKE_SOURCE_DIR}/lib/simsun.ttc"
+	"$<TARGET_FILE_DIR:MotaSDL>/simsun.ttc"
+)
+add_custom_command(TARGET MotaSDL POST_BUILD
+	COMMAND ${CMAKE_COMMAND} -E copy_directory
+	"${CMAKE_SOURCE_DIR}/map"
+	"$<TARGET_FILE_DIR:MotaSDL>/map"
 	"$<TARGET_FILE_DIR:MotaSDL>/simsun.ttc"
 )

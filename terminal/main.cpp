@@ -1,6 +1,7 @@
 // SDL3 魔塔终端版本
 #include "sdl_terminal.h"
 #include "console_cmd.h"
+#include "script/lua_state.h"
 #include "game/player.h"
 #include "game/monster.h"
 #include "render/display.h"
@@ -31,7 +32,8 @@ int main(int argc, char** argv) {
 	player.events = &events;
 	player.backpack = &backpack;
 
-	map_init_default();
+	map_init();
+		map_init_default();
 
 	SetColor(WHITE);
 

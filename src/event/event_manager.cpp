@@ -1,267 +1,257 @@
 #include "event/event_manager.h"
 #include "game/player.h"
-#include "event/dialog.h"
 #include "game/map.h"
-#include <render/cursor.h>
+#include "script/lua_state.h"
+#include "script/lua_bridge.h"
+extern "C" {
+#include "lua.h"
+#include "lauxlib.h"
+}
 #include <cstring>
 #include <cstdio>
 
-// ============================================================
-// 事件动作数据
-// ============================================================
-
-static const char* TEXT_3F_OLD_MAN =
-	"我可以给你一本怪物手册，你可以用它预测该楼层各怪物对你造成的伤害。";
-
-static const EventAction ACT_3F_OLD_MAN[] = {
-	{ ActionType::SAY,      0, 0, TEXT_3F_OLD_MAN },
-	{ ActionType::SET_FLAG, 1, 0, nullptr },
-	{ ActionType::END,      0, 0, nullptr },
-};
-
-static const char* TEXT_4F_OLD_MAN =
-	"有些门不能用钥匙打开，只有当你击败它的守卫后才会自动打开。";
-
-static const EventAction ACT_4F_OLD_MAN[] = {
-	{ ActionType::SAY,      0, 0, TEXT_4F_OLD_MAN },
-	{ ActionType::SET_FLAG, 3, 0, nullptr },
-	{ ActionType::END,      0, 0, nullptr },
-};
-
-static const EventAction ACT_2F_PRISON_OPEN[] = {
-		{ ActionType::REPLACE_ALL, 8, 1, nullptr },
-		{ ActionType::SET_FLAG,    2, 0, nullptr },
-		{ ActionType::END,         0, 0, nullptr },
-};
-
-static const EventAction ACT_11F_WIZARD_DOOR[] = {
-		{ ActionType::REPLACE_ALL, 8, 1, nullptr },
-		{ ActionType::SET_FLAG,    4, 0, nullptr },
-		{ ActionType::END,         0, 0, nullptr },
-};
-
-// ============================================================
-// EventManager
-// ============================================================
-void EventManager::init()
-{
-	event_count_ = 0;
-	altar_times_ = 0;
+void EventManager::init() {
 	std::memset(flags_, 0, sizeof(flags_));
-
-	// --- ON_TILE ---
-	addEvent({ 3, EventTrigger::ON_TILE, 151, 1, 1, 2, ACT_3F_OLD_MAN });
-	addEvent({ 4, EventTrigger::ON_TILE, 151, 3, 3, 2, ACT_4F_OLD_MAN });
-
-	// --- ON_CLEAR ---
-	// 第2层：当该层怪物全部死亡，打开所有怪物看护的门
-	addEvent({ 2, EventTrigger::ON_CLEAR, 0, 2, 2, 2, ACT_2F_PRISON_OPEN });
-
-	// --- ON_GUARD_KILL ---
-	// 第11层：击败左上角(1,5)和(3,5)两个红色法师后，开启它们看守的门
-	addEvent({ 11, EventTrigger::ON_GUARD_KILL, 2, 4, 4, 2,
-		ACT_11F_WIZARD_DOOR, {1, 3}, {5, 5} });
+	altar_times_ = 0;
+	event_count_ = 0;
 }
 
-void EventManager::addEvent(const Event& ev)
-{
+void EventManager::addEvent(const Event& ev) {
 	if (event_count_ < MAX_EVENTS)
 		events_[event_count_++] = ev;
 }
 
-void EventManager::setFlag(uint8_t id)
-{
+void EventManager::setFlag(uint8_t id) {
 	if (id < MAX_FLAGS) flags_[id] = 1;
 }
 
-bool EventManager::hasFlag(uint8_t id) const
-{
+bool EventManager::hasFlag(uint8_t id) const {
 	if (id >= MAX_FLAGS) return true;
 	return flags_[id] != 0;
 }
 
 // ============================================================
-// 对外接口
+// Lua 事件调度：遍历所有楼层的事件表，匹配则执行
 // ============================================================
-void EventManager::checkTile(uint8_t floor, uint8_t tile_id, Player& player)
-{
-	for (uint8_t i = 0; i < event_count_; i++)
-	{
-		const Event& ev = events_[i];
-		if (ev.trigger != EventTrigger::ON_TILE) continue;
-		if (ev.floor_ != floor) continue;
-		if (ev.trigger_param != tile_id) continue;
-		if (ev.condition_flag != 0 && hasFlag(ev.condition_flag)) continue;
+static void run_event_actions(lua_State* L, int ev_idx) {
+	lua_getfield(L, ev_idx, "actions");
+	int act_count = (int)lua_objlen(L, -1);
+	for (int i = 1; i <= act_count; i++) {
+		lua_rawgeti(L, -1, i);
+		lua_getfield(L, -1, "type");
+		const char* type = lua_tostring(L, -1);
+		lua_pop(L, 1);
 
-		executeEvent(ev, player);
-		return;
+		if (strcmp(type, "say") == 0) {
+			lua_getfield(L, -1, "text");
+			saySomething((char*)lua_tostring(L, -1));
+			lua_pop(L, 1);
+		}
+		else if (strcmp(type, "replace_all") == 0) {
+			lua_getfield(L, -1, "from"); int from = (int)lua_tointeger(L, -1); lua_pop(L, 1);
+			lua_getfield(L, -1, "to");   int to   = (int)lua_tointeger(L, -1); lua_pop(L, 1);
+			// floor 从事件表获取
+			lua_getfield(L, ev_idx, "floor");
+			int fl = (lua_isnil(L, -1)) ? 0 : (int)lua_tointeger(L, -1);
+			lua_pop(L, 1);
+			if (fl >= 0 && fl <= 50) {
+				for (uint8_t y = 0; y < 13; y++)
+					for (uint8_t x = 0; x < 13; x++)
+						if (map_get((uint8_t)fl, x, y) == (uint8_t)from)
+							map_set((uint8_t)fl, x, y, (uint8_t)to);
+			}
+			if (from == 8 && to == 1)
+				term_set_message("守卫门已打开");
+		}
+		lua_pop(L, 1);
 	}
+	lua_pop(L, 1); // actions table
+
+	// 设置标记
+	lua_getfield(L, ev_idx, "set_flag");
+	if (lua_isnumber(L, -1)) {
+		int flag = (int)lua_tointeger(L, -1);
+		// 需要访问 EventManager — 通过 player->events 获取
+	}
+	lua_pop(L, 1);
 }
 
-void EventManager::checkClear(uint8_t floor)
-{
+void EventManager::checkTile(uint8_t floor, uint8_t tile_id, Player& player) {
+	lua_State* L = script_init();
+	if (!L) return;
+	// 确保事件 API 已注册
+	if (player.events) lua_register_game_api(L, &player, player.events);
+
+	char file[32];
+	snprintf(file, sizeof(file), "floor_%d", floor);
+	lua_getglobal(L, "require");
+	lua_pushstring(L, file);
+	if (lua_pcall(L, 1, 1, 0) != LUA_OK) { lua_pop(L, 1); return; }
+
+	lua_getfield(L, -1, "events");
+	if (!lua_istable(L, -1)) { lua_pop(L, 2); return; }
+
+	int n = (int)lua_objlen(L, -1);
+	for (int i = 1; i <= n; i++) {
+		lua_rawgeti(L, -1, i);
+		lua_getfield(L, -1, "trigger");
+		const char* trigger = lua_tostring(L, -1);
+		lua_pop(L, 1);
+
+		if (!trigger || strcmp(trigger, "on_tile") != 0) { lua_pop(L, 1); continue; }
+
+		lua_getfield(L, -1, "tile");
+		if ((int)lua_tointeger(L, -1) != (int)tile_id) { lua_pop(L, 2); continue; }
+		lua_pop(L, 1);
+
+		// 检查 condition_flag
+		lua_getfield(L, -1, "condition_flag");
+		int cf = (int)lua_tointeger(L, -1);
+		lua_pop(L, 1);
+		if (cf > 0 && hasFlag((uint8_t)cf)) { lua_pop(L, 1); continue; }
+
+		run_event_actions(L, lua_gettop(L));
+		lua_getfield(L, -1, "set_flag");
+		int sf = (int)lua_tointeger(L, -1);
+		lua_pop(L, 1);
+		if (sf > 0) setFlag((uint8_t)sf);
+
+		lua_pop(L, 1);
+		break;
+	}
+	lua_pop(L, 2); // events + floor table
+}
+
+void EventManager::checkClear(uint8_t floor) {
 	if (countMonsters(floor) > 0) return;
 
-	for (uint8_t i = 0; i < event_count_; i++)
-	{
-		const Event& ev = events_[i];
-		if (ev.trigger != EventTrigger::ON_CLEAR) continue;
-		if (ev.floor_ != floor) continue;
-		if (ev.condition_flag != 0 && hasFlag(ev.condition_flag)) continue;
+	lua_State* L = script_init();
+	if (!L) return;
 
-		Player dummy;
-		dummy.init();
-		executeEvent(ev, dummy);
-		return;
+	char file[32];
+	snprintf(file, sizeof(file), "floor_%d", floor);
+	lua_getglobal(L, "require");
+	lua_pushstring(L, file);
+	if (lua_pcall(L, 1, 1, 0) != LUA_OK) { lua_pop(L, 1); return; }
+
+	lua_getfield(L, -1, "events");
+	if (!lua_istable(L, -1)) { lua_pop(L, 2); return; }
+
+	int n = (int)lua_objlen(L, -1);
+	for (int i = 1; i <= n; i++) {
+		lua_rawgeti(L, -1, i);
+		lua_getfield(L, -1, "trigger");
+		const char* trigger = lua_tostring(L, -1);
+		lua_pop(L, 1);
+
+		if (!trigger || strcmp(trigger, "on_clear") != 0) { lua_pop(L, 1); continue; }
+
+		lua_getfield(L, -1, "condition_flag");
+		int cf = (int)lua_tointeger(L, -1);
+		lua_pop(L, 1);
+		if (cf > 0 && hasFlag((uint8_t)cf)) { lua_pop(L, 1); continue; }
+
+		run_event_actions(L, lua_gettop(L));
+		lua_getfield(L, -1, "set_flag");
+		int sf = (int)lua_tointeger(L, -1);
+		lua_pop(L, 1);
+		if (sf > 0) setFlag((uint8_t)sf);
+
+		lua_pop(L, 1);
+		break;
 	}
+	lua_pop(L, 2);
 }
 
-void EventManager::checkGuardKill(uint8_t floor, uint8_t killed_x, uint8_t killed_y, Player& player)
-{
-	for (uint8_t i = 0; i < event_count_; i++)
-	{
-		const Event& ev = events_[i];
-		if (ev.trigger != EventTrigger::ON_GUARD_KILL) continue;
-		if (ev.floor_ != floor) continue;
-		if (ev.condition_flag != 0 && hasFlag(ev.condition_flag)) continue;
+void EventManager::checkGuardKill(uint8_t floor, uint8_t killed_x, uint8_t killed_y, Player& player) {
+	lua_State* L = script_init();
+	if (!L) return;
+	if (player.events) lua_register_game_api(L, &player, player.events);
 
-		// 检查被杀死的怪物是否在守卫列表中
-		uint8_t count = ev.trigger_param;
+	char file[32];
+	snprintf(file, sizeof(file), "floor_%d", floor);
+	lua_getglobal(L, "require");
+	lua_pushstring(L, file);
+	if (lua_pcall(L, 1, 1, 0) != LUA_OK) { lua_pop(L, 1); return; }
+
+	lua_getfield(L, -1, "events");
+	if (!lua_istable(L, -1)) { lua_pop(L, 2); return; }
+
+	int n = (int)lua_objlen(L, -1);
+	for (int i = 1; i <= n; i++) {
+		lua_rawgeti(L, -1, i);
+		lua_getfield(L, -1, "trigger");
+		const char* trigger = lua_tostring(L, -1);
+		lua_pop(L, 1);
+
+		if (!trigger || strcmp(trigger, "on_guard_kill") != 0) { lua_pop(L, 1); continue; }
+
+		// 检查守卫位置
+		lua_getfield(L, -1, "guards");
 		bool is_guard = false;
-		for (uint8_t g = 0; g < count; g++)
-		{
-			if (ev.guard_x[g] == killed_x && ev.guard_y[g] == killed_y)
-			{
-				is_guard = true;
-				break;
-			}
+		int ng = (int)lua_objlen(L, -1);
+		for (int g = 1; g <= ng; g++) {
+			lua_rawgeti(L, -1, g);
+			lua_getfield(L, -1, "x"); int gx = (int)lua_tointeger(L, -1); lua_pop(L, 1);
+			lua_getfield(L, -1, "y"); int gy = (int)lua_tointeger(L, -1); lua_pop(L, 1);
+			if (gx == (int)killed_x && gy == (int)killed_y) { is_guard = true; }
+			lua_pop(L, 1);
+			if (is_guard) break;
 		}
-		if (!is_guard) continue;
+		lua_pop(L, 1); // guards table
+		if (!is_guard) { lua_pop(L, 1); continue; }
 
-		// 检查所有守卫是否都已被清除（tile == 1）
+		// 检查所有守卫是否已清除
+		lua_getfield(L, -1, "guards");
 		bool all_cleared = true;
-		for (uint8_t g = 0; g < count; g++)
-		{
-			if (map_get(floor, ev.guard_x[g], ev.guard_y[g]) != 1)
-			{
-				all_cleared = false;
-				break;
-			}
+		ng = (int)lua_objlen(L, -1);
+		for (int g = 1; g <= ng; g++) {
+			lua_rawgeti(L, -1, g);
+			lua_getfield(L, -1, "x"); int gx = (int)lua_tointeger(L, -1); lua_pop(L, 1);
+			lua_getfield(L, -1, "y"); int gy = (int)lua_tointeger(L, -1); lua_pop(L, 1);
+			if (map_get(floor, (uint8_t)gx, (uint8_t)gy) != 1) { all_cleared = false; }
+			lua_pop(L, 1);
+			if (!all_cleared) break;
 		}
-		if (!all_cleared) continue;
+		lua_pop(L, 1);
+		if (!all_cleared) { lua_pop(L, 1); continue; }
 
-		executeEvent(ev, player);
-		return;
+		lua_getfield(L, -1, "condition_flag");
+		int cf = (int)lua_tointeger(L, -1);
+		lua_pop(L, 1);
+		if (cf > 0 && hasFlag((uint8_t)cf)) { lua_pop(L, 1); continue; }
+
+		run_event_actions(L, lua_gettop(L));
+		lua_getfield(L, -1, "set_flag");
+		int sf = (int)lua_tointeger(L, -1);
+		lua_pop(L, 1);
+		if (sf > 0) setFlag((uint8_t)sf);
+
+		lua_pop(L, 1);
+		break;
 	}
+	lua_pop(L, 2);
 }
 
-uint8_t EventManager::countMonsters(uint8_t floor)
-{
+uint8_t EventManager::countMonsters(uint8_t floor) {
 	uint8_t count = 0;
 	for (uint8_t y = 0; y < 13; y++)
-		for (uint8_t x = 0; x < 13; x++)
-		{
+		for (uint8_t x = 0; x < 13; x++) {
 			uint8_t t = map_get(floor, x, y);
-			if (t >= 101 && t <= 150)
-				count++;
+			if (t >= 101 && t <= 150) count++;
 		}
 	return count;
 }
 
 // ============================================================
-// 动作执行
+// 祭坛系统保留 C++ 实现
 // ============================================================
-void EventManager::executeEvent(const Event& ev, Player& player)
-{
-	for (uint8_t i = 0; i < ev.action_count; i++)
-	{
-		const EventAction& act = ev.actions[i];
-		if (act.type == ActionType::END) break;
-		executeAction(act, player, ev.floor_);
-	}
-	if (ev.set_flag != 0)
-		setFlag(ev.set_flag);
-}
-
-void EventManager::executeAction(const EventAction& act, Player& player, uint8_t ev_floor)
-{
-	switch (act.type)
-	{
-	case ActionType::SAY:
-		saySomething((char*)act.text);
-		break;
-
-	case ActionType::SET_FLAG:
-		setFlag(act.param);
-		break;
-
-	case ActionType::GIVE_KEY:
-		switch (act.param) {
-			case 0: player.yellowKey++; break;
-			case 1: player.blueKey++;   break;
-			case 2: player.redKey++;    break;
-		}
-		break;
-
-	case ActionType::GIVE_POTION:
-		if (act.param == 0)
-			player.health += (((player.floor) - 1) / 10 + 1) * 50;
-		else
-			player.health += (((player.floor) - 1) / 10 + 1) * 200;
-		break;
-
-	case ActionType::GIVE_GEM:
-		if (act.param == 0)
-			player.attack += (((player.floor) - 1) / 10 + 1);
-		else
-			player.defence += (((player.floor) - 1) / 10 + 1);
-		break;
-
-	case ActionType::GIVE_EQUIP: {
-		uint8_t id = act.param;
-		if      (id == 58) player.attack  += 10;
-		else if (id == 59) player.defence += 10;
-		else if (id == 60) player.attack  += 20;
-		else if (id == 61) player.defence += 20;
-		else if (id == 62) player.attack  += 40;
-		else if (id == 63) player.defence += 40;
-		else if (id == 64) player.attack  += 50;
-		else if (id == 65) player.defence += 50;
-		else if (id == 66) player.attack  += 100;
-		else if (id == 67) player.defence += 100;
-		break;
-	}
-
-	case ActionType::TAKE_MONEY:
-		if (player.money >= act.param)
-			player.money -= act.param;
-		break;
-
-	case ActionType::REPLACE_ALL:
-		for (uint8_t y = 0; y < 13; y++)
-			for (uint8_t x = 0; x < 13; x++)
-				if (map_get(ev_floor, x, y) == act.param)
-					map_set(ev_floor, x, y, act.param2);
-		if (act.param == 8 && act.param2 == 1)
-			term_set_message("守卫门已打开");
-		break;
-
-	default:
-		break;
-	}
-}
-
-// ============================================================
-// 祭坛系统
-// ============================================================
-uint16_t EventManager::getAltarCost() const
-{
+uint16_t EventManager::getAltarCost() const {
 	uint16_t t = altar_times_;
 	return 20 + 10 * (t + 1) * t;
 }
 
-void EventManager::checkAltar(uint8_t floor, Player& player)
-{
+void EventManager::checkAltar(uint8_t floor, Player& player) {
 	uint8_t  ratio = (floor - 1) / 10 + 1;
 	uint16_t cost  = getAltarCost();
 	uint16_t atk_gain = 2 * ratio;
@@ -282,24 +272,15 @@ void EventManager::checkAltar(uint8_t floor, Player& player)
 	char* list[4] = { choice_hp, choice_atk, choice_def, choice_leave };
 	uint8_t choice = chooseFromSomething(4, list);
 
-	if (choice == 3 || choice == 255)
-		return;
-
-	if (player.money < cost)
-	{
-		saySomething((char*)"你的金币不足，无法供奉！");
-		return;
-	}
+	if (choice == 3 || choice == 255) return;
+	if (player.money < cost) { saySomething((char*)"你的金币不足，无法供奉！"); return; }
 
 	player.money -= cost;
-
-	switch (choice)
-	{
-	case 0: player.health += hp_gain;  break;
-	case 1: player.attack += atk_gain; break;
-	case 2: player.defence += def_gain; break;
+	switch (choice) {
+		case 0: player.health += hp_gain;  break;
+		case 1: player.attack += atk_gain; break;
+		case 2: player.defence += def_gain; break;
 	}
-
 	altar_times_++;
 	drainInput();
 }

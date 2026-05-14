@@ -6,8 +6,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexec-charset=GBK")
 # MinGW 运行时 DLL 路径
 get_filename_component(MINGW_BIN "${CMAKE_CXX_COMPILER}" DIRECTORY)
 
-set(SDL3_ROOT "${CMAKE_SOURCE_DIR}/terminal/sdl3/SDL3-3.4.8/x86_64-w64-mingw32")
-set(SDL3_TTF_ROOT "${CMAKE_SOURCE_DIR}/terminal/sdl3/SDL3_ttf-3.2.2/x86_64-w64-mingw32")
+set(SDL3_ROOT "${CMAKE_SOURCE_DIR}/lib/SDL3-3.4.8/x86_64-w64-mingw32")
+set(SDL3_TTF_ROOT "${CMAKE_SOURCE_DIR}/lib/SDL3_ttf-3.2.2/x86_64-w64-mingw32")
 
 add_executable(MotaSDL
 	src/game/map.cpp src/game/monster.cpp src/game/player.cpp
@@ -57,6 +57,6 @@ add_custom_command(TARGET MotaSDL POST_BUILD
 )
 add_custom_command(TARGET MotaSDL POST_BUILD
 	COMMAND ${CMAKE_COMMAND} -E copy_if_different
-	"${CMAKE_SOURCE_DIR}/terminal/sdl3/simsun.ttc"
+	"${CMAKE_SOURCE_DIR}/lib/simsun.ttc"
 	"$<TARGET_FILE_DIR:MotaSDL>/simsun.ttc"
 )

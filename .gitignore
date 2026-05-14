@@ -15,10 +15,8 @@
 *.so
 *.dylib
 *.dll
-!lib/*.dll
-!terminal/sdl3/**/*.dll
+!lib/**/*.dll
 *.def
-!lib/*.def
 
 # Fortran module files
 *.mod
@@ -29,9 +27,8 @@
 *.la
 *.a
 *.lib
-!lib/*.a
-!terminal/sdl3/**/*.a
-!terminal/sdl3/**/*.lib
+!lib/**/*.a
+!lib/**/*.lib
 
 # Executables
 *.exe

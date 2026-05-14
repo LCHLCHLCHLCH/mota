@@ -24,9 +24,6 @@ void EventManager::addEvent(const Event& ev) {
 void EventManager::setFlag(uint8_t id) { if (id < MAX_FLAGS) flags_[id] = 1; }
 bool EventManager::hasFlag(uint8_t id) const { return (id >= MAX_FLAGS) ? true : (flags_[id] != 0); }
 
-// ============================================================
-// 执行 Lua 事件的动作列表
-// ============================================================
 static void run_event_actions(lua_State* L, int ev_idx, uint8_t floor) {
 	lua_getfield(L, ev_idx, "actions");
 	int n = (int)lua_objlen(L, -1);
@@ -56,24 +53,25 @@ static void run_event_actions(lua_State* L, int ev_idx, uint8_t floor) {
 	lua_pop(L, 1);
 }
 
-static void load_floor_events(lua_State* L, uint8_t floor) {
+static bool load_floor_events(lua_State* L, uint8_t floor) {
 	char file[32];
 	snprintf(file, sizeof(file), "floor_%d", floor);
 	lua_getglobal(L, "require");
 	lua_pushstring(L, file);
-	if (lua_pcall(L, 1, 1, 0) != LUA_OK) { lua_pop(L, 1); return; }
+	if (lua_pcall(L, 1, 1, 0) != LUA_OK) {
+		fprintf(stderr, "Lua require '%s' failed: %s\n", file, lua_tostring(L, -1));
+		lua_pop(L, 1);
+		return false;
+	}
+	return true;
 }
 
-// ============================================================
-// checkTile
-// ============================================================
 void EventManager::checkTile(uint8_t floor, uint8_t tile_id, Player& player) {
 	lua_State* L = script_init();
 	if (!L) return;
 	if (player.events) lua_register_game_api(L, &player, player.events);
 
-	load_floor_events(L, floor);
-	if (lua_gettop(L) == 0) return; // load failed
+	if (!load_floor_events(L, floor)) return;
 
 	lua_getfield(L, -1, "events");
 	if (!lua_istable(L, -1)) { lua_pop(L, 2); return; }
@@ -105,17 +103,13 @@ void EventManager::checkTile(uint8_t floor, uint8_t tile_id, Player& player) {
 	lua_pop(L, 2);
 }
 
-// ============================================================
-// checkClear
-// ============================================================
 void EventManager::checkClear(uint8_t floor) {
 	if (countMonsters(floor) > 0) return;
 
 	lua_State* L = script_init();
 	if (!L) return;
 
-	load_floor_events(L, floor);
-	if (lua_gettop(L) == 0) return;
+	if (!load_floor_events(L, floor)) return;
 
 	lua_getfield(L, -1, "events");
 	if (!lua_istable(L, -1)) { lua_pop(L, 2); return; }
@@ -143,16 +137,12 @@ void EventManager::checkClear(uint8_t floor) {
 	lua_pop(L, 2);
 }
 
-// ============================================================
-// checkGuardKill
-// ============================================================
 void EventManager::checkGuardKill(uint8_t floor, uint8_t killed_x, uint8_t killed_y, Player& player) {
 	lua_State* L = script_init();
 	if (!L) return;
 	if (player.events) lua_register_game_api(L, &player, player.events);
 
-	load_floor_events(L, floor);
-	if (lua_gettop(L) == 0) return;
+	if (!load_floor_events(L, floor)) return;
 
 	lua_getfield(L, -1, "events");
 	if (!lua_istable(L, -1)) { lua_pop(L, 2); return; }
@@ -165,7 +155,6 @@ void EventManager::checkGuardKill(uint8_t floor, uint8_t killed_x, uint8_t kille
 		lua_pop(L, 1);
 		if (!trigger || strcmp(trigger, "on_guard_kill") != 0) { lua_pop(L, 1); continue; }
 
-		// 检查被杀死的怪物是否在守卫列表中
 		lua_getfield(L, -1, "guards");
 		bool is_guard = false;
 		int ng = (int)lua_objlen(L, -1);
@@ -179,7 +168,6 @@ void EventManager::checkGuardKill(uint8_t floor, uint8_t killed_x, uint8_t kille
 		lua_pop(L, 1);
 		if (!is_guard) { lua_pop(L, 1); continue; }
 
-		// 检查所有守卫是否都已被清除
 		lua_getfield(L, -1, "guards");
 		bool all_cleared = true;
 		ng = (int)lua_objlen(L, -1);
@@ -208,7 +196,6 @@ void EventManager::checkGuardKill(uint8_t floor, uint8_t killed_x, uint8_t kille
 	lua_pop(L, 2);
 }
 
-// ============================================================
 uint8_t EventManager::countMonsters(uint8_t floor) {
 	uint8_t count = 0;
 	for (uint8_t y = 0; y < 13; y++)

@@ -71,6 +71,8 @@ int main(int argc, char** argv) {
 						killed++;
 					}
 				}
+				if (killed > 0 && player.events)
+					player.events->checkClear(player.floor);
 				if (killed > 0) {
 					char _m[64];
 					snprintf(_m, sizeof(_m), "炸药炸死了%d个怪物", killed);

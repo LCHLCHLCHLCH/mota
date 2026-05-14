@@ -7,6 +7,7 @@
 #include "event/dialog.h"
 #include "sdl_terminal.h"
 #include "save_system.h"
+#include "ui/backpack.h"
 extern "C" {
 #include "lua.h"
 #include "lauxlib.h"
@@ -148,7 +149,16 @@ static int l_give(lua_State* L) {
 		case 66: p.attack += 100;  printf("攻击+100\n"); break;
 		case 67: p.defence += 100; printf("防御+100\n"); break;
 		case 68: p.hasTeleporter = true; printf("获得楼层传送器\n"); break;
-		default: printf("未知道具 ID\n"); break;
+	case 69:
+	case 70: {
+		static Item cmdItem;
+		cmdItem.name = (char*)getItemName((uint8_t)id);
+		cmdItem.id = (uint8_t)id;
+		if (p.backpack) p.backpack->addItem(&cmdItem);
+		printf("获得%s\n", getItemName((uint8_t)id));
+		break;
+	}
+	default: printf("未知道具 ID\n"); break;
 	}
 	return 0;
 }

@@ -36,6 +36,7 @@
 *.app
 
 build/
+_build/
 
 # IDE / editor
 .claude/

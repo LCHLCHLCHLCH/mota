@@ -56,20 +56,8 @@ static DeferredDraw g_deferred[16];
 static int          g_deferred_count = 0;
 
 // ============================================================
-// UTF-8 转换
+// wchar_t → UTF-8 转换（用于 SDL_ttf 文本渲染）
 // ============================================================
-static char* gbk_to_utf8(const char* gbk) {
-	int wlen = MultiByteToWideChar(936, 0, gbk, -1, NULL, 0);
-	if (wlen <= 0) return NULL;
-	wchar_t* wbuf = new wchar_t[wlen];
-	MultiByteToWideChar(936, 0, gbk, -1, wbuf, wlen);
-	int ulen = WideCharToMultiByte(CP_UTF8, 0, wbuf, wlen, NULL, 0, NULL, NULL);
-	char* utf8 = new char[ulen];
-	WideCharToMultiByte(CP_UTF8, 0, wbuf, wlen, utf8, ulen, NULL, NULL);
-	delete[] wbuf;
-	return utf8;
-}
-
 static char* wchar_to_utf8(const wchar_t* wstr, int wlen) {
 	if (wlen <= 0) return NULL;
 	int ulen = WideCharToMultiByte(CP_UTF8, 0, wstr, wlen, NULL, 0, NULL, NULL);
@@ -221,30 +209,26 @@ static void draw_cell_sdl(int col, int row) {
 // SDL 渲染文本（状态栏数值、底部消息等）
 // ============================================================
 static void draw_text_rect(int px, int py, int pw, int ph,
-                           const char* gbk_text, SDL_Color fg, SDL_Color bg) {
+                           const char* utf8_text, SDL_Color fg, SDL_Color bg) {
 	SDL_FRect rect = { (float)px, (float)py, (float)pw, (float)ph };
 	SDL_SetRenderDrawColor(g_renderer, bg.r, bg.g, bg.b, bg.a);
 	SDL_RenderFillRect(g_renderer, &rect);
 
-	char* utf8 = gbk_to_utf8(gbk_text);
-	if (utf8) {
-		SDL_Surface* surf = TTF_RenderText_Blended(g_ttf_font, utf8, 0, fg);
-		if (surf) {
-			SDL_Texture* tex = SDL_CreateTextureFromSurface(g_renderer, surf);
-			if (tex) {
-				float tw = (float)surf->w;
-				float th = (float)surf->h;
-				SDL_FRect trect = {
-					px + (pw - tw) * 0.5f,
-					py + (ph - th) * 0.5f,
-					tw, th
-				};
-				SDL_RenderTexture(g_renderer, tex, NULL, &trect);
-				SDL_DestroyTexture(tex);
-			}
-			SDL_DestroySurface(surf);
+	SDL_Surface* surf = TTF_RenderText_Blended(g_ttf_font, utf8_text, 0, fg);
+	if (surf) {
+		SDL_Texture* tex = SDL_CreateTextureFromSurface(g_renderer, surf);
+		if (tex) {
+			float tw = (float)surf->w;
+			float th = (float)surf->h;
+			SDL_FRect trect = {
+				px + (pw - tw) * 0.5f,
+				py + (ph - th) * 0.5f,
+				tw, th
+			};
+			SDL_RenderTexture(g_renderer, tex, NULL, &trect);
+			SDL_DestroyTexture(tex);
 		}
-		delete[] utf8;
+		SDL_DestroySurface(surf);
 	}
 }
 
@@ -273,9 +257,7 @@ bool term_init(const char* title, int cols, int rows, int cell_w, int cell_h) {
 
 	TTF_Init();
 
-	char* title_utf8 = gbk_to_utf8(title);
-	g_window = SDL_CreateWindow(title_utf8 ? title_utf8 : title, g_win_w, g_win_h, 0);
-	delete[] title_utf8;
+	g_window = SDL_CreateWindow(title, g_win_w, g_win_h, 0);
 	if (!g_window) {
 		fprintf(stderr, "SDL_CreateWindow failed: %s\n", SDL_GetError());
 		return false;
@@ -403,10 +385,10 @@ void colorPrint(COLOR c, char* s) {
 void addstr_gbk(const char* s) {
 	int len = (int)strlen(s);
 	if (len == 0) return;
-	int wlen = MultiByteToWideChar(936, 0, s, len, NULL, 0);
+	int wlen = MultiByteToWideChar(CP_UTF8, 0, s, len, NULL, 0);
 	if (wlen <= 0) return;
 	wchar_t* buf = new wchar_t[wlen + 1];
-	MultiByteToWideChar(936, 0, s, len, buf, wlen);
+	MultiByteToWideChar(CP_UTF8, 0, s, len, buf, wlen);
 	buf[wlen] = 0;
 	put_str(g_cursor_x, g_cursor_y, buf, g_cur_fg, g_cur_bg);
 	g_cursor_x += wlen;
@@ -453,10 +435,10 @@ int term_printw(const char* fmt, ...) {
 	int len = vsnprintf(buf, sizeof(buf), fmt, args);
 	va_end(args);
 	if (len <= 0) return 0;
-	int wlen = MultiByteToWideChar(936, 0, buf, len, NULL, 0);
+	int wlen = MultiByteToWideChar(CP_UTF8, 0, buf, len, NULL, 0);
 	if (wlen <= 0) return 0;
 	wchar_t* wbuf = new wchar_t[wlen + 1];
-	MultiByteToWideChar(936, 0, buf, len, wbuf, wlen);
+	MultiByteToWideChar(CP_UTF8, 0, buf, len, wbuf, wlen);
 	wbuf[wlen] = 0;
 	put_str(g_cursor_x, g_cursor_y, wbuf, g_cur_fg, g_cur_bg);
 	g_cursor_x += wlen;

@@ -49,7 +49,7 @@ struct Cell {
 };
 static Cell* g_cells = nullptr;
 
-// 延迟直接绘制（绕过 cell，在 term_present 中执行）
+// 状态栏数值直接绘制（绕过 cell，持久保留跨帧）
 struct DeferredDraw {
 	int  px, py, pw, ph;
 	char text[64];
@@ -362,7 +362,7 @@ void term_present() {
 			delete[] wbuf;
 		}
 	}
-	g_deferred_count = 0;
+	// (不清除 g_deferred，使其在多次 term_present 间保持)
 
 	// 4. 底部消息
 	if (g_message[0]) {
@@ -564,4 +564,8 @@ void term_draw_text(int px, int py, int pw, int ph,
 	d.text[63] = 0;
 	d.fg = fg_color;
 	d.bg = bg_color;
+}
+
+void term_clear_draws() {
+	g_deferred_count = 0;
 }

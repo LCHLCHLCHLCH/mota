@@ -6,6 +6,8 @@
 void StatusBar::draw(const Player& ply) {
 	char buf[16];
 
+	term_clear_draws();
+
 	gotoxy(18, 0);
 	term_printw("%d", ply.floor);
 
@@ -17,7 +19,6 @@ void StatusBar::draw(const Player& ply) {
 	gotoxy(15, 9);  colorPrint(BLUE, (char*)"防");
 	gotoxy(15, 11); colorPrint(YELLOW, (char*)"金");
 
-	// 数值用 term_draw_text 直接 GDI 绘制，紧凑无空隙
 	snprintf(buf, sizeof(buf), "%d", ply.health);
 	term_draw_text(17 * 22, 2 * 22, 100, 22, buf, COLOR_WHITE, 0);
 

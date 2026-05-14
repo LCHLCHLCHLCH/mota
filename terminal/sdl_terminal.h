@@ -44,6 +44,7 @@ int  term_printw(const char* fmt, ...);
 // ============================================================
 void term_draw_text(int px, int py, int pw, int ph,
                     const char* text, int fg_color, int bg_color);
+void term_clear_draws();
 
 // ============================================================
 // 底部消息系统（走一步后自动消失）

@@ -92,3 +92,8 @@ add_custom_command(TARGET MotaSDL POST_BUILD
 	"${MINGW_BIN}/libwinpthread-1.dll"
 	"$<TARGET_FILE_DIR:MotaSDL>/libwinpthread-1.dll"
 )
+add_custom_command(TARGET MotaSDL POST_BUILD
+	COMMAND ${CMAKE_COMMAND} -E copy_if_different
+	"${CMAKE_SOURCE_DIR}/terminal/sdl3/simsun.ttc"
+	"$<TARGET_FILE_DIR:MotaSDL>/simsun.ttc"
+)

@@ -121,6 +121,20 @@ static void attr_to_colors(int attr, int& fg, int& bg) {
 // GDI 字体：高度 = cell 高度 - 2px 留白
 // ============================================================
 static void create_font() {
+	char exe_path[MAX_PATH];
+	GetModuleFileNameA(NULL, exe_path, MAX_PATH);
+	char* last_slash = strrchr(exe_path, '\\');
+	if (last_slash) {
+		*last_slash = 0;
+		char font_path[MAX_PATH];
+		snprintf(font_path, sizeof(font_path), "%s\\simsun.ttc", exe_path);
+		if (GetFileAttributesA(font_path) != INVALID_FILE_ATTRIBUTES) {
+			WCHAR wpath[MAX_PATH];
+			MultiByteToWideChar(CP_ACP, 0, font_path, -1, wpath, MAX_PATH);
+			AddFontResourceExW(wpath, FR_PRIVATE, 0);
+		}
+	}
+
 	int font_h = g_cell_h - 2;
 	if (font_h < 10) font_h = 10;
 	g_font = CreateFontW(

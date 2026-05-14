@@ -6,7 +6,6 @@ get_filename_component(MINGW_BIN "${CMAKE_CXX_COMPILER}" DIRECTORY)
 set(SDL3_ROOT "${CMAKE_SOURCE_DIR}/lib/SDL3-3.4.8/x86_64-w64-mingw32")
 set(SDL3_TTF_ROOT "${CMAKE_SOURCE_DIR}/lib/SDL3_ttf-3.2.2/x86_64-w64-mingw32")
 
-# Lua 动态库
 add_library(lua SHARED
 	lua-5.5.0/lapi.c lua-5.5.0/lauxlib.c lua-5.5.0/lbaselib.c lua-5.5.0/lcode.c
 	lua-5.5.0/lcorolib.c lua-5.5.0/lctype.c lua-5.5.0/ldblib.c lua-5.5.0/ldebug.c
@@ -31,12 +30,13 @@ add_executable(MotaSDL
 	terminal/sdl_statusBar.cpp terminal/sdl_terminal.cpp
 	terminal/console_cmd.cpp
 	terminal/save_system.cpp
-		src/script/lua_state.cpp src/script/lua_bridge.cpp
+	src/script/lua_state.cpp src/script/lua_bridge.cpp
 	logo/sdl_logo.rc
 )
 
 target_include_directories(MotaSDL PRIVATE
-	src src/render terminal src/script ${SDL3_ROOT}/include ${SDL3_ROOT}/include/SDL3
+	src src/render terminal src/script
+	${SDL3_ROOT}/include ${SDL3_ROOT}/include/SDL3
 	${SDL3_TTF_ROOT}/include ${SDL3_TTF_ROOT}/include/SDL3_ttf
 	lua-5.5.0
 )
@@ -46,41 +46,33 @@ target_compile_definitions(MotaSDL PRIVATE SDL3_BUILD)
 
 add_custom_command(TARGET MotaSDL POST_BUILD
 	COMMAND ${CMAKE_COMMAND} -E copy_if_different
-	"${SDL3_ROOT}/bin/SDL3.dll"
-	"$<TARGET_FILE_DIR:MotaSDL>/SDL3.dll"
+	"${SDL3_ROOT}/bin/SDL3.dll"   "$<TARGET_FILE_DIR:MotaSDL>/SDL3.dll"
 )
 add_custom_command(TARGET MotaSDL POST_BUILD
 	COMMAND ${CMAKE_COMMAND} -E copy_if_different
-	"${SDL3_TTF_ROOT}/bin/SDL3_ttf.dll"
-	"$<TARGET_FILE_DIR:MotaSDL>/SDL3_ttf.dll"
+	"${SDL3_TTF_ROOT}/bin/SDL3_ttf.dll" "$<TARGET_FILE_DIR:MotaSDL>/SDL3_ttf.dll"
 )
 add_custom_command(TARGET MotaSDL POST_BUILD
 	COMMAND ${CMAKE_COMMAND} -E copy_if_different
-	"$<TARGET_FILE:lua>"
-	"$<TARGET_FILE_DIR:MotaSDL>/$<TARGET_FILE_NAME:lua>"
+	"$<TARGET_FILE:lua>"  "$<TARGET_FILE_DIR:MotaSDL>/$<TARGET_FILE_NAME:lua>"
 )
 add_custom_command(TARGET MotaSDL POST_BUILD
 	COMMAND ${CMAKE_COMMAND} -E copy_if_different
-	"${MINGW_BIN}/libstdc++-6.dll"
-	"$<TARGET_FILE_DIR:MotaSDL>/libstdc++-6.dll"
+	"${MINGW_BIN}/libstdc++-6.dll"   "$<TARGET_FILE_DIR:MotaSDL>/libstdc++-6.dll"
 )
 add_custom_command(TARGET MotaSDL POST_BUILD
 	COMMAND ${CMAKE_COMMAND} -E copy_if_different
-	"${MINGW_BIN}/libgcc_s_seh-1.dll"
-	"$<TARGET_FILE_DIR:MotaSDL>/libgcc_s_seh-1.dll"
+	"${MINGW_BIN}/libgcc_s_seh-1.dll" "$<TARGET_FILE_DIR:MotaSDL>/libgcc_s_seh-1.dll"
 )
 add_custom_command(TARGET MotaSDL POST_BUILD
 	COMMAND ${CMAKE_COMMAND} -E copy_if_different
-	"${MINGW_BIN}/libwinpthread-1.dll"
-	"$<TARGET_FILE_DIR:MotaSDL>/libwinpthread-1.dll"
+	"${MINGW_BIN}/libwinpthread-1.dll" "$<TARGET_FILE_DIR:MotaSDL>/libwinpthread-1.dll"
 )
 add_custom_command(TARGET MotaSDL POST_BUILD
 	COMMAND ${CMAKE_COMMAND} -E copy_if_different
-	"${CMAKE_SOURCE_DIR}/lib/simsun.ttc"
-	"$<TARGET_FILE_DIR:MotaSDL>/map"
+	"${CMAKE_SOURCE_DIR}/lib/simsun.ttc" "$<TARGET_FILE_DIR:MotaSDL>/simsun.ttc"
 )
 add_custom_command(TARGET MotaSDL POST_BUILD
 	COMMAND ${CMAKE_COMMAND} -E copy_directory
-	"${CMAKE_SOURCE_DIR}/map"
-	"$<TARGET_FILE_DIR:MotaSDL>/map"
+	"${CMAKE_SOURCE_DIR}/map" "$<TARGET_FILE_DIR:MotaSDL>/map"
 )

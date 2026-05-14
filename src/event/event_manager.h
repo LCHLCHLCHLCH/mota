@@ -16,6 +16,8 @@ public:
 
 	bool hasFlag(uint8_t id) const;
 	void setFlag(uint8_t id);
+	uint8_t getAltarTimes() const { return altar_times_; }
+	void    setAltarTimes(uint8_t t) { altar_times_ = t; }
 
 private:
 	uint8_t flags_[MAX_FLAGS];

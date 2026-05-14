@@ -1,20 +1,6 @@
 #include "render/frame_print.h"
 #include <render/cursor.h>
 
-// Clear the right half of the current 2-column cell, then move back.
-// This guarantees no residual from a previous 2-col char can survive.
-#ifdef SDL3_BUILD
-// SDL3 用 GDI 渲染，无 CJK continuation-column 问题，此函数为空
-static void clearRightHalf() {}
-#else
-static void clearRightHalf() {
-	int y, x;
-	getyx(stdscr, y, x);
-	gotoxy(x + 1, y);
-	addch(' ');
-	gotoxy(x, y);
-}
-#endif
 
 void framePrintChar(uint8_t ch)
 {
@@ -22,19 +8,11 @@ void framePrintChar(uint8_t ch)
 	{
 	// 实体的部分
 	case 1:
-#ifdef SDL3_BUILD
-		addstr_gbk(" ");
-#else
-		addstr_gbk("  ");
-#endif
+addstr_gbk(" ");
 		break;
 	case 2:
 		SetConsoleColor(7 * 16 | 7);
-#ifdef SDL3_BUILD
-		addstr_gbk(" ");
-#else
-		addstr_gbk("  ");
-#endif
+addstr_gbk(" ");
 		SetColor(WHITE);
 		break;
 	case 3:
@@ -48,16 +26,11 @@ void framePrintChar(uint8_t ch)
 		break;
 	case 6:
 		SetConsoleColor(64 | 7);
-#ifdef SDL3_BUILD
-		addstr_gbk(" ");
-#else
-		addstr_gbk("  ");
-#endif
+addstr_gbk(" ");
 		SetColor(WHITE);
 		break;
 	case 7:
 		SetConsoleColor(1 * 16 | 7);
-		clearRightHalf();
 		addstr_gbk("★");
 		SetColor(WHITE);
 		break;
@@ -72,11 +45,7 @@ void framePrintChar(uint8_t ch)
 		break;
 	case 11:
 		SetConsoleColor(7 * 16 | 7);
-#ifdef SDL3_BUILD
-		addstr_gbk(" ");
-#else
-		addstr_gbk("  ");
-#endif
+addstr_gbk(" ");
 		SetColor(WHITE);
 		break;
 	// 道具
@@ -90,19 +59,15 @@ void framePrintChar(uint8_t ch)
 		colorPrint(RED, (char *)"钥");
 		break;
 	case 54:
-		clearRightHalf();
 		colorPrint(RED, (char *)"★");
 		break;
 	case 55:
-		clearRightHalf();
 		colorPrint(BLUE, (char *)"★");
 		break;
 	case 56:
-		clearRightHalf();
 		colorPrint(RED, (char *)"◆");
 		break;
 	case 57:
-		clearRightHalf();
 		colorPrint(BLUE, (char *)"◆");
 		break;
 	case 58:
@@ -143,11 +108,9 @@ void framePrintChar(uint8_t ch)
 		break;
 	// 这一区域是怪物
 	case 101:
-		clearRightHalf();
 		colorPrint(GREEN, (char *)"⊙");
 		break;
 	case 102:
-		clearRightHalf();
 		colorPrint(RED, (char *)"⊙");
 		break;
 	case 103:
@@ -169,7 +132,6 @@ void framePrintChar(uint8_t ch)
 		colorPrint(RED, (char *)"骷");
 		break;
 	case 109:
-		clearRightHalf();
 		colorPrint(PURPLE, (char *)"⊙");
 		break;
 	case 110:
@@ -227,7 +189,6 @@ void framePrintChar(uint8_t ch)
 		colorPrint(RED, (char*)"巫");
 		break;
 	case 128:
-		clearRightHalf();
 		colorPrint(GREEN, (char*)"Θ");
 		break;
 	case 129:
@@ -272,7 +233,6 @@ void framePrintChar(uint8_t ch)
 		break;
 	// 显示错误
 	default:
-		clearRightHalf();
 		addstr_gbk("？");
 		break;
 	}

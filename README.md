@@ -1,6 +1,6 @@
 # 魔塔 (Magic Tower)
 
-经典的魔塔游戏，使用 C++ 开发。
+经典的魔塔游戏，使用 C++ 开发，基于 SDL3 + SDL_ttf 渲染。
 
 ## 游戏操作
 
@@ -20,9 +20,8 @@
 
 - MinGW-w64 (GCC 16+)
 - CMake 3.28+
-- SDL3 (已内置在 `terminal/sdl3/` 中)
 
-### 构建步骤
+### 构建
 
 ```bash
 git clone https://github.com/LCHLCHLCHLCH/mota.git
@@ -32,35 +31,35 @@ cmake -G "MinGW Makefiles" ..
 cmake --build .
 ```
 
-项目包含两个构建目标：
-
-| 目标 | 说明 | 渲染方式 |
-|---|---|---|
-| `MagicalTower` | 控制台版本 | ncurses |
-| `MotaSDL` | 图形窗口版本 | SDL3 + GDI |
-
-构建全部目标：`cmake --build .`
-仅构建 SDL3 版本：`cmake --build . --target MotaSDL`
-
-### Linux
-
-暂不支持。SDL3 版本依赖 Windows GDI 进行 CJK 字体渲染，若需 Linux 支持需改用 SDL3_ttf 或 FreeType。
-
 ## 项目结构
 
 ```
-src/             游戏逻辑（与渲染后端无关）
-  game/          地图、怪物、玩家、数值计算
-  event/         事件系统（对话、触发器、祭坛）
-  render/        渲染抽象层（ncurses / SDL3 共用）
+src/             游戏逻辑
+  game/          地图、怪物、玩家、道具
+  event/         事件系统
+  render/        渲染层（帧绘制、区域显示）
   ui/            背包界面
-terminal/        SDL3 终端渲染后端
-  sdl3/          SDL3 预编译库 (3.4.8)
-lib/             ncurses 预编译库
+terminal/        SDL3 终端渲染和平台入口
+  sdl3/          SDL3 + SDL_ttf 预编译库
+  console_cmd    调试控制台
+  save_system    存档系统
 ```
+
+## 控制台命令
+
+游戏运行时可在命令行窗口输入命令：
+
+| 命令 | 说明 |
+|---|---|
+| `help` | 显示帮助 |
+| `info` | 显示玩家状态 |
+| `set health 999` | 设置属性 |
+| `save <name>` | 保存游戏 |
+| `load <name>` | 读取存档 |
+| `light on/off` | 切换浅色模式 |
 
 ## 许可
 
-本项目中的 C++ 源代码基于 MIT 许可证发布。详见 [LICENSE](LICENSE)。
+C++ 源代码基于 MIT 许可证发布。详见 [LICENSE](LICENSE)。
 
-SDL3 库文件 (`terminal/sdl3/`) 按 SDL 的 zlib 许可证分发，详见其 LICENSE.txt。
+SDL3 / SDL_ttf 库文件按各自许可证分发。

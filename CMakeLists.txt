@@ -1,64 +1,20 @@
 cmake_minimum_required(VERSION 3.28.1)
-project(MagicalTower)
+project(MotaSDL)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexec-charset=GBK")
-add_definitions(-D_XOPEN_SOURCE_EXTENDED)
 
 # MinGW 运行时 DLL 路径
 get_filename_component(MINGW_BIN "${CMAKE_CXX_COMPILER}" DIRECTORY)
 
-# 共享的游戏逻辑源文件（不含渲染层）
-set(GAME_SOURCES
+set(SDL3_ROOT "${CMAKE_SOURCE_DIR}/terminal/sdl3/SDL3-3.4.8/x86_64-w64-mingw32")
+set(SDL3_TTF_ROOT "${CMAKE_SOURCE_DIR}/terminal/sdl3/SDL3_ttf-3.2.2/x86_64-w64-mingw32")
+
+add_executable(MotaSDL
 	src/game/map.cpp src/game/monster.cpp src/game/player.cpp
 	src/game/item.cpp
 	src/event/event_manager.cpp
 	src/render/display.cpp src/render/frame_print.cpp
 	src/render/region_display.cpp src/ui/backpack.cpp
-)
-
-# ============================================================
-# 目标 1: ncurses 版本
-# ============================================================
-add_executable(MagicalTower
-	${GAME_SOURCES}
-	src/main.cpp
-	src/render/cursor.cpp src/render/key.cpp src/render/status_bar.cpp
-	src/event/dialog.cpp
-	logo/logo.rc
-)
-target_include_directories(MagicalTower PRIVATE src src/render)
-target_link_directories(MagicalTower PRIVATE ${CMAKE_SOURCE_DIR}/lib)
-target_link_libraries(MagicalTower ncursesw)
-
-add_custom_command(TARGET MagicalTower POST_BUILD
-	COMMAND ${CMAKE_COMMAND} -E copy_if_different
-	"${CMAKE_SOURCE_DIR}/lib/ncursesw.dll"
-	"$<TARGET_FILE_DIR:MagicalTower>/ncursesw.dll"
-)
-add_custom_command(TARGET MagicalTower POST_BUILD
-	COMMAND ${CMAKE_COMMAND} -E copy_if_different
-	"${MINGW_BIN}/libstdc++-6.dll"
-	"$<TARGET_FILE_DIR:MagicalTower>/libstdc++-6.dll"
-)
-add_custom_command(TARGET MagicalTower POST_BUILD
-	COMMAND ${CMAKE_COMMAND} -E copy_if_different
-	"${MINGW_BIN}/libgcc_s_seh-1.dll"
-	"$<TARGET_FILE_DIR:MagicalTower>/libgcc_s_seh-1.dll"
-)
-add_custom_command(TARGET MagicalTower POST_BUILD
-	COMMAND ${CMAKE_COMMAND} -E copy_if_different
-	"${MINGW_BIN}/libwinpthread-1.dll"
-	"$<TARGET_FILE_DIR:MagicalTower>/libwinpthread-1.dll"
-)
-
-# ============================================================
-# 目标 2: SDL3 终端版本
-# ============================================================
-set(SDL3_ROOT "${CMAKE_SOURCE_DIR}/terminal/sdl3/SDL3-3.4.8/x86_64-w64-mingw32")
-set(SDL3_TTF_ROOT "${CMAKE_SOURCE_DIR}/terminal/sdl3/SDL3_ttf-3.2.2/x86_64-w64-mingw32")
-
-add_executable(MotaSDL
-	${GAME_SOURCES}
 	terminal/main.cpp
 	terminal/sdl_dialog.cpp terminal/sdl_key.cpp
 	terminal/sdl_statusBar.cpp terminal/sdl_terminal.cpp

@@ -1,14 +1,6 @@
 #pragma once
 
-#ifdef SDL3_BUILD
-// SDL3 版本：使用 sdl_terminal 提供的函数
 #include <../terminal/sdl_terminal.h>
-#else
-// ncurses 版本
-#include <render/ncursesw/curses.h>
-inline void term_set_message(const char*) {}
-inline void term_clear_message() {}
-#endif
 
 enum COLOR {
 	RED,
@@ -35,6 +27,4 @@ void SetConsoleColor(int attr);
 void SetColor(COLOR a);
 void colorPrint(COLOR c, char *s);
 void addstr_gbk(const char* s);
-#ifdef SDL3_BUILD
 void addch(char ch);
-#endif

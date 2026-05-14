@@ -367,7 +367,20 @@ void Player::reactToProp(uint8_t floor_going, uint8_t x_going, uint8_t y_going)
 			this->backpack->addItem(&iceItem);
 		}
 		term_set_message("获得冰霜魔法！进入背包按Z使用");
+				case 70: // 炸药
+		this->x = x_going;
+		this->y = y_going;
+		map_set(floor_going, x_going, y_going, 1);
+		if (this->backpack) {
+			static Item bombItem;
+			static char bombName[] = "炸药";
+			bombItem.name = bombName;
+			bombItem.id = 70;
+			this->backpack->addItem(&bombItem);
+		}
+		term_set_message("获得炸药！进入背包按Z使用");
 		break;
+break;
 	}
 }
 

@@ -21,6 +21,7 @@ const char* getItemName(uint8_t id) {
 		case 67: return "神圣盾";
 		case 68: return "楼层传送器";
 		case 69: return "冰霜魔法";
+		case 70: return "炸药";
 		default: return "未知道具";
 	}
 }

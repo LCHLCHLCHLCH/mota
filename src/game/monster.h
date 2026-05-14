@@ -13,3 +13,4 @@ public:
 
 Monster* getMonsterType(uint8_t id);
 const char* getMonsterName(uint8_t id);
+bool isBossMonster(uint8_t id);

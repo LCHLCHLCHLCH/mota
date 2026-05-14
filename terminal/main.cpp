@@ -2,16 +2,15 @@
 #include "sdl_terminal.h"
 #include "console_cmd.h"
 #include "game/player.h"
+#include "game/monster.h"
 #include "render/display.h"
 #include "render/key.h"
 #include "game/map.h"
-#include "game/monster.h"
 #include "render/region_display.h"
 #include "render/status_bar.h"
 #include "event/dialog.h"
 #include "ui/backpack.h"
 #include "event/event_manager.h"
-#include <cstring>
 
 int main(int argc, char** argv) {
 	(void)argc; (void)argv;
@@ -52,6 +51,32 @@ int main(int argc, char** argv) {
 			Item* chosen = backpack.selectItem();
 			if (chosen && chosen->id == 69) {
 				player.freezeLava();
+			}
+			else if (chosen && chosen->id == 70) {
+				int killed = 0;
+				uint8_t px = player.x, py = player.y;
+				uint8_t adj[4][2] = {
+					{px, (uint8_t)(py - 1)},
+					{px, (uint8_t)(py + 1)},
+					{(uint8_t)(px - 1), py},
+					{(uint8_t)(px + 1), py}
+				};
+				for (int i = 0; i < 4; i++) {
+					uint8_t t = map_get(player.floor, adj[i][0], adj[i][1]);
+					if (t >= 101 && t <= 150 && !isBossMonster(t)) {
+						map_set(player.floor, adj[i][0], adj[i][1], 1);
+						player.money += getMonsterType(t)->money;
+						killed++;
+					}
+				}
+				if (killed > 0) {
+					char _m[64];
+					snprintf(_m, sizeof(_m), "炸药炸死了%d个怪物", killed);
+					term_set_message(_m);
+				} else {
+					term_set_message("炸药没有效果");
+				}
+				backpack.delItem(chosen);
 			}
 		} else {
 			player.respondToKey(key);

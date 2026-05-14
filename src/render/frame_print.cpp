@@ -107,7 +107,10 @@ addstr_gbk(" ");
 		colorPrint(BLUE, (char *)"冰");
 		break;
 	// 这一区域是怪物
-	case 101:
+			case 70:
+			colorPrint(RED, (char *)"炸");
+			break;
+		case 101:
 		colorPrint(GREEN, (char *)"⊙");
 		break;
 	case 102:

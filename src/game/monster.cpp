@@ -377,3 +377,20 @@ const char* getMonsterName(uint8_t id) {
 		default:  return "未知怪物";
 	}
 }
+
+bool isBossMonster(uint8_t id) {
+	switch (id) {
+		case 115:  // 巨型章鱼
+		case 116:  // 吸血鬼
+		case 117:  // 大法师
+		case 123:  // 魔龙
+		case 128:  // 史莱姆王
+		case 132:  // 高级卫兵
+		case 133:  // 假魔王
+		case 134:  // 假魔王(封印)
+		case 135:  // 真魔王
+			return true;
+		default:
+			return false;
+	}
+}

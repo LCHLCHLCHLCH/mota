@@ -52,6 +52,7 @@ static unsigned __stdcall console_thread(void* param) {
 }
 
 void console_welcome() {
+	SetConsoleOutputCP(CP_UTF8);
 	InitializeCriticalSection(&g_cs);
 	printf("========================================\n");
 	printf("  魔塔 SDL3 - 调试控制台 (Lua)\n");

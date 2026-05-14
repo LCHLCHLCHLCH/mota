@@ -1,4 +1,5 @@
 #include "console_cmd.h"
+#include "sdl_terminal.h"
 #include "save_system.h"
 #include "game/player.h"
 #include "game/map.h"
@@ -107,6 +108,7 @@ static void print_help() {
 	printf("  killall                  清除当前楼层所有怪物\n");
 	printf("  save   <name>            保存游戏\n");
 	printf("  load   <name>            读取存档\n");
+	printf("  light  on/off            切换浅色模式\n");
 	printf("\n");
 }
 
@@ -250,6 +252,17 @@ static void process_command(const char* cmd, Player& player, EventManager& event
 			load_game(word2, player, events);
 		else
 			printf("用法: load <名字>\n");
+	}
+	else if (strcmp(word1, "light") == 0) {
+		if (strcmp(word2, "on") == 0 || strcmp(word2, "1") == 0) {
+			term_set_light_mode(true);
+			printf("light mode on\n");
+		} else if (strcmp(word2, "off") == 0 || strcmp(word2, "0") == 0) {
+			term_set_light_mode(false);
+			printf("light mode off\n");
+		} else {
+			printf("usage: light on|off\n");
+		}
 	}
 	else {
 		printf("未知命令: %s (输入 help 查看帮助)\n", word1);

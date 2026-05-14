@@ -38,6 +38,9 @@ static int g_cursor_y = 0;
 // 退出标志
 static bool g_quit = false;
 
+// 浅色模式：背景白、前景白字变黑、彩色不变
+static bool g_light_mode = false;
+
 // 底部消息
 static char g_message[128] = "";
 
@@ -443,6 +446,14 @@ void drainInput() {}
 
 bool term_quit_requested() {
 	return g_quit;
+}
+
+void term_set_light_mode(bool on) {
+	if (g_light_mode == on) return;
+	g_light_mode = on;
+	SDL_Color tmp = g_palette[0];
+	g_palette[0] = g_palette[4];
+	g_palette[4] = tmp;
 }
 
 void term_set_message(const char* msg) {

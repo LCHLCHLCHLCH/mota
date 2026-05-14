@@ -1,9 +1,14 @@
 #include "game/map.h"
+#include "game/player.h"
+#include "game/monster.h"
+#include "event/event_manager.h"
 #include "script/lua_state.h"
 extern "C" {
 #include "lua.h"
 #include "lauxlib.h"
 }
+#include "game/player.h"
+#include "game/monster.h"
 #include <cstring>
 #include <cstdio>
 
@@ -64,4 +69,18 @@ void map_set(uint8_t floor, uint8_t x, uint8_t y, uint8_t value) {
 uint8_t map_get_default(uint8_t floor, uint8_t x, uint8_t y) {
 	if (floor > 50 || x >= 13 || y >= 13) return 0;
 	return g_map_default[floor][y][x];
+}
+
+int map_kill_monster(uint8_t floor, uint8_t x, uint8_t y, Player* player) {
+	uint8_t t = map_get(floor, x, y);
+	if (t < 101 || t > 150) return 0;
+	map_set(floor, x, y, 1);
+	int gold = getMonsterType(t)->money;
+	if (player) {
+		player->money += gold;
+		if (player->events) {
+			player->events->checkGuardKill(floor, x, y, *player);
+		}
+	}
+	return gold;
 }

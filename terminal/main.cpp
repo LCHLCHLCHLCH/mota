@@ -58,22 +58,17 @@ int main(int argc, char** argv) {
 			else if (chosen && chosen->id == 70) {
 				int killed = 0;
 				uint8_t px = player.x, py = player.y;
-				uint8_t dirs[4][2] = {{px, (uint8_t)(py-1)}, {px, (uint8_t)(py+1)}, {(uint8_t)(px-1), py}, {(uint8_t)(px+1), py}};
+				uint8_t dirs[4][2] = {{px,(uint8_t)(py-1)},{px,(uint8_t)(py+1)},{(uint8_t)(px-1),py},{(uint8_t)(px+1),py}};
 				for (int i = 0; i < 4; i++) {
 					uint8_t tx = dirs[i][0], ty = dirs[i][1];
 					uint8_t t = map_get(player.floor, tx, ty);
 					if (t >= 101 && t <= 150 && !isBossMonster(t)) {
-						map_set(player.floor, tx, ty, 1);
-						player.money += getMonsterType(t)->money;
-						if (player.events)
-							player.events->checkGuardKill(player.floor, tx, ty, player);
+						map_kill_monster(player.floor, tx, ty, &player);
 						killed++;
 					}
 				}
 				backpack.delItem(chosen);
 				if (killed > 0) {
-					if (player.events)
-						player.events->checkClear(player.floor);
 					char _m[64];
 					snprintf(_m, sizeof(_m), "炸药炸死了%d个怪物", killed);
 					term_set_message(_m);

@@ -108,27 +108,22 @@ void Player::reactToMonster(uint8_t floor_going, uint8_t x_going, uint8_t y_goin
 		this->x = x_going;
 		this->y = y_going;
 		// 清除怪物
-		map_set(floor_going, x_going, y_going, 1);
+		map_kill_monster(floor_going, x_going, y_going, this);
 		// 受到伤害
 		this->health = this->health - this->hurt;
-		// 加钱
-		this->money += m->money;
 		// 消息
 		{
 			char _m[64];
 			if (this->hurt > 0)
 				snprintf(_m, sizeof(_m), "击败%s，损失%d生命，获得%d金币",
-					getMonsterName(id), (int)this->hurt, (int)m->money);
+				getMonsterName(id), (int)this->hurt, (int)m->money);
 			else
 				snprintf(_m, sizeof(_m), "击败%s，获得%d金币",
-					getMonsterName(id), (int)m->money);
+				getMonsterName(id), (int)m->money);
 			term_set_message(_m);
 		}
-		// 通知事件系统
-		if (this->events != nullptr) {
+		if (this->events != nullptr)
 			this->events->checkClear(floor_going);
-			this->events->checkGuardKill(floor_going, x_going, y_going, *this);
-		}
 	}
 	else
 	{
@@ -366,7 +361,7 @@ void Player::reactToProp(uint8_t floor_going, uint8_t x_going, uint8_t y_going)
 			iceItem.id = 69;
 			this->backpack->addItem(&iceItem);
 		}
-		term_set_message("获得冰霜魔法！进入背包按Z使用");
+		term_set_message("获得冰霜魔法");
 				case 70: // 炸药
 		this->x = x_going;
 		this->y = y_going;
@@ -378,7 +373,7 @@ void Player::reactToProp(uint8_t floor_going, uint8_t x_going, uint8_t y_going)
 			bombItem.id = 70;
 			this->backpack->addItem(&bombItem);
 		}
-		term_set_message("获得炸药！进入背包按Z使用");
+		term_set_message("获得炸药");
 		break;
 break;
 	}

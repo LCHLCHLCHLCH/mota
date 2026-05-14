@@ -18,10 +18,12 @@ return {
     },
         events = {
         {
-            trigger = "on_clear",
+            trigger = "on_tile",
+            tile = 154,
             condition_flag = 2,
             set_flag = 2,
             actions = {
+                { type = "say", text = "所有牢门都已打开！" },
                 { type = "replace_all", from = 8, to = 1 },
             }
         }

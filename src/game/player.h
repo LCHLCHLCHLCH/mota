@@ -3,7 +3,6 @@
 #include "game/map.h"
 #include "render/key.h"
 #include "game/monster.h"
-#include "game/calc.h"
 #include "event/dialog.h"
 
 class EventManager;

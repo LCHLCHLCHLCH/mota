@@ -205,16 +205,16 @@ void EventManager::executeAction(const EventAction& act, Player& player, uint8_t
 
 	case ActionType::GIVE_POTION:
 		if (act.param == 0)
-			player.health += get_Red_Health_Potion_Value(player.floor);
+			player.health += (((player.floor) - 1) / 10 + 1) * 50;
 		else
-			player.health += get_Blue_Health_Potion_Value(player.floor);
+			player.health += (((player.floor) - 1) / 10 + 1) * 200;
 		break;
 
 	case ActionType::GIVE_GEM:
 		if (act.param == 0)
-			player.attack += get_Gem_Stone_Value(player.floor);
+			player.attack += (((player.floor) - 1) / 10 + 1);
 		else
-			player.defence += get_Gem_Stone_Value(player.floor);
+			player.defence += (((player.floor) - 1) / 10 + 1);
 		break;
 
 	case ActionType::GIVE_EQUIP: {

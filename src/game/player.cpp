@@ -234,11 +234,11 @@ void Player::reactToProp(uint8_t floor_going, uint8_t x_going, uint8_t y_going)
 		this->x = x_going;
 		this->y = y_going;
 		map_set(floor_going, x_going, y_going, 1);
-		this->health = this->health + get_Red_Health_Potion_Value(this->floor);
+		this->health = this->health + (((this->floor) - 1) / 10 + 1) * 50;
 		{
 			char _m[32];
 			snprintf(_m, sizeof(_m), "获得红血瓶，生命增加%d",
-				get_Red_Health_Potion_Value(this->floor));
+				(((this->floor) - 1) / 10 + 1) * 50);
 			term_set_message(_m);
 		}
 		break;
@@ -246,11 +246,11 @@ void Player::reactToProp(uint8_t floor_going, uint8_t x_going, uint8_t y_going)
 		this->x = x_going;
 		this->y = y_going;
 		map_set(floor_going, x_going, y_going, 1);
-		this->health = this->health + get_Blue_Health_Potion_Value(this->floor);
+		this->health = this->health + (((this->floor) - 1) / 10 + 1) * 200;
 		{
 			char _m[32];
 			snprintf(_m, sizeof(_m), "获得蓝血瓶，生命增加%d",
-				get_Blue_Health_Potion_Value(this->floor));
+				(((this->floor) - 1) / 10 + 1) * 200);
 			term_set_message(_m);
 		}
 		break;
@@ -258,11 +258,11 @@ void Player::reactToProp(uint8_t floor_going, uint8_t x_going, uint8_t y_going)
 		this->x = x_going;
 		this->y = y_going;
 		map_set(floor_going, x_going, y_going, 1);
-		this->attack = this->attack + get_Gem_Stone_Value(this->floor);
+		this->attack = this->attack + (((this->floor) - 1) / 10 + 1);
 		{
 			char _m[32];
 			snprintf(_m, sizeof(_m), "获得红宝石，攻击增加%d",
-				get_Gem_Stone_Value(this->floor));
+				(((this->floor) - 1) / 10 + 1));
 			term_set_message(_m);
 		}
 		break;
@@ -270,11 +270,11 @@ void Player::reactToProp(uint8_t floor_going, uint8_t x_going, uint8_t y_going)
 		this->x = x_going;
 		this->y = y_going;
 		map_set(floor_going, x_going, y_going, 1);
-		this->defence = this->defence + get_Gem_Stone_Value(this->floor);
+		this->defence = this->defence + (((this->floor) - 1) / 10 + 1);
 		{
 			char _m[32];
 			snprintf(_m, sizeof(_m), "获得蓝宝石，防御增加%d",
-				get_Gem_Stone_Value(this->floor));
+				(((this->floor) - 1) / 10 + 1));
 			term_set_message(_m);
 		}
 		break;

@@ -18,12 +18,11 @@ return {
     },
         events = {
         {
-            trigger = "on_tile",
-            tile = 154,
+            trigger = "on_guard_kill",
+            guards = {{x = 6, y = 2}, {x = 8, y = 2}},
             condition_flag = 2,
             set_flag = 2,
             actions = {
-                { type = "say", text = "所有牢门都已打开！" },
                 { type = "replace_all", from = 8, to = 1 },
             }
         }

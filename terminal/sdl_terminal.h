@@ -1,5 +1,6 @@
 #pragma once
 #include <SDL3/SDL.h>
+#include <SDL3_ttf/SDL_ttf.h>
 
 // ============================================================
 // SDL3 终端初始化 / 关闭 / 渲染
@@ -40,7 +41,7 @@ void term_set_light_mode(bool on);
 int  term_printw(const char* fmt, ...);
 
 // ============================================================
-// 直接 GDI 文本（绕过 cell，用于状态栏数值等需要紧凑排版的场景）
+// 直接 SDL 文本（绕过 cell，用于状态栏数值等需要紧凑排版的场景）
 // 坐标单位：像素
 // ============================================================
 void term_draw_text(int px, int py, int pw, int ph,

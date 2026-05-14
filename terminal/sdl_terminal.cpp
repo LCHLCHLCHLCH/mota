@@ -10,19 +10,13 @@
 // ============================================================
 static SDL_Window*   g_window    = nullptr;
 static SDL_Renderer* g_renderer  = nullptr;
-static SDL_Texture*  g_texture   = nullptr;
 
 static int g_cols = 28, g_rows = 22;
 static int g_cell_w = 22, g_cell_h = 22;
 static int g_win_w = 616, g_win_h = 484;
-static int g_row_bytes = 0;
 
-// GDI 资源
-static HDC     g_mem_dc   = nullptr;
-static HBITMAP g_mem_bmp  = nullptr;
-static HBITMAP g_old_bmp  = nullptr;
-static HFONT   g_font     = nullptr;
-static BYTE*   g_dib_bits = nullptr;
+// SDL_ttf 字体
+static TTF_Font* g_ttf_font = nullptr;
 
 // 调色板
 static SDL_Color g_palette[16];
@@ -38,7 +32,7 @@ static int g_cursor_y = 0;
 // 退出标志
 static bool g_quit = false;
 
-// 浅色模式：背景白、前景白字变黑、彩色不变
+// 浅色模式
 static bool g_light_mode = false;
 
 // 底部消息
@@ -52,7 +46,7 @@ struct Cell {
 };
 static Cell* g_cells = nullptr;
 
-// 状态栏数值直接绘制（绕过 cell，持久保留跨帧）
+// 延迟直接绘制
 struct DeferredDraw {
 	int  px, py, pw, ph;
 	char text[64];
@@ -62,7 +56,7 @@ static DeferredDraw g_deferred[16];
 static int          g_deferred_count = 0;
 
 // ============================================================
-// GBK → UTF-8 转换（用于窗口标题等 SDL API）
+// UTF-8 转换
 // ============================================================
 static char* gbk_to_utf8(const char* gbk) {
 	int wlen = MultiByteToWideChar(936, 0, gbk, -1, NULL, 0);
@@ -73,6 +67,16 @@ static char* gbk_to_utf8(const char* gbk) {
 	char* utf8 = new char[ulen];
 	WideCharToMultiByte(CP_UTF8, 0, wbuf, wlen, utf8, ulen, NULL, NULL);
 	delete[] wbuf;
+	return utf8;
+}
+
+static char* wchar_to_utf8(const wchar_t* wstr, int wlen) {
+	if (wlen <= 0) return NULL;
+	int ulen = WideCharToMultiByte(CP_UTF8, 0, wstr, wlen, NULL, 0, NULL, NULL);
+	if (ulen <= 0) return NULL;
+	char* utf8 = new char[ulen + 1];
+	WideCharToMultiByte(CP_UTF8, 0, wstr, wlen, utf8, ulen, NULL, NULL);
+	utf8[ulen] = 0;
 	return utf8;
 }
 
@@ -112,18 +116,18 @@ static int color_to_idx(COLOR c) {
 
 static void attr_to_colors(int attr, int& fg, int& bg) {
 	switch (attr) {
-		case 7 * 16 | 7:  fg = 4; bg = 4; break;  // WALL
-		case 64 | 7:      fg = 4; bg = 1; break;  // LAVA
-		case 1 * 16 | 7:  fg = 4; bg = 3; break;  // STAR
-		case 9 * 16 | 7:  fg = 4; bg = 3; break;  // EMPH
+		case 7 * 16 | 7:  fg = 4; bg = 4; break;
+		case 64 | 7:      fg = 4; bg = 1; break;
+		case 1 * 16 | 7:  fg = 4; bg = 3; break;
+		case 9 * 16 | 7:  fg = 4; bg = 3; break;
 		default:          fg = 4; bg = 0; break;
 	}
 }
 
 // ============================================================
-// GDI 字体：高度 = cell 高度 - 2px 留白
+// 加载字体
 // ============================================================
-static void create_font() {
+static void load_font() {
 	char exe_path[MAX_PATH];
 	GetModuleFileNameA(NULL, exe_path, MAX_PATH);
 	char* last_slash = strrchr(exe_path, '\\');
@@ -132,20 +136,17 @@ static void create_font() {
 		char font_path[MAX_PATH];
 		snprintf(font_path, sizeof(font_path), "%s\\simsun.ttc", exe_path);
 		if (GetFileAttributesA(font_path) != INVALID_FILE_ATTRIBUTES) {
-			WCHAR wpath[MAX_PATH];
-			MultiByteToWideChar(CP_ACP, 0, font_path, -1, wpath, MAX_PATH);
-			AddFontResourceExW(wpath, FR_PRIVATE, 0);
+			g_ttf_font = TTF_OpenFont(font_path, g_cell_h - 2);
 		}
 	}
-
-	int font_h = g_cell_h - 2;
-	if (font_h < 10) font_h = 10;
-	g_font = CreateFontW(
-		font_h, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
-		DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
-		CLEARTYPE_QUALITY, FIXED_PITCH | FF_MODERN,
-		L"SimSun"
-	);
+	if (!g_ttf_font) {
+		// 回退到系统字体
+		char sys_path[MAX_PATH];
+		GetWindowsDirectoryA(sys_path, MAX_PATH);
+		char font_path[MAX_PATH];
+		snprintf(font_path, sizeof(font_path), "%s\\Fonts\\simsun.ttc", sys_path);
+		g_ttf_font = TTF_OpenFont(font_path, g_cell_h - 2);
+	}
 }
 
 // ============================================================
@@ -168,10 +169,7 @@ static void put_cell(int col, int row, wchar_t ch, int fg, int bg) {
 static void put_str(int col, int row, const wchar_t* s, int fg, int bg) {
 	int start_col = col;
 	while (*s) {
-		if (col >= g_cols) {
-			row++;
-			col = start_col;
-		}
+		if (col >= g_cols) { row++; col = start_col; }
 		if (row >= g_rows) break;
 		put_cell(col, row, *s, fg, bg);
 		col++;
@@ -180,30 +178,73 @@ static void put_str(int col, int row, const wchar_t* s, int fg, int bg) {
 }
 
 // ============================================================
-// 逐行渲染：每 cell 独立绘制，保证位置稳定
+// SDL 渲染一个 cell
 // ============================================================
-static void render_row_gdi(int row) {
-	for (int col = 0; col < g_cols; col++) {
-		Cell* c = cell_at(col, row);
-		if (!c) continue;
+static void draw_cell_sdl(int col, int row) {
+	Cell* c = cell_at(col, row);
+	if (!c) return;
 
-		int cx = col * g_cell_w;
-		int cy = row * g_cell_h;
-		RECT rect = { cx, cy, cx + g_cell_w, cy + g_cell_h };
+	int cx = col * g_cell_w;
+	int cy = row * g_cell_h;
+	SDL_FRect rect = { (float)cx, (float)cy, (float)g_cell_w, (float)g_cell_h };
 
-		SDL_Color& bg_c = g_palette[c->bg];
-		HBRUSH brush = CreateSolidBrush(RGB(bg_c.r, bg_c.g, bg_c.b));
-		FillRect(g_mem_dc, &rect, brush);
-		DeleteObject(brush);
+	SDL_Color& bg_c = g_palette[c->bg];
+	SDL_SetRenderDrawColor(g_renderer, bg_c.r, bg_c.g, bg_c.b, bg_c.a);
+	SDL_RenderFillRect(g_renderer, &rect);
 
-		if (c->ch != L' ') {
-			SDL_Color& fg_c = g_palette[c->fg];
-			SetTextColor(g_mem_dc, RGB(fg_c.r, fg_c.g, fg_c.b));
-			SetBkMode(g_mem_dc, TRANSPARENT);
-			SelectObject(g_mem_dc, g_font);
-			DrawTextW(g_mem_dc, &c->ch, 1, &rect,
-				DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+	if (c->ch != L' ') {
+		SDL_Color& fg_c = g_palette[c->fg];
+		char* utf8 = wchar_to_utf8(&c->ch, 1);
+		if (utf8) {
+			SDL_Surface* surf = TTF_RenderText_Blended(g_ttf_font, utf8, 0, fg_c);
+			if (surf) {
+				SDL_Texture* tex = SDL_CreateTextureFromSurface(g_renderer, surf);
+				if (tex) {
+					float tw = (float)surf->w;
+					float th = (float)surf->h;
+					SDL_FRect trect = {
+						cx + (g_cell_w - tw) * 0.5f,
+						cy + (g_cell_h - th) * 0.5f,
+						tw, th
+					};
+					SDL_RenderTexture(g_renderer, tex, NULL, &trect);
+					SDL_DestroyTexture(tex);
+				}
+				SDL_DestroySurface(surf);
+			}
+			delete[] utf8;
 		}
+	}
+}
+
+// ============================================================
+// SDL 渲染文本（状态栏数值、底部消息等）
+// ============================================================
+static void draw_text_rect(int px, int py, int pw, int ph,
+                           const char* gbk_text, SDL_Color fg, SDL_Color bg) {
+	SDL_FRect rect = { (float)px, (float)py, (float)pw, (float)ph };
+	SDL_SetRenderDrawColor(g_renderer, bg.r, bg.g, bg.b, bg.a);
+	SDL_RenderFillRect(g_renderer, &rect);
+
+	char* utf8 = gbk_to_utf8(gbk_text);
+	if (utf8) {
+		SDL_Surface* surf = TTF_RenderText_Blended(g_ttf_font, utf8, 0, fg);
+		if (surf) {
+			SDL_Texture* tex = SDL_CreateTextureFromSurface(g_renderer, surf);
+			if (tex) {
+				float tw = (float)surf->w;
+				float th = (float)surf->h;
+				SDL_FRect trect = {
+					px + (pw - tw) * 0.5f,
+					py + (ph - th) * 0.5f,
+					tw, th
+				};
+				SDL_RenderTexture(g_renderer, tex, NULL, &trect);
+				SDL_DestroyTexture(tex);
+			}
+			SDL_DestroySurface(surf);
+		}
+		delete[] utf8;
 	}
 }
 
@@ -215,7 +256,6 @@ bool term_init(const char* title, int cols, int rows, int cell_w, int cell_h) {
 	g_cell_w = cell_w; g_cell_h = cell_h;
 	g_win_w = cols * cell_w;
 	g_win_h = rows * cell_h;
-	g_row_bytes = g_win_w * 4;
 
 	g_cells = new Cell[cols * rows];
 	for (int i = 0; i < cols * rows; i++) {
@@ -231,6 +271,8 @@ bool term_init(const char* title, int cols, int rows, int cell_w, int cell_h) {
 		return false;
 	}
 
+	TTF_Init();
+
 	char* title_utf8 = gbk_to_utf8(title);
 	g_window = SDL_CreateWindow(title_utf8 ? title_utf8 : title, g_win_w, g_win_h, 0);
 	delete[] title_utf8;
@@ -245,37 +287,11 @@ bool term_init(const char* title, int cols, int rows, int cell_w, int cell_h) {
 		return false;
 	}
 
-	g_texture = SDL_CreateTexture(g_renderer,
-		SDL_PIXELFORMAT_XRGB8888, SDL_TEXTUREACCESS_STREAMING,
-		g_win_w, g_win_h);
-	if (!g_texture) {
-		g_texture = SDL_CreateTexture(g_renderer,
-			SDL_PIXELFORMAT_BGRA8888, SDL_TEXTUREACCESS_STREAMING,
-			g_win_w, g_win_h);
-	}
-	if (!g_texture) {
-		fprintf(stderr, "SDL_CreateTexture failed: %s\n", SDL_GetError());
+	load_font();
+	if (!g_ttf_font) {
+		fprintf(stderr, "Failed to load font\n");
 		return false;
 	}
-
-	// GDI DIB section
-	HDC screen_dc = GetDC(NULL);
-	g_mem_dc = CreateCompatibleDC(screen_dc);
-
-	BITMAPINFO bmi = {};
-	bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-	bmi.bmiHeader.biWidth = g_win_w;
-	bmi.bmiHeader.biHeight = -g_win_h;  // top-down
-	bmi.bmiHeader.biPlanes = 1;
-	bmi.bmiHeader.biBitCount = 32;
-	bmi.bmiHeader.biCompression = BI_RGB;
-
-	g_mem_bmp = CreateDIBSection(g_mem_dc, &bmi, DIB_RGB_COLORS,
-		(void**)&g_dib_bits, NULL, 0);
-	g_old_bmp = (HBITMAP)SelectObject(g_mem_dc, g_mem_bmp);
-	ReleaseDC(NULL, screen_dc);
-
-	create_font();
 
 	// 设置窗口图标
 	{
@@ -285,27 +301,18 @@ bool term_init(const char* title, int cols, int rows, int cell_w, int cell_h) {
 			BITMAP bm;
 			GetObjectW(hBmp, sizeof(bm), &bm);
 			int w = bm.bmWidth, h = bm.bmHeight;
-
 			BITMAPINFOHEADER bi = {};
 			bi.biSize = sizeof(bi);
-			bi.biWidth = w;
-			bi.biHeight = -h;
-			bi.biPlanes = 1;
-			bi.biBitCount = 32;
-			bi.biCompression = BI_RGB;
-
-			int rowBytes = w * 4;
-			BYTE* px = new BYTE[h * rowBytes];
+			bi.biWidth = w; bi.biHeight = -h;
+			bi.biPlanes = 1; bi.biBitCount = 32; bi.biCompression = BI_RGB;
+			int rb = w * 4;
+			BYTE* px = new BYTE[h * rb];
 			HDC hdc = GetDC(NULL);
 			GetDIBits(hdc, hBmp, 0, h, px, (BITMAPINFO*)&bi, DIB_RGB_COLORS);
 			ReleaseDC(NULL, hdc);
-
 			SDL_Surface* surf = SDL_CreateSurfaceFrom(w, h,
-				SDL_PIXELFORMAT_BGRA8888, px, rowBytes);
-			if (surf) {
-				SDL_SetWindowIcon(g_window, surf);
-				SDL_DestroySurface(surf);
-			}
+				SDL_PIXELFORMAT_BGRA8888, px, rb);
+			if (surf) { SDL_SetWindowIcon(g_window, surf); SDL_DestroySurface(surf); }
 			delete[] px;
 			DeleteObject(hBmp);
 		}
@@ -315,17 +322,11 @@ bool term_init(const char* title, int cols, int rows, int cell_w, int cell_h) {
 }
 
 void term_shutdown() {
-	delete[] g_cells;
-	g_cells = nullptr;
-
-	if (g_font)    DeleteObject(g_font);
-	if (g_old_bmp) SelectObject(g_mem_dc, g_old_bmp);
-	if (g_mem_bmp) DeleteObject(g_mem_bmp);
-	if (g_mem_dc)  DeleteDC(g_mem_dc);
-
-	if (g_texture)   SDL_DestroyTexture(g_texture);
-	if (g_renderer)  SDL_DestroyRenderer(g_renderer);
-	if (g_window)    SDL_DestroyWindow(g_window);
+	delete[] g_cells; g_cells = nullptr;
+	if (g_ttf_font) { TTF_CloseFont(g_ttf_font); g_ttf_font = nullptr; }
+	TTF_Quit();
+	if (g_renderer) { SDL_DestroyRenderer(g_renderer); g_renderer = nullptr; }
+	if (g_window)   { SDL_DestroyWindow(g_window); g_window = nullptr; }
 	SDL_Quit();
 }
 
@@ -333,71 +334,30 @@ void term_shutdown() {
 // 帧渲染
 // ============================================================
 void term_present() {
-	int total_pixels = g_win_w * g_win_h;
-
-	// 1. 清空 DIB
-	memset(g_dib_bits, 0, total_pixels * 4);
+	// 1. 清屏
+	SDL_Color& bg0 = g_palette[0];
+	SDL_SetRenderDrawColor(g_renderer, bg0.r, bg0.g, bg0.b, 255);
+	SDL_RenderClear(g_renderer);
 
 	// 2. 逐 cell 渲染
 	for (int row = 0; row < g_rows; row++)
-		render_row_gdi(row);
+		for (int col = 0; col < g_cols; col++)
+			draw_cell_sdl(col, row);
 
-	// 3. 执行延迟直接绘制（状态栏数值等）
+	// 3. 延迟直接绘制（状态栏数值等）
 	for (int i = 0; i < g_deferred_count; i++) {
 		DeferredDraw& d = g_deferred[i];
-		RECT rect = { d.px, d.py, d.px + d.pw, d.py + d.ph };
-
-		SDL_Color& bg_c = g_palette[d.bg];
-		HBRUSH brush = CreateSolidBrush(RGB(bg_c.r, bg_c.g, bg_c.b));
-		FillRect(g_mem_dc, &rect, brush);
-		DeleteObject(brush);
-
-		int wlen = MultiByteToWideChar(936, 0, d.text, -1, NULL, 0);
-		if (wlen > 0) {
-			wchar_t* wbuf = new wchar_t[wlen];
-			MultiByteToWideChar(936, 0, d.text, -1, wbuf, wlen);
-			SDL_Color& fg_c = g_palette[d.fg];
-			SetTextColor(g_mem_dc, RGB(fg_c.r, fg_c.g, fg_c.b));
-			SetBkMode(g_mem_dc, TRANSPARENT);
-			SelectObject(g_mem_dc, g_font);
-			DrawTextW(g_mem_dc, wbuf, wlen - 1, &rect,
-				DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-			delete[] wbuf;
-		}
+		draw_text_rect(d.px, d.py, d.pw, d.ph, d.text,
+			g_palette[d.fg], g_palette[d.bg]);
 	}
-	// (不清除 g_deferred，使其在多次 term_present 间保持)
 
 	// 4. 底部消息
 	if (g_message[0]) {
-		int msg_y = (g_rows - 1) * g_cell_h;
-		RECT rect = { 0, msg_y, g_win_w, msg_y + g_cell_h };
-		HBRUSH brush = CreateSolidBrush(RGB(0, 0, 0));
-		FillRect(g_mem_dc, &rect, brush);
-		DeleteObject(brush);
-
-		int wlen = MultiByteToWideChar(936, 0, g_message, -1, NULL, 0);
-		if (wlen > 0) {
-			wchar_t* wbuf = new wchar_t[wlen];
-			MultiByteToWideChar(936, 0, g_message, -1, wbuf, wlen);
-			SetTextColor(g_mem_dc, RGB(255, 255, 255));
-			SetBkMode(g_mem_dc, TRANSPARENT);
-			SelectObject(g_mem_dc, g_font);
-			DrawTextW(g_mem_dc, wbuf, wlen - 1, &rect,
-				DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-			delete[] wbuf;
-		}
+		draw_text_rect(0, (g_rows - 1) * g_cell_h, g_win_w, g_cell_h,
+			g_message, g_palette[4], g_palette[0]);
 	}
 
-	// 5. 确保 GDI 写入完成
-	GdiFlush();
-
-	// 6. 修复 alpha 通道
-	for (int i = 0; i < total_pixels; i++)
-		g_dib_bits[i * 4 + 3] = 255;
-
-	// 7. 上传并呈现
-	SDL_UpdateTexture(g_texture, NULL, g_dib_bits, g_row_bytes);
-	SDL_RenderTexture(g_renderer, g_texture, NULL, NULL);
+	// 5. 呈现
 	SDL_RenderPresent(g_renderer);
 }
 
@@ -414,39 +374,100 @@ void touchwin_term() {
 
 void erase_term() {
 	touchwin_term();
-	g_cursor_x = 0;
-	g_cursor_y = 0;
-	g_cur_fg = 4;
-	g_cur_bg = 0;
+	g_cursor_x = 0; g_cursor_y = 0;
+	g_cur_fg = 4; g_cur_bg = 0;
 }
 
-void refresh_term() {
-	term_present();
-}
+void refresh_term() { term_present(); }
 
 // ============================================================
 // ncurses 兼容层
 // ============================================================
-void console_init() {
-	term_init("魔塔 - SDL3", 28, 22, 22, 22);
-}
-
-void console_shutdown() {
-	term_shutdown();
-}
-
-void gotoxy(int x, int y) {
-	g_cursor_x = x;
-	g_cursor_y = y;
-}
-
+void console_init()   { term_init("魔塔 - SDL3", 28, 22, 22, 22); }
+void console_shutdown(){ term_shutdown(); }
+void gotoxy(int x, int y) { g_cursor_x = x; g_cursor_y = y; }
 void hideCursor() {}
-
 void drainInput() {}
 
-bool term_quit_requested() {
-	return g_quit;
+void SetConsoleColor(int attr) { attr_to_colors(attr, g_cur_fg, g_cur_bg); }
+
+void SetColor(COLOR a) { g_cur_fg = color_to_idx(a); g_cur_bg = 0; }
+
+void colorPrint(COLOR c, char* s) {
+	int prev_fg = g_cur_fg;
+	g_cur_fg = color_to_idx(c);
+	addstr_gbk(s);
+	g_cur_fg = prev_fg;
 }
+
+void addstr_gbk(const char* s) {
+	int len = (int)strlen(s);
+	if (len == 0) return;
+	int wlen = MultiByteToWideChar(936, 0, s, len, NULL, 0);
+	if (wlen <= 0) return;
+	wchar_t* buf = new wchar_t[wlen + 1];
+	MultiByteToWideChar(936, 0, s, len, buf, wlen);
+	buf[wlen] = 0;
+	put_str(g_cursor_x, g_cursor_y, buf, g_cur_fg, g_cur_bg);
+	g_cursor_x += wlen;
+	delete[] buf;
+}
+
+void addch(char ch) {
+	if (g_cursor_x >= g_cols) { g_cursor_x = 0; g_cursor_y++; }
+	put_cell(g_cursor_x, g_cursor_y, (wchar_t)ch, g_cur_fg, g_cur_bg);
+	g_cursor_x++;
+}
+
+// ============================================================
+// 键盘输入
+// ============================================================
+int getch_term() {
+	for (;;) {
+		SDL_Event ev;
+		if (!SDL_WaitEventTimeout(&ev, 100)) return -1;
+		switch (ev.type) {
+		case SDL_EVENT_QUIT: g_quit = true; return 0;
+		case SDL_EVENT_KEY_DOWN: {
+			int code = (int)ev.key.key;
+			switch (code) {
+				case SDLK_UP:     return 0x103;
+				case SDLK_DOWN:   return 0x102;
+				case SDLK_LEFT:   return 0x104;
+				case SDLK_RIGHT:  return 0x105;
+				default:          return code;
+			}
+		}
+		default: break;
+		}
+	}
+}
+
+// ============================================================
+// printf 风格输出
+// ============================================================
+int term_printw(const char* fmt, ...) {
+	char buf[256];
+	va_list args;
+	va_start(args, fmt);
+	int len = vsnprintf(buf, sizeof(buf), fmt, args);
+	va_end(args);
+	if (len <= 0) return 0;
+	int wlen = MultiByteToWideChar(936, 0, buf, len, NULL, 0);
+	if (wlen <= 0) return 0;
+	wchar_t* wbuf = new wchar_t[wlen + 1];
+	MultiByteToWideChar(936, 0, buf, len, wbuf, wlen);
+	wbuf[wlen] = 0;
+	put_str(g_cursor_x, g_cursor_y, wbuf, g_cur_fg, g_cur_bg);
+	g_cursor_x += wlen;
+	delete[] wbuf;
+	return 0;
+}
+
+// ============================================================
+// 消息 / 退出手柄
+// ============================================================
+bool term_quit_requested() { return g_quit; }
 
 void term_set_light_mode(bool on) {
 	if (g_light_mode == on) return;
@@ -461,110 +482,10 @@ void term_set_message(const char* msg) {
 	g_message[127] = 0;
 }
 
-void term_clear_message() {
-	g_message[0] = 0;
-}
-
-void SetConsoleColor(int attr) {
-	attr_to_colors(attr, g_cur_fg, g_cur_bg);
-}
-
-void SetColor(COLOR a) {
-	g_cur_fg = color_to_idx(a);
-	g_cur_bg = 0;
-}
-
-void colorPrint(COLOR c, char* s) {
-	int prev_fg = g_cur_fg;
-	g_cur_fg = color_to_idx(c);
-	addstr_gbk(s);
-	g_cur_fg = prev_fg;
-}
-
-void addstr_gbk(const char* s) {
-	int len = (int)strlen(s);
-	if (len == 0) return;
-
-	int wlen = MultiByteToWideChar(936, 0, s, len, NULL, 0);
-	if (wlen <= 0) return;
-
-	wchar_t* buf = new wchar_t[wlen + 1];
-	MultiByteToWideChar(936, 0, s, len, buf, wlen);
-	buf[wlen] = 0;
-
-	put_str(g_cursor_x, g_cursor_y, buf, g_cur_fg, g_cur_bg);
-	g_cursor_x += wlen;
-
-	delete[] buf;
-}
-
-void addch(char ch) {
-	if (g_cursor_x >= g_cols) {
-		g_cursor_x = 0;
-		g_cursor_y++;
-	}
-	put_cell(g_cursor_x, g_cursor_y, (wchar_t)ch, g_cur_fg, g_cur_bg);
-	g_cursor_x++;
-}
+void term_clear_message() { g_message[0] = 0; }
 
 // ============================================================
-// 键盘输入
-// ============================================================
-int getch_term() {
-	for (;;) {
-		SDL_Event ev;
-		if (!SDL_WaitEventTimeout(&ev, 100)) { return -1; }
-
-		switch (ev.type) {
-		case SDL_EVENT_QUIT:
-			g_quit = true;
-			return 0;
-
-		case SDL_EVENT_KEY_DOWN: {
-			int code = (int)ev.key.key;
-			switch (code) {
-				case SDLK_UP:     return 0x103;
-				case SDLK_DOWN:   return 0x102;
-				case SDLK_LEFT:   return 0x104;
-				case SDLK_RIGHT:  return 0x105;
-				default:          return code;
-			}
-		}
-
-		default:
-			break;
-		}
-	}
-}
-
-// ============================================================
-// printf 风格输出
-// ============================================================
-int term_printw(const char* fmt, ...) {
-	char buf[256];
-	va_list args;
-	va_start(args, fmt);
-	int len = vsnprintf(buf, sizeof(buf), fmt, args);
-	va_end(args);
-
-	if (len <= 0) return 0;
-
-	int wlen = MultiByteToWideChar(936, 0, buf, len, NULL, 0);
-	if (wlen <= 0) return 0;
-
-	wchar_t* wbuf = new wchar_t[wlen + 1];
-	MultiByteToWideChar(936, 0, buf, len, wbuf, wlen);
-	wbuf[wlen] = 0;
-
-	put_str(g_cursor_x, g_cursor_y, wbuf, g_cur_fg, g_cur_bg);
-	g_cursor_x += wlen;
-
-	delete[] wbuf;
-	return 0;
-}
-
-// ============================================================
-// 直接 GDI 文本（绕过 cell 系统，数值无空隙）
+// 延迟绘制
 // ============================================================
 void term_draw_text(int px, int py, int pw, int ph,
                     const char* text, int fg_color, int bg_color) {
@@ -573,10 +494,7 @@ void term_draw_text(int px, int py, int pw, int ph,
 	d.px = px; d.py = py; d.pw = pw; d.ph = ph;
 	strncpy(d.text, text, 63);
 	d.text[63] = 0;
-	d.fg = fg_color;
-	d.bg = bg_color;
+	d.fg = fg_color; d.bg = bg_color;
 }
 
-void term_clear_draws() {
-	g_deferred_count = 0;
-}
+void term_clear_draws() { g_deferred_count = 0; }

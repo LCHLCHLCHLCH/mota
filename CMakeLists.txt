@@ -11,7 +11,7 @@ set(SDL3_TTF_ROOT "${CMAKE_SOURCE_DIR}/lib/SDL3_ttf-3.2.2/x86_64-w64-mingw32")
 
 add_executable(MotaSDL
 	src/game/map.cpp src/game/monster.cpp src/game/player.cpp
-	src/game/item.cpp
+	src/game/item.cpp src/game/tile_data.cpp
 	src/event/event_manager.cpp
 	src/render/display.cpp src/render/frame_print.cpp
 	src/render/region_display.cpp src/ui/backpack.cpp

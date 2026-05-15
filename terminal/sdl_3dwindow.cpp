@@ -119,16 +119,21 @@ static void draw_column(int x, int wh, int tile, int side, uint8_t fl,
 }
 
 // ============================================================
-// GBK → UTF-8 用于 SDL_ttf
+// GBK → UTF-8 用于 SDL_ttf（与 addstr_gbk 完全一致的转换逻辑）
 // ============================================================
 static char* gbk_utf8(const char* gbk) {
-	int wlen = MultiByteToWideChar(936, 0, gbk, -1, NULL, 0);
+	int len = (int)strlen(gbk);
+	if (len == 0) return NULL;
+	int wlen = MultiByteToWideChar(936, 0, gbk, len, NULL, 0);
 	if (wlen <= 0) return NULL;
-	wchar_t* wb = new wchar_t[wlen];
-	MultiByteToWideChar(936, 0, gbk, -1, wb, wlen);
+	wchar_t* wb = new wchar_t[wlen + 1];
+	MultiByteToWideChar(936, 0, gbk, len, wb, wlen);
+	wb[wlen] = 0;
 	int ulen = WideCharToMultiByte(CP_UTF8, 0, wb, wlen, NULL, 0, NULL, NULL);
-	char* u8 = new char[ulen];
+	if (ulen <= 0) { delete[] wb; return NULL; }
+	char* u8 = new char[ulen + 1];
 	WideCharToMultiByte(CP_UTF8, 0, wb, wlen, u8, ulen, NULL, NULL);
+	u8[ulen] = 0;
 	delete[] wb;
 	return u8;
 }
@@ -149,11 +154,13 @@ static void draw_text(int cx, int cy, int sprite_h, const char* gbk, uint32_t co
 	delete[] u8;
 	if (!src) return;
 
-	// 计算目标尺寸：文字宽度不超过 sprite 高度的2/3
+	// 缩放文字以匹配 sprite 大小（近大远小）
 	int tw = src->w, th = src->h;
-	int max_w = sprite_h * 2 / 3;
-	if (tw > max_w) { th = th * max_w / tw; tw = max_w; }
-	if (tw < 6) tw = 6; if (th < 6) th = 6;
+	int target_h = sprite_h * 3 / 4;
+	if (target_h < 8) target_h = 8;
+	tw = tw * target_h / th;
+	th = target_h;
+	if (tw < 4) tw = 4;
 
 	// SDL_BlitSurfaceScaled 缩放，保证质量
 	SDL_Surface* dst = SDL_CreateSurface(tw, th, SDL_PIXELFORMAT_ARGB8888);

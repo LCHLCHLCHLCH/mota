@@ -80,9 +80,6 @@ static void run_event_actions(lua_State* L, int ev_idx, uint8_t floor, Player* p
 			if (from == 8 && to == 1)
 				term_set_message("守卫门已打开");
 		}
-		else if (strcmp(type, "altar") == 0 && player && player->events) {
-			player->events->checkAltar(floor, *player);
-		}
 		else if (strcmp(type, "add_health") == 0 && player) {
 			if (!check_if_choice(L, -1)) { lua_pop(L, 1); continue; }
 			lua_getfield(L, -1, "value");
@@ -323,35 +320,4 @@ uint16_t EventManager::getAltarCost() const {
 	return 20 + 10 * (t + 1) * t;
 }
 
-void EventManager::checkAltar(uint8_t floor, Player& player) {
-	uint8_t  ratio = (floor - 1) / 10 + 1;
-	uint16_t cost  = getAltarCost();
-	uint16_t atk_gain = 2 * ratio;
-	uint16_t def_gain = 4 * ratio;
-	uint16_t hp_gain  = 100 * (altar_times_ + 1);
 
-	char text_buf[64];
-	char choice_atk[32], choice_def[32], choice_hp[32], choice_leave[8];
-	snprintf(text_buf, sizeof(text_buf), "供奉%d金币，便可以增加你的力量，你想要什么呢……", cost);
-	snprintf(choice_hp,  sizeof(choice_hp),  "生命+%d", hp_gain);
-	snprintf(choice_atk, sizeof(choice_atk), "攻击+%d", atk_gain);
-	snprintf(choice_def, sizeof(choice_def), "防御+%d", def_gain);
-	snprintf(choice_leave, sizeof(choice_leave), "离开");
-
-	saySomething(text_buf);
-
-	char* list[4] = { choice_hp, choice_atk, choice_def, choice_leave };
-	uint8_t choice = chooseFromSomething(4, list);
-
-	if (choice == 3 || choice == 255) return;
-	if (player.money < cost) { saySomething((char*)"你的金币不足，无法供奉！"); return; }
-
-	player.money -= cost;
-	switch (choice) {
-		case 0: player.health += hp_gain;  break;
-		case 1: player.attack += atk_gain; break;
-		case 2: player.defence += def_gain; break;
-	}
-	altar_times_++;
-	drainInput();
-}

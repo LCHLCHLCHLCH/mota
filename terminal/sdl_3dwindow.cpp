@@ -67,11 +67,9 @@ static int collect_sprites(const Player& ply, Sprite* out, int max_sprites) {
 // ============================================================
 static void cast_ray(uint8_t floor, double px, double py, double angle,
                      int& hit_tile, int& side, double& perp_dist) {
-	double dx = cos(angle);
-	double dy = -sin(angle);  // 屏幕 Y 轴向下
-	// 简化：sin(angle) 取反使 Y 轴对应地图行方向
-	// 实际上我们需要：angle=0 看向北方(地图上方, y减小)
-	// angle=π/2 看向东方(地图右方, x增大)
+	// angle: 0=北(y-), π/2=东(x+)
+	double dx = sin(angle);
+	double dy = -cos(angle);
 
 	int map_x = (int)px, map_y = (int)py;
 	double delta_x = (dx == 0) ? 1e30 : fabs(1.0 / dx);
@@ -232,16 +230,12 @@ static void render_frame(const Player& ply) {
 		double dx = sp->x - px;
 		double dy = sp->y - py;
 
-		// 变换到相机空间
-		double inv = 1.0 / (cos(g_dir) * cos(g_dir) + sin(g_dir) * sin(g_dir));
-		double tx = dx * cos(g_dir) - dy * sin(g_dir);
-		double ty = dx * (-sin(g_dir)) - dy * cos(g_dir);
-		// 简化：tx = dx*cos(-dir) - dy*sin(-dir)
-		// 更正：相机空间：x' = (sp-p) · right, y' = (sp-p) · forward
-		double fwd_x = -sin(g_dir);  // 前方（屏幕上方 = 地图上方 = y减小）
-		double fwd_y = -cos(g_dir);  // 所以 forward = (-sin(dir), -cos(dir))
+		// 变换到相机空间（与 cast_ray 一致的坐标系）
+		// forward = (sin(dir), -cos(dir)), right = (cos(dir), sin(dir))
+		double fwd_x = sin(g_dir);
+		double fwd_y = -cos(g_dir);
 		double rgt_x = cos(g_dir);
-		double rgt_y = -sin(g_dir);
+		double rgt_y = sin(g_dir);
 
 		double cam_x = dx * rgt_x + dy * rgt_y;
 		double cam_y = dx * fwd_x + dy * fwd_y;

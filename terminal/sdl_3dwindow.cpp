@@ -118,25 +118,7 @@ static void draw_column(int x, int wh, int tile, int side, uint8_t fl,
 	}
 }
 
-// ============================================================
-// GBK → UTF-8 用于 SDL_ttf（与 addstr_gbk 完全一致的转换逻辑）
-// ============================================================
-static char* gbk_utf8(const char* gbk) {
-	int len = (int)strlen(gbk);
-	if (len == 0) return NULL;
-	int wlen = MultiByteToWideChar(936, 0, gbk, len, NULL, 0);
-	if (wlen <= 0) return NULL;
-	wchar_t* wb = new wchar_t[wlen + 1];
-	MultiByteToWideChar(936, 0, gbk, len, wb, wlen);
-	wb[wlen] = 0;
-	int ulen = WideCharToMultiByte(CP_UTF8, 0, wb, wlen, NULL, 0, NULL, NULL);
-	if (ulen <= 0) { delete[] wb; return NULL; }
-	char* u8 = new char[ulen + 1];
-	WideCharToMultiByte(CP_UTF8, 0, wb, wlen, u8, ulen, NULL, NULL);
-	u8[ulen] = 0;
-	delete[] wb;
-	return u8;
-}
+// 使用 term_gbk_to_utf8（与 2D 渲染器完全一致的转换管道）
 
 // ============================================================
 // 将文字渲染到像素缓冲（近大远小缩放）
@@ -146,7 +128,7 @@ static void draw_text(int cx, int cy, int sprite_h, const char* gbk, uint32_t co
 	if (!font || !gbk || !gbk[0]) return;
 	if (sprite_h < 6) sprite_h = 6;
 
-	char* u8 = gbk_utf8(gbk);
+	char* u8 = term_gbk_to_utf8(gbk);
 	if (!u8) return;
 
 	SDL_Color fg = { (uint8_t)(color>>16), (uint8_t)(color>>8), (uint8_t)color, 255 };

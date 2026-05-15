@@ -68,6 +68,20 @@ static char* wchar_to_utf8(const wchar_t* wstr, int wlen) {
 	return utf8;
 }
 
+// 公开的 GBK → UTF-8（与 addstr_gbk 完全一致的转换逻辑）
+char* term_gbk_to_utf8(const char* gbk) {
+	int len = (int)strlen(gbk);
+	if (len == 0) return NULL;
+	int wlen = MultiByteToWideChar(936, 0, gbk, len, NULL, 0);
+	if (wlen <= 0) return NULL;
+	wchar_t* wb = new wchar_t[wlen + 1];
+	MultiByteToWideChar(936, 0, gbk, len, wb, wlen);
+	wb[wlen] = 0;
+	char* u8 = wchar_to_utf8(wb, wlen);
+	delete[] wb;
+	return u8;
+}
+
 // ============================================================
 // 调色板
 // ============================================================

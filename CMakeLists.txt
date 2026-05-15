@@ -30,6 +30,7 @@ add_executable(MotaSDL
 	terminal/sdl_statusBar.cpp terminal/sdl_terminal.cpp
 	terminal/console_cmd.cpp
 	terminal/save_system.cpp
+	terminal/sdl_3dwindow.cpp
 	src/script/lua_state.cpp src/script/lua_bridge.cpp
 	logo/sdl_logo.rc
 )

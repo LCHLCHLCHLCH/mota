@@ -303,6 +303,8 @@ bool term_init(const char* title, int cols, int rows, int cell_w, int cell_h) {
 	return true;
 }
 
+SDL_Window* term_get_window() { return g_window; }
+
 void term_shutdown() {
 	delete[] g_cells; g_cells = nullptr;
 	if (g_ttf_font) { TTF_CloseFont(g_ttf_font); g_ttf_font = nullptr; }

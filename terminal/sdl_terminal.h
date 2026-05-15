@@ -10,7 +10,6 @@ void term_shutdown();
 void term_present();
 SDL_Window* term_get_window();
 TTF_Font*   term_get_ttf_font();
-char*       term_gbk_to_utf8(const char* gbk);
 
 // ============================================================
 // ncurses 兼容 API（与 src/render/cursor.h 一致）

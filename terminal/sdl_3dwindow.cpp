@@ -6,7 +6,6 @@
 #include "game/tile_data.h"
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>
-#include <windows.h>
 #include <cmath>
 #include <cstring>
 
@@ -118,22 +117,16 @@ static void draw_column(int x, int wh, int tile, int side, uint8_t fl,
 	}
 }
 
-// 使用 term_gbk_to_utf8（与 2D 渲染器完全一致的转换管道）
-
 // ============================================================
 // 将文字渲染到像素缓冲（近大远小缩放）
 // ============================================================
-static void draw_text(int cx, int cy, int sprite_h, const char* gbk, uint32_t color) {
+static void draw_text(int cx, int cy, int sprite_h, const char* text, uint32_t color) {
 	TTF_Font* font = term_get_ttf_font();
-	if (!font || !gbk || !gbk[0]) return;
+	if (!font || !text || !text[0]) return;
 	if (sprite_h < 6) sprite_h = 6;
 
-	char* u8 = term_gbk_to_utf8(gbk);
-	if (!u8) return;
-
 	SDL_Color fg = { (uint8_t)(color>>16), (uint8_t)(color>>8), (uint8_t)color, 255 };
-	SDL_Surface* src = TTF_RenderText_Blended(font, u8, 0, fg);
-	delete[] u8;
+	SDL_Surface* src = TTF_RenderText_Blended(font, text, 0, fg);
 	if (!src) return;
 
 	// 缩放文字以匹配 sprite 大小（近大远小）

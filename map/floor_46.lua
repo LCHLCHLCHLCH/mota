@@ -17,5 +17,10 @@ return {
         {2,2,2,2,2,2,2,2,2,2,2,2,2}
     },
     events = {
+        {
+            trigger = "on_tile",
+            tile = 155,
+            actions = { { type = "altar" } }
+        }
     }
 }

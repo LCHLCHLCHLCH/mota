@@ -19,6 +19,11 @@ return {
         events = {
         {
             trigger = "on_tile",
+            tile = 155,
+            actions = { { type = "altar" } }
+        },
+        {
+            trigger = "on_tile",
             tile = 151,
             condition_flag = 3,
             set_flag = 3,

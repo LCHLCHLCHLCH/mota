@@ -82,12 +82,8 @@ void Player::respondToMap(uint8_t floor_going, uint8_t x_going, uint8_t y_going)
 		reactToMonster(floor_going, x_going, y_going);
 		break;
 	case TILE_NPC:
-		if (this->events) {
-			if (tile == 155)
-				this->events->checkAltar(floor_going, *this);
-			else
-				this->events->checkTile(floor_going, tile, *this);
-		}
+		if (this->events)
+			this->events->checkTile(floor_going, tile, *this);
 		break;
 	default:
 		break;

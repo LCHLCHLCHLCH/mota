@@ -24,7 +24,7 @@ void EventManager::addEvent(const Event& ev) {
 void EventManager::setFlag(uint8_t id) { if (id < MAX_FLAGS) flags_[id] = 1; }
 bool EventManager::hasFlag(uint8_t id) const { return (id >= MAX_FLAGS) ? true : (flags_[id] != 0); }
 
-static void run_event_actions(lua_State* L, int ev_idx, uint8_t floor) {
+static void run_event_actions(lua_State* L, int ev_idx, uint8_t floor, Player* player) {
 	lua_getfield(L, ev_idx, "actions");
 	int n = (int)lua_objlen(L, -1);
 	for (int i = 1; i <= n; i++) {
@@ -47,6 +47,12 @@ static void run_event_actions(lua_State* L, int ev_idx, uint8_t floor) {
 						map_set(floor, x, y, (uint8_t)to);
 			if (from == 8 && to == 1)
 				term_set_message("守卫门已打开");
+		}
+		else if (strcmp(type, "altar") == 0 && player && player->events) {
+			player->events->checkAltar(floor, *player);
+		}
+		else if (strcmp(type, "altar") == 0 && player && player->events) {
+			player->events->checkAltar(floor, *player);
 		}
 		lua_pop(L, 1);
 	}
@@ -92,7 +98,7 @@ void EventManager::checkTile(uint8_t floor, uint8_t tile_id, Player& player) {
 		int cf = (int)lua_tointeger(L, -1); lua_pop(L, 1);
 		if (cf > 0 && hasFlag((uint8_t)cf)) { lua_pop(L, 1); continue; }
 
-		run_event_actions(L, lua_gettop(L), floor);
+		run_event_actions(L, lua_gettop(L), floor, &player);
 
 		lua_getfield(L, -1, "set_flag");
 		int sf = (int)lua_tointeger(L, -1); lua_pop(L, 1);
@@ -126,7 +132,7 @@ void EventManager::checkClear(uint8_t floor) {
 		int cf = (int)lua_tointeger(L, -1); lua_pop(L, 1);
 		if (cf > 0 && hasFlag((uint8_t)cf)) { lua_pop(L, 1); continue; }
 
-		run_event_actions(L, lua_gettop(L), floor);
+		run_event_actions(L, lua_gettop(L), floor, NULL);
 
 		lua_getfield(L, -1, "set_flag");
 		int sf = (int)lua_tointeger(L, -1); lua_pop(L, 1);
@@ -185,7 +191,7 @@ void EventManager::checkGuardKill(uint8_t floor, uint8_t killed_x, uint8_t kille
 		int cf = (int)lua_tointeger(L, -1); lua_pop(L, 1);
 		if (cf > 0 && hasFlag((uint8_t)cf)) { lua_pop(L, 1); continue; }
 
-		run_event_actions(L, lua_gettop(L), floor);
+		run_event_actions(L, lua_gettop(L), floor, &player);
 
 		lua_getfield(L, -1, "set_flag");
 		int sf = (int)lua_tointeger(L, -1); lua_pop(L, 1);

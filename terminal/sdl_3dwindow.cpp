@@ -138,28 +138,48 @@ static char* gbk_utf8(const char* gbk) {
 // ============================================================
 static void draw_text(int cx, int cy, int max_w, const char* gbk, uint32_t color) {
 	TTF_Font* font = term_get_ttf_font();
-	if (!font) return;
+	if (!font || !gbk || !gbk[0]) return;
 	char* u8 = gbk_utf8(gbk);
 	if (!u8) return;
-	SDL_Surface* s = TTF_RenderText_Blended(font, u8, 0, (SDL_Color){
-		(uint8_t)(color>>16), (uint8_t)(color>>8), (uint8_t)color, 255 });
+
+	SDL_Color fg = { (uint8_t)(color>>16), (uint8_t)(color>>8), (uint8_t)color, 255 };
+	SDL_Surface* src = TTF_RenderText_Blended(font, u8, 0, fg);
 	delete[] u8;
-	if (!s) return;
-	// 缩放
-	int sw = s->w, sh = s->h;
-	if (sw > max_w) { sh = sh * max_w / sw; sw = max_w; }
-	int x0 = cx - sw/2, y0 = cy - sh/2;
-	uint32_t* sp = (uint32_t*)s->pixels;
-	for (int y = 0; y < sh; y++) {
-		for (int x = 0; x < sw; x++) {
+	if (!src) return;
+
+	// 计算目标缩放尺寸
+	int tw = src->w, th = src->h;
+	if (tw > max_w) { th = th * max_w / tw; tw = max_w; }
+	if (th < 4) th = 4; if (tw < 4) tw = 4;
+	if (th > TEX_H) th = TEX_H; if (tw > TEX_W*2) tw = TEX_W*2;
+
+	// 创建缩放后的表面
+	SDL_Surface* scaled = SDL_CreateSurface(tw, th, SDL_PIXELFORMAT_ARGB8888);
+	if (!scaled) { SDL_DestroySurface(src); return; }
+	SDL_SetSurfaceBlendMode(src, SDL_BLENDMODE_NONE);
+	SDL_BlitSurfaceScaled(src, NULL, scaled, NULL, SDL_SCALEMODE_LINEAR);
+	SDL_DestroySurface(src);
+
+	// 复制到像素缓冲
+	SDL_LockSurface(scaled);
+	uint8_t* sp = (uint8_t*)scaled->pixels;
+	int spitch = scaled->pitch;
+	int x0 = cx - tw/2, y0 = cy - th/2;
+
+	for (int y = 0; y < th; y++) {
+		for (int x = 0; x < tw; x++) {
 			int px = x0 + x, py = y0 + y;
 			if (px < 0 || px >= TEX_W || py < 0 || py >= TEX_H) continue;
-			uint32_t sc = sp[(y * s->h / sh) * s->w + (x * s->w / sw)];
-			if (sc & 0xFF000000)  // 非透明
-				g_pixels[py * TEX_W + px] = (sc & 0x00FFFFFF) | 0xFF000000;
+			uint8_t* p = sp + y * spitch + x * 4;
+			uint8_t a = p[3]; // ARGB8888 LE: bytes B,G,R,A
+			if (a > 0) {
+				g_pixels[py * TEX_W + px] =
+					(0xFFu << 24) | (p[2] << 16) | (p[1] << 8) | p[0];
+			}
 		}
 	}
-	SDL_DestroySurface(s);
+	SDL_UnlockSurface(scaled);
+	SDL_DestroySurface(scaled);
 }
 
 // ============================================================

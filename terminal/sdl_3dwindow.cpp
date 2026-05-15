@@ -1,16 +1,15 @@
 // 伪 3D 第一人称窗口 (Wolfenstein 3D 风格 raycasting)
 #include "sdl_3dwindow.h"
+#include "sdl_terminal.h"
 #include "game/player.h"
 #include "game/map.h"
-#include "game/monster.h"
 #include "game/tile_data.h"
 #include <SDL3/SDL.h>
+#include <SDL3_ttf/SDL_ttf.h>
+#include <windows.h>
 #include <cmath>
 #include <cstring>
 
-// ============================================================
-// 常量
-// ============================================================
 #define SCR_W   640
 #define SCR_H   480
 #define TEX_W   320
@@ -26,8 +25,9 @@ static double g_dir = 0.0;
 static double g_z_buf[TEX_W];
 static bool   g_3d_ready = false;
 
+// 阻挡视线的 tile（不包括岩浆 6，使其渲染为地板）
 static bool is_wall(uint8_t t) {
-	return t == 2 || t == 3 || t == 4 || t == 5 || t == 6 || t == 7 || t == 8 || t == 11;
+	return t == 2 || t == 3 || t == 4 || t == 5 || t == 7 || t == 8 || t == 11;
 }
 
 // ============================================================
@@ -35,29 +35,26 @@ static bool is_wall(uint8_t t) {
 // ============================================================
 struct Sprite { double x, y; int tile_id; };
 
-static int collect_sprites(const Player& ply, Sprite* out, int max_sprites) {
-	int count = 0;
-	for (int dy = -5; dy <= 5 && count < max_sprites; dy++) {
-		for (int dx = -5; dx <= 5 && count < max_sprites; dx++) {
+static int collect_sprites(const Player& ply, Sprite* out, int max) {
+	int n = 0;
+	for (int dy = -5; dy <= 5 && n < max; dy++)
+		for (int dx = -5; dx <= 5 && n < max; dx++) {
 			int mx = (int)ply.x + dx, my = (int)ply.y + dy;
 			if (mx < 0 || mx >= 13 || my < 0 || my >= 13) continue;
 			uint8_t t = map_get(ply.floor, mx, my);
-			if (t == 1 || t == 0 || is_wall(t)) continue;
-			out[count].x = mx + 0.5;
-			out[count].y = my + 0.5;
-			out[count].tile_id = t;
-			count++;
+			if (t == 0 || t == 1 || is_wall(t)) continue;
+			out[n].x = mx + 0.5; out[n].y = my + 0.5; out[n].tile_id = t;
+			n++;
 		}
-	}
-	return count;
+	return n;
 }
 
 // ============================================================
-// DDA 射线投射
+// DDA 射线
 // ============================================================
-static void cast_ray(uint8_t floor, double px, double py, double angle,
-                     int& hit_tile, int& side, double& perp_dist) {
-	double dx = sin(angle), dy = -cos(angle);
+static void cast_ray(uint8_t fl, double px, double py, double a,
+                     int& tile, int& side, double& dist) {
+	double dx = sin(a), dy = -cos(a);
 	int mx = (int)px, my = (int)py;
 	double ddx = (dx == 0) ? 1e30 : fabs(1.0 / dx);
 	double ddy = (dy == 0) ? 1e30 : fabs(1.0 / dy);
@@ -66,156 +63,142 @@ static void cast_ray(uint8_t floor, double px, double py, double angle,
 	else        { sx =  1; sdx = (mx + 1.0 - px) * ddx; }
 	if (dy < 0) { sy = -1; sdy = (py - my) * ddy; }
 	else        { sy =  1; sdy = (my + 1.0 - py) * ddy; }
-
 	for (int i = 0; i < 64; i++) {
 		if (sdx < sdy) { sdx += ddx; mx += sx; side = 0; }
 		else           { sdy += ddy; my += sy; side = 1; }
 		if (mx < 0 || mx >= 13 || my < 0 || my >= 13) break;
-		uint8_t t = map_get(floor, mx, my);
-		if (is_wall(t)) {
-			hit_tile = t;
-			perp_dist = (side == 0) ? sdx - ddx : sdy - ddy;
-			return;
-		}
+		uint8_t t = map_get(fl, mx, my);
+		if (is_wall(t)) { tile = t; dist = (side == 0) ? sdx - ddx : sdy - ddy; return; }
 	}
-	hit_tile = 0; perp_dist = MAX_DIST;
+	tile = 0; dist = MAX_DIST;
 }
 
 // ============================================================
 // 墙壁颜色
 // ============================================================
-static uint32_t wall_color(int t, int side) {
+static uint32_t wall_col(int t, int side) {
 	double s = side ? 0.7 : 1.0;
 	switch (t) {
-		case 2:  return ((uint32_t)(200*s)<<16)|((uint32_t)(200*s)<<8)|(uint32_t)(200*s);
-		case 3:  return ((uint32_t)(200*s)<<16)|((uint32_t)(180*s)<<8)|0;
-		case 4:  return 0|((uint32_t)(100*s)<<8)|((uint32_t)(220*s)<<16);
-		case 5:  return ((uint32_t)(220*s)<<16)|0|0;
-		case 6:  return ((uint32_t)(255*s)<<16)|((uint32_t)(60*s)<<8)|0;
-		case 7:  return 0|((uint32_t)(100*s)<<16)|((uint32_t)(200*s)<<8);
-		case 8:  return ((uint32_t)(180*s)<<16)|((uint32_t)(180*s)<<8)|(uint32_t)(180*s);
-		case 11: return ((uint32_t)(180*s)<<16)|((uint32_t)(180*s)<<8)|(uint32_t)(180*s);
+		case 2: return ((uint32_t)(200*s)<<16)|((uint32_t)(200*s)<<8)|(uint32_t)(200*s);
+		case 3: return ((uint32_t)(200*s)<<16)|((uint32_t)(180*s)<<8)|0;
+		case 4: return 0|((uint32_t)(100*s)<<8)|((uint32_t)(220*s)<<16);
+		case 5: return ((uint32_t)(220*s)<<16)|0|0;
+		case 7: return 0|((uint32_t)(100*s)<<16)|((uint32_t)(200*s)<<8);
+		case 8: case 11: return ((uint32_t)(180*s)<<16)|((uint32_t)(180*s)<<8)|(uint32_t)(180*s);
 		default: return ((uint32_t)(120*s)<<16)|((uint32_t)(120*s)<<8)|(uint32_t)(120*s);
 	}
 }
 
-// ============================================================
-// 地板颜色（根据 tile 类型）
-// ============================================================
-static uint32_t floor_color(uint8_t t, double shade) {
-	switch (t) {
-		case 6: { int r=(int)(255*shade), g=(int)(50*shade); return (r<<16)|(g<<8)|0; } // 岩浆：橙红
-		case 7: { int c=(int)(100*shade); return (c<<16)|((int)(200*shade)<<8)|c; }  // 星星：绿
-		default:{ int c=(int)(70*shade); return (c<<16)|(c<<8)|c; } // 普通地板：暗灰
-	}
+static uint32_t floor_col(uint8_t t, double shade) {
+	if (t == 6) { int r=(int)(255*shade), g=(int)(50*shade); return (r<<16)|(g<<8)|0; }
+	if (t == 7) { int c=(int)(100*shade); return (c<<16)|((int)(200*shade)<<8)|c; }
+	int c=(int)(70*shade); return (c<<16)|(c<<8)|c;
 }
 
 // ============================================================
-// 绘制一列
+// 绘制一列（墙壁+天花板+地板）
 // ============================================================
-static void draw_column(int tex_x, int wall_h, int tile, int side, uint8_t fl,
-                        double px, double py, double angle) {
-	int y0 = (TEX_H - wall_h) / 2;
-	if (y0 < 0) y0 = 0;
-	int y1 = y0 + wall_h;
-	if (y1 > TEX_H) y1 = TEX_H;
+static void draw_column(int x, int wh, int tile, int side, uint8_t fl,
+                        double px, double py, double a) {
+	int y0 = (TEX_H - wh) / 2; if (y0 < 0) y0 = 0;
+	int y1 = y0 + wh; if (y1 > TEX_H) y1 = TEX_H;
+	uint32_t wc = wall_col(tile, side);
+	for (int y = 0; y < y0; y++) g_pixels[y * TEX_W + x] = 0xFF303030;
+	for (int y = y0; y < y1; y++) g_pixels[y * TEX_W + x] = wc;
 
-	uint32_t wc = wall_color(tile, side);
-
-	for (int y = 0; y < y0; y++)
-		g_pixels[y * TEX_W + tex_x] = 0xFF303030;
-
-	for (int y = y0; y < y1; y++)
-		g_pixels[y * TEX_W + tex_x] = wc;
-
-	// 地板：根据 floor tile 着色
-	double dx = sin(angle), dy = -cos(angle);
+	double rdx = sin(a), rdy = -cos(a);
 	for (int y = y1; y < TEX_H; y++) {
-		double row_dist = 0.5 * TEX_H / (y - TEX_H/2 + 0.001);
-		double fx = px + row_dist * dx;
-		double fy = py + row_dist * dy;
+		double rd = 0.5 * TEX_H / (y - TEX_H/2 + 0.001);
+		double fx = px + rd * rdx, fy = py + rd * rdy;
 		int fmx = (int)fx, fmy = (int)fy;
 		double shade = 1.0 - (double)(y - TEX_H/2) / (TEX_H/2) * 0.5;
-		uint32_t fc;
-		if (fmx >= 0 && fmx < 13 && fmy >= 0 && fmy < 13)
-			fc = floor_color(map_get(fl, fmx, fmy), shade);
-		else
-			fc = floor_color(0, shade);
-		g_pixels[y * TEX_W + tex_x] = fc;
+		uint32_t fc = (fmx>=0&&fmx<13&&fmy>=0&&fmy<13) ?
+			floor_col(map_get(fl, fmx, fmy), shade) : floor_col(0, shade);
+		g_pixels[y * TEX_W + x] = fc;
 	}
 }
 
 // ============================================================
-// 精灵符号渲染（简单的圆形色块）
+// GBK → UTF-8 用于 SDL_ttf
 // ============================================================
-static uint32_t sprite_color(uint8_t c) {
-	switch (c) {
-		case 0: return 0xFFFF3030;
-		case 1: return 0xFFFFFF00;
-		case 2: return 0xFF4040FF;
-		case 3: return 0xFFFFFFFF;
-		case 4: return 0xFF30FF30;
-		case 5: return 0xFFFF30FF;
-		case 6: return 0xFFA0A0A0;
-		case 7: return 0xFF30FFFF;
-		default: return 0xFFFF3030;
-	}
+static char* gbk_utf8(const char* gbk) {
+	int wlen = MultiByteToWideChar(936, 0, gbk, -1, NULL, 0);
+	if (wlen <= 0) return NULL;
+	wchar_t* wb = new wchar_t[wlen];
+	MultiByteToWideChar(936, 0, gbk, -1, wb, wlen);
+	int ulen = WideCharToMultiByte(CP_UTF8, 0, wb, wlen, NULL, 0, NULL, NULL);
+	char* u8 = new char[ulen];
+	WideCharToMultiByte(CP_UTF8, 0, wb, wlen, u8, ulen, NULL, NULL);
+	delete[] wb;
+	return u8;
 }
 
-static void draw_sprite_circle(int cx, int cy, int r, uint32_t color) {
-	int r2 = r * r;
-	for (int dy = -r; dy < r; dy++) {
-		for (int dx = -r; dx < r; dx++) {
-			int sx = cx + dx, sy = cy + dy;
-			if (sx < 0 || sx >= TEX_W || sy < 0 || sy >= TEX_H) continue;
-			if (dx*dx + dy*dy < r2)
-				g_pixels[sy * TEX_W + sx] = color;
+// ============================================================
+// 将文字渲染到像素缓冲
+// ============================================================
+static void draw_text(int cx, int cy, int max_w, const char* gbk, uint32_t color) {
+	TTF_Font* font = term_get_ttf_font();
+	if (!font) return;
+	char* u8 = gbk_utf8(gbk);
+	if (!u8) return;
+	SDL_Surface* s = TTF_RenderText_Blended(font, u8, 0, (SDL_Color){
+		(uint8_t)(color>>16), (uint8_t)(color>>8), (uint8_t)color, 255 });
+	delete[] u8;
+	if (!s) return;
+	// 缩放
+	int sw = s->w, sh = s->h;
+	if (sw > max_w) { sh = sh * max_w / sw; sw = max_w; }
+	int x0 = cx - sw/2, y0 = cy - sh/2;
+	uint32_t* sp = (uint32_t*)s->pixels;
+	for (int y = 0; y < sh; y++) {
+		for (int x = 0; x < sw; x++) {
+			int px = x0 + x, py = y0 + y;
+			if (px < 0 || px >= TEX_W || py < 0 || py >= TEX_H) continue;
+			uint32_t sc = sp[(y * s->h / sh) * s->w + (x * s->w / sw)];
+			if (sc & 0xFF000000)  // 非透明
+				g_pixels[py * TEX_W + px] = (sc & 0x00FFFFFF) | 0xFF000000;
 		}
 	}
+	SDL_DestroySurface(s);
 }
 
 // ============================================================
-// 完整帧渲染
+// 完整帧
 // ============================================================
 static void render_frame(const Player& ply) {
 	double px = ply.x + 0.5, py = ply.y + 0.5;
 	uint8_t fl = ply.floor;
-
 	memset(g_pixels, 0, sizeof(g_pixels));
 	memset(g_z_buf, 0, sizeof(g_z_buf));
 
-	// 投射射线
 	for (int x = 0; x < TEX_W; x++) {
-		double angle = g_dir - FOV/2.0 + FOV * (double)x / (TEX_W - 1);
-		int hit_tile, side; double dist;
-		cast_ray(fl, px, py, angle, hit_tile, side, dist);
-		dist = dist * cos(angle - g_dir);
+		double a = g_dir - FOV/2.0 + FOV * x / (TEX_W - 1);
+		int tile, side; double dist;
+		cast_ray(fl, px, py, a, tile, side, dist);
+		dist = dist * cos(a - g_dir);
 		if (dist < 0.01) dist = 0.01;
 		int h = (int)(TEX_H / dist);
 		if (h > TEX_H * 8) h = TEX_H * 8;
-		draw_column(x, h, hit_tile, side, fl, px, py, angle);
+		draw_column(x, h, tile, side, fl, px, py, a);
 		g_z_buf[x] = dist;
 	}
 
-	// 精灵
 	Sprite sprites[300];
 	int n = collect_sprites(ply, sprites, 300);
-	struct { Sprite* s; double dist; } sorted[300];
+	struct { Sprite* s; double d; } sd[300];
 	for (int i = 0; i < n; i++) {
 		double dx = sprites[i].x - px, dy = sprites[i].y - py;
-		sorted[i].s = &sprites[i];
-		sorted[i].dist = dx*dx + dy*dy;
+		sd[i].s = &sprites[i]; sd[i].d = dx*dx + dy*dy;
 	}
 	for (int i = 0; i < n-1; i++)
 		for (int j = 0; j < n-1-i; j++)
-			if (sorted[j].dist < sorted[j+1].dist)
-				{ auto t = sorted[j]; sorted[j] = sorted[j+1]; sorted[j+1] = t; }
+			if (sd[j].d < sd[j+1].d) { auto t = sd[j]; sd[j] = sd[j+1]; sd[j+1] = t; }
 
 	double fwx = sin(g_dir), fwy = -cos(g_dir);
 	double rwx = cos(g_dir), rwy = sin(g_dir);
 
 	for (int i = 0; i < n; i++) {
-		Sprite* sp = sorted[i].s;
+		Sprite* sp = sd[i].s;
 		double dx = sp->x - px, dy = sp->y - py;
 		double cx = dx * rwx + dy * rwy;
 		double cy = dx * fwx + dy * fwy;
@@ -223,19 +206,30 @@ static void render_frame(const Player& ply) {
 		int sx = (int)((TEX_W/2) * (1.0 + cx / cy / (FOV/2.0)));
 		int sh = (int)(TEX_H / cy);
 		if (sx < -sh || sx >= TEX_W + sh) continue;
-
 		bool vis = false;
 		for (int tx = sx - sh/2; tx <= sx + sh/2; tx++)
 			if (tx >= 0 && tx < TEX_W && cy < g_z_buf[tx] + 0.5) { vis = true; break; }
 		if (!vis) continue;
 
-		uint32_t col = sprite_color(g_tile_defs[sp->tile_id].color);
-		draw_sprite_circle(sx, TEX_H/2, sh / 3, col);
+		const char* sym = g_tile_defs[sp->tile_id].symbol;
+		if (!sym || !sym[0]) continue;
+		uint32_t col;
+		uint8_t c = g_tile_defs[sp->tile_id].color;
+		if      (c == 0) col = 0xFFFF3030;
+		else if (c == 1) col = 0xFFFFFF00;
+		else if (c == 2) col = 0xFF4040FF;
+		else if (c == 3) col = 0xFFFFFFFF;
+		else if (c == 4) col = 0xFF30FF30;
+		else if (c == 5) col = 0xFFFF30FF;
+		else if (c == 6) col = 0xFFA0A0A0;
+		else if (c == 7) col = 0xFF30FFFF;
+		else             col = 0xFFFF3030;
+		draw_text(sx, TEX_H/2, sh, sym, col);
 	}
 }
 
 // ============================================================
-// 窗口管理
+// 窗口
 // ============================================================
 bool run_3d_window(SDL_Window* main_win, Player& player) {
 	(void)player;
@@ -251,8 +245,7 @@ bool run_3d_window(SDL_Window* main_win, Player& player) {
 	g_tex3d = SDL_CreateTexture(g_ren3d, SDL_PIXELFORMAT_XRGB8888,
 		SDL_TEXTUREACCESS_STREAMING, TEX_W, TEX_H);
 	SDL_ShowWindow(g_win3d);
-	g_dir = 0.0;
-	g_3d_ready = true;
+	g_dir = 0.0; g_3d_ready = true;
 	return true;
 }
 

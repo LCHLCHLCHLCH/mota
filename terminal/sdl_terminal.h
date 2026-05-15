@@ -9,6 +9,7 @@ bool term_init(const char* title, int cols, int rows, int cell_w, int cell_h);
 void term_shutdown();
 void term_present();
 SDL_Window* term_get_window();
+TTF_Font*   term_get_ttf_font();
 
 // ============================================================
 // ncurses 兼容 API（与 src/render/cursor.h 一致）

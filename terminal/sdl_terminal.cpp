@@ -304,6 +304,7 @@ bool term_init(const char* title, int cols, int rows, int cell_w, int cell_h) {
 }
 
 SDL_Window* term_get_window() { return g_window; }
+TTF_Font* term_get_ttf_font() { return g_ttf_font; }
 
 void term_shutdown() {
 	delete[] g_cells; g_cells = nullptr;

@@ -43,6 +43,7 @@ void Backpack::delItem(Item *i)
 		if (i->nextItem != nullptr)
 			i->nextItem->lastItem = i->lastItem;
 	}
+	delete i;
 }
 
 /**

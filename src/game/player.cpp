@@ -351,27 +351,34 @@ void Player::reactToProp(uint8_t floor_going, uint8_t x_going, uint8_t y_going)
 		this->y = y_going;
 		map_set(floor_going, x_going, y_going, 1);
 		if (this->backpack) {
-			static Item iceItem;
-			static char iceName[] = "冰霜魔法";
-			iceItem.name = iceName;
-			iceItem.id = 69;
-			this->backpack->addItem(&iceItem);
+			bool _has = false;
+			for (Item* _it = this->backpack->headPtr; _it; _it = _it->nextItem)
+				if (_it->id == 69) { _has = true; break; }
+			if (!_has) {
+				Item* _it = new Item();
+				_it->name = (char*)"冰霜魔法";
+				_it->id = 69;
+				_it->lastItem = nullptr;
+				_it->nextItem = nullptr;
+				this->backpack->addItem(_it);
+			}
 		}
 		term_set_message("获得冰霜魔法");
-				case 70: // 炸药
+		break;
+	case 70: // 炸药
 		this->x = x_going;
 		this->y = y_going;
 		map_set(floor_going, x_going, y_going, 1);
 		if (this->backpack) {
-			static Item bombItem;
-			static char bombName[] = "炸药";
-			bombItem.name = bombName;
-			bombItem.id = 70;
-			this->backpack->addItem(&bombItem);
+			Item* _it = new Item();
+			_it->name = (char*)"炸药";
+			_it->id = 70;
+			_it->lastItem = nullptr;
+			_it->nextItem = nullptr;
+			this->backpack->addItem(_it);
 		}
 		term_set_message("获得炸药");
 		break;
-break;
 	}
 }
 

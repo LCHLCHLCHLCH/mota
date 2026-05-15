@@ -111,6 +111,13 @@ static void run_event_actions(lua_State* L, int ev_idx, uint8_t floor, Player* p
 			lua_pop(L, 1);
 			if (player->money >= val) player->money -= val;
 		}
+		else if (strcmp(type, "set_tile") == 0) {
+			if (!check_if_choice(L, -1)) { lua_pop(L, 1); continue; }
+			lua_getfield(L, -1, "x"); int tx = (int)lua_tointeger(L, -1); lua_pop(L, 1);
+			lua_getfield(L, -1, "y"); int ty = (int)lua_tointeger(L, -1); lua_pop(L, 1);
+			lua_getfield(L, -1, "value"); int tv = (int)lua_tointeger(L, -1); lua_pop(L, 1);
+			map_set(floor, (uint8_t)tx, (uint8_t)ty, (uint8_t)tv);
+		}
 		else if (strcmp(type, "msg") == 0) {
 			if (!check_if_choice(L, -1)) { lua_pop(L, 1); continue; }
 			lua_getfield(L, -1, "text");

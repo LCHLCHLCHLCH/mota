@@ -259,4 +259,11 @@ void lua_register_game_api(lua_State* L, Player* player, EventManager* events) {
 		return 1;
 	});
 	lua_register(L, "drain", [](lua_State* L)->int { drainInput(); return 0; });
+	lua_register(L, "set_tile", [](lua_State* L)->int {
+		int x = (int)luaL_checkinteger(L, 1);
+		int y = (int)luaL_checkinteger(L, 2);
+		int v = (int)luaL_checkinteger(L, 3);
+		map_set(g_ply->floor, (uint8_t)x, (uint8_t)y, (uint8_t)v);
+		return 0;
+	});
 }

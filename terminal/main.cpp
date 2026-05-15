@@ -26,8 +26,6 @@ int main(int argc, char** argv) {
 	Player player;
 	player.init();
 
-	run_3d_window(term_get_window(), player);
-
 	Display display;
 	StatusBar statusBar;
 	Backpack backpack;

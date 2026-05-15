@@ -8,6 +8,7 @@
 #include "sdl_terminal.h"
 #include "save_system.h"
 #include "ui/backpack.h"
+#include "sdl_3dwindow.h"
 extern "C" {
 #include "lua.h"
 #include "lauxlib.h"
@@ -201,6 +202,18 @@ static int l_load_cmd(lua_State* L) {
 	return 0;
 }
 
+static int l_open3d(lua_State* L) {
+	(void)L;
+	run_3d_window(term_get_window(), *g_ply);
+	return 0;
+}
+
+static int l_close3d(lua_State* L) {
+	(void)L;
+	shutdown_3d_window();
+	return 0;
+}
+
 void lua_register_game_api(lua_State* L, Player* player, EventManager* events) {
 	g_ply = player;
 	g_ev  = events;
@@ -221,4 +234,6 @@ void lua_register_game_api(lua_State* L, Player* player, EventManager* events) {
 	lua_register(L, "save",  l_save_cmd);
 	lua_register(L, "load",  l_load_cmd);
 	lua_register(L, "restart", l_restart);
+	lua_register(L, "open3d",  l_open3d);
+	lua_register(L, "close3d", l_close3d);
 }

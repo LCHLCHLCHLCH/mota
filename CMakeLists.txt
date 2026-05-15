@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.28.1)
 project(MotaSDL)
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexec-charset=GBK")
+
 get_filename_component(MINGW_BIN "${CMAKE_CXX_COMPILER}" DIRECTORY)
 
 set(SDL3_ROOT "${CMAKE_SOURCE_DIR}/lib/SDL3-3.4.8/x86_64-w64-mingw32")

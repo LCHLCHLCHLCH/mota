@@ -134,68 +134,50 @@ static char* gbk_utf8(const char* gbk) {
 }
 
 // ============================================================
-// 将文字渲染到像素缓冲
+// 将文字渲染到像素缓冲（近大远小缩放）
 // ============================================================
 static void draw_text(int cx, int cy, int sprite_h, const char* gbk, uint32_t color) {
-	TTF_Font* base_font = term_get_ttf_font();
-	if (!base_font || !gbk || !gbk[0]) return;
-	if (sprite_h < 4) sprite_h = 4;
+	TTF_Font* font = term_get_ttf_font();
+	if (!font || !gbk || !gbk[0]) return;
+	if (sprite_h < 6) sprite_h = 6;
 
-	// GBK → UTF-8
 	char* u8 = gbk_utf8(gbk);
 	if (!u8) return;
 
-	// 根据 sprite 高度选择合适的字体大小
-	int font_pt = sprite_h * 2 / 3;
-	if (font_pt < 10) font_pt = 10;
-
-	TTF_Font* font = NULL;
-	char exe_path[MAX_PATH];
-	GetModuleFileNameA(NULL, exe_path, MAX_PATH);
-	char* last_slash = strrchr(exe_path, '\\');
-	if (last_slash) {
-		*last_slash = 0;
-		char fp[MAX_PATH];
-		snprintf(fp, sizeof(fp), "%s\\simsun.ttc", exe_path);
-		font = TTF_OpenFont(fp, (float)font_pt);
-	}
-	if (!font) font = base_font;
-
 	SDL_Color fg = { (uint8_t)(color>>16), (uint8_t)(color>>8), (uint8_t)color, 255 };
-	SDL_Surface* surf = TTF_RenderText_Blended(font, u8, 0, fg);
+	SDL_Surface* src = TTF_RenderText_Blended(font, u8, 0, fg);
 	delete[] u8;
-	if (font != base_font) TTF_CloseFont(font);
-	if (!surf) return;
+	if (!src) return;
 
-	// 如果文字比 sprite 宽，等比缩小；否则保持原样
-	int tw = surf->w, th = surf->h;
-	int max_w = sprite_h * 3 / 4;
-	if (tw > max_w && max_w > 0) {
-		th = th * max_w / tw;
-		tw = max_w;
-	}
+	// 计算目标尺寸：文字宽度不超过 sprite 高度的2/3
+	int tw = src->w, th = src->h;
+	int max_w = sprite_h * 2 / 3;
+	if (tw > max_w) { th = th * max_w / tw; tw = max_w; }
+	if (tw < 6) tw = 6; if (th < 6) th = 6;
 
-	// 像素复制到缓冲
+	// SDL_BlitSurfaceScaled 缩放，保证质量
+	SDL_Surface* dst = SDL_CreateSurface(tw, th, SDL_PIXELFORMAT_ARGB8888);
+	if (!dst) { SDL_DestroySurface(src); return; }
+	SDL_SetSurfaceBlendMode(src, SDL_BLENDMODE_NONE);
+	SDL_BlitSurfaceScaled(src, NULL, dst, NULL, SDL_SCALEMODE_LINEAR);
+	SDL_DestroySurface(src);
+
 	int x0 = cx - tw / 2, y0 = cy - th / 2;
-	SDL_LockSurface(surf);
-	uint8_t* sp = (uint8_t*)surf->pixels;
-	int pitch = surf->pitch;
-	int sh = surf->h, sw = surf->w;
+	SDL_LockSurface(dst);
+	uint8_t* sp = (uint8_t*)dst->pixels;
+	int pitch = dst->pitch;
 
 	for (int y = 0; y < th; y++) {
-		int sy = y * sh / th;
 		for (int x = 0; x < tw; x++) {
-			int sx = x * sw / tw;
 			int px = x0 + x, py = y0 + y;
 			if (px < 0 || px >= TEX_W || py < 0 || py >= TEX_H) continue;
-			uint8_t* p = sp + sy * pitch + sx * 4;
-			uint8_t a = p[3];
-			if (a > 0)
+			uint8_t* p = sp + y * pitch + x * 4;
+			if (p[3] > 0)
 				g_pixels[py * TEX_W + px] = (0xFFu<<24) | (p[2]<<16) | (p[1]<<8) | p[0];
 		}
 	}
-	SDL_UnlockSurface(surf);
-	SDL_DestroySurface(surf);
+	SDL_UnlockSurface(dst);
+	SDL_DestroySurface(dst);
 }
 
 // ============================================================

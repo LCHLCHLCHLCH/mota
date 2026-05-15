@@ -20,7 +20,8 @@ return {
         {
             trigger = "on_tile",
             tile = 155,
-            actions = { { type = "altar" } }
+            actions = { { type = "altar_show" },
+                { type = "altar_apply" } }
         },
         {
             trigger = "on_tile",

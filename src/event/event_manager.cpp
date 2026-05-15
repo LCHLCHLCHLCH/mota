@@ -15,23 +15,14 @@ static int g_last_choice = -1;
 void EventManager::init() {
 	std::memset(flags_, 0, sizeof(flags_));
 	altar_times_ = 0;
-	event_count_ = 0;
-}
-
-void EventManager::addEvent(const Event& ev) {
-	if (event_count_ < MAX_EVENTS)
-		events_[event_count_++] = ev;
 }
 
 void EventManager::setFlag(uint8_t id) { if (id < MAX_FLAGS) flags_[id] = 1; }
 bool EventManager::hasFlag(uint8_t id) const { return (id >= MAX_FLAGS) ? true : (flags_[id] != 0); }
 
-// ============================================================
-// 从 Lua table 读取 "if_choice" 字段，返回 true 表示应执行
-// ============================================================
 static bool check_if_choice(lua_State* L, int idx) {
 	lua_getfield(L, idx, "if_choice");
-	if (lua_isnil(L, -1)) { lua_pop(L, 1); return true; }  // 无限制
+	if (lua_isnil(L, -1)) { lua_pop(L, 1); return true; }
 	bool ok;
 	if (lua_istable(L, -1)) {
 		ok = false;
@@ -48,9 +39,6 @@ static bool check_if_choice(lua_State* L, int idx) {
 	return ok;
 }
 
-// ============================================================
-// 执行事件动作序列
-// ============================================================
 static void run_event_actions(lua_State* L, int ev_idx, uint8_t floor, Player* player) {
 	g_last_choice = -1;
 
@@ -62,14 +50,12 @@ static void run_event_actions(lua_State* L, int ev_idx, uint8_t floor, Player* p
 		const char* type = lua_tostring(L, -1);
 		lua_pop(L, 1);
 
-		// --- say ---
 		if (strcmp(type, "say") == 0) {
 			if (!check_if_choice(L, -1)) { lua_pop(L, 1); continue; }
 			lua_getfield(L, -1, "text");
 			saySomething((char*)lua_tostring(L, -1));
 			lua_pop(L, 1);
 		}
-		// --- choose ---
 		else if (strcmp(type, "choose") == 0 && player) {
 			lua_getfield(L, -1, "choices");
 			char* list[8];
@@ -83,7 +69,6 @@ static void run_event_actions(lua_State* L, int ev_idx, uint8_t floor, Player* p
 			g_last_choice = (int)chooseFromSomething((uint8_t)nc, list);
 			lua_pop(L, 1);
 		}
-		// --- replace_all ---
 		else if (strcmp(type, "replace_all") == 0) {
 			if (!check_if_choice(L, -1)) { lua_pop(L, 1); continue; }
 			lua_getfield(L, -1, "from"); int from = (int)lua_tointeger(L, -1); lua_pop(L, 1);
@@ -95,11 +80,9 @@ static void run_event_actions(lua_State* L, int ev_idx, uint8_t floor, Player* p
 			if (from == 8 && to == 1)
 				term_set_message("守卫门已打开");
 		}
-		// --- altar (完整祭坛流程，保留兼容) ---
 		else if (strcmp(type, "altar") == 0 && player && player->events) {
 			player->events->checkAltar(floor, *player);
 		}
-		// --- add_health / add_attack / add_defence ---
 		else if (strcmp(type, "add_health") == 0 && player) {
 			if (!check_if_choice(L, -1)) { lua_pop(L, 1); continue; }
 			lua_getfield(L, -1, "value");
@@ -118,7 +101,6 @@ static void run_event_actions(lua_State* L, int ev_idx, uint8_t floor, Player* p
 			player->defence += (uint32_t)lua_tointeger(L, -1);
 			lua_pop(L, 1);
 		}
-		// --- add_money / take_money ---
 		else if (strcmp(type, "add_money") == 0 && player) {
 			if (!check_if_choice(L, -1)) { lua_pop(L, 1); continue; }
 			lua_getfield(L, -1, "value");
@@ -132,16 +114,52 @@ static void run_event_actions(lua_State* L, int ev_idx, uint8_t floor, Player* p
 			lua_pop(L, 1);
 			if (player->money >= val) player->money -= val;
 		}
-		// --- altar_tick (递增祭坛使用次数) ---
 		else if (strcmp(type, "altar_tick") == 0 && player && player->events) {
 			player->events->setAltarTimes(player->events->getAltarTimes() + 1);
 		}
-		// --- msg ---
 		else if (strcmp(type, "msg") == 0) {
 			if (!check_if_choice(L, -1)) { lua_pop(L, 1); continue; }
 			lua_getfield(L, -1, "text");
 			term_set_message((char*)lua_tostring(L, -1));
 			lua_pop(L, 1);
+		}
+		// altar_show: 计算费用/增益，显示提示和选择框
+		else if (strcmp(type, "altar_show") == 0 && player && player->events) {
+			EventManager* ev = player->events;
+			unsigned ratio = (floor - 1) / 10 + 1;
+			unsigned cost = ev->getAltarCost();
+			unsigned hp = 100 * (ev->getAltarTimes() + 1);
+			unsigned atk = 2 * ratio;
+			unsigned def = 4 * ratio;
+			char tb[80], ca[32], cb[32], cc[32], cd[8];
+			snprintf(tb, sizeof(tb), "供奉%d金币，便可以增加你的力量，你想要什么呢……", cost);
+			snprintf(ca, sizeof(ca), "生命+%d", hp);
+			snprintf(cb, sizeof(cb), "攻击+%d", atk);
+			snprintf(cc, sizeof(cc), "防御+%d", def);
+			snprintf(cd, sizeof(cd), "离开");
+			saySomething(tb);
+			char* list[4] = { ca, cb, cc, cd };
+			g_last_choice = (int)chooseFromSomething(4, list);
+		}
+		// altar_apply: 根据选择扣钱/加属性/tick
+		else if (strcmp(type, "altar_apply") == 0 && player && player->events) {
+			if (g_last_choice == 3 || g_last_choice == 255) { /* 离开 */ }
+			else {
+				EventManager* ev = player->events;
+				if (player->money < ev->getAltarCost()) {
+					saySomething((char*)"你的金币不足，无法供奉！");
+				} else {
+					player->money -= ev->getAltarCost();
+					unsigned ratio = (floor - 1) / 10 + 1;
+					switch (g_last_choice) {
+						case 0: player->health += 100 * (ev->getAltarTimes() + 1); break;
+						case 1: player->attack += 2 * ratio; break;
+						case 2: player->defence += 4 * ratio; break;
+					}
+					ev->setAltarTimes(ev->getAltarTimes() + 1);
+					drainInput();
+				}
+			}
 		}
 
 		lua_pop(L, 1);
@@ -149,9 +167,6 @@ static void run_event_actions(lua_State* L, int ev_idx, uint8_t floor, Player* p
 	lua_pop(L, 1);
 }
 
-// ============================================================
-// 楼层事件加载
-// ============================================================
 static bool load_floor_events(lua_State* L, uint8_t floor) {
 	char file[32];
 	snprintf(file, sizeof(file), "floor_%d", floor);
@@ -165,9 +180,6 @@ static bool load_floor_events(lua_State* L, uint8_t floor) {
 	return true;
 }
 
-// ============================================================
-// checkTile / checkClear / checkGuardKill
-// ============================================================
 void EventManager::checkTile(uint8_t floor, uint8_t tile_id, Player& player) {
 	lua_State* L = script_init();
 	if (!L) return;
@@ -207,10 +219,8 @@ void EventManager::checkTile(uint8_t floor, uint8_t tile_id, Player& player) {
 
 void EventManager::checkClear(uint8_t floor) {
 	if (countMonsters(floor) > 0) return;
-
 	lua_State* L = script_init();
 	if (!L) return;
-
 	if (!load_floor_events(L, floor)) return;
 
 	lua_getfield(L, -1, "events");
@@ -298,9 +308,6 @@ void EventManager::checkGuardKill(uint8_t floor, uint8_t killed_x, uint8_t kille
 	lua_pop(L, 2);
 }
 
-// ============================================================
-// 怪物计数 / 祭坛
-// ============================================================
 uint8_t EventManager::countMonsters(uint8_t floor) {
 	uint8_t count = 0;
 	for (uint8_t y = 0; y < 13; y++)

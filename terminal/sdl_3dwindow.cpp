@@ -99,7 +99,7 @@ static void cast_ray(uint8_t floor, double px, double py, double angle,
 		}
 		if (map_x < 0 || map_x >= 13 || map_y < 0 || map_y >= 13) break;
 		uint8_t t = map_get(floor, map_x, map_y);
-		if (t >= 1 && t <= 11) {  // 阻挡视线的 tile
+		if (t == 2 || t == 3 || t == 4 || t == 5 || t == 6 || t == 7 || t == 8 || t == 11) {  // 阻挡视线的 tile
 			hit_tile = t;
 			side = s;
 			if (s == 0) perp_dist = side_dist_x - delta_x;

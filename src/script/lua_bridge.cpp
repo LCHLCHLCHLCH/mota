@@ -236,4 +236,27 @@ void lua_register_game_api(lua_State* L, Player* player, EventManager* events) {
 	lua_register(L, "restart", l_restart);
 	lua_register(L, "open3d",  l_open3d);
 	lua_register(L, "close3d", l_close3d);
+
+	// 数值操作
+	lua_register(L, "add_health",  [](lua_State* L)->int { g_ply->health += (uint32_t)luaL_checkinteger(L,1); return 0; });
+	lua_register(L, "add_attack",  [](lua_State* L)->int { g_ply->attack += (uint32_t)luaL_checkinteger(L,1); return 0; });
+	lua_register(L, "add_defence", [](lua_State* L)->int { g_ply->defence += (uint32_t)luaL_checkinteger(L,1); return 0; });
+	lua_register(L, "add_money",   [](lua_State* L)->int { g_ply->money  += (uint32_t)luaL_checkinteger(L,1); return 0; });
+	lua_register(L, "take_money",  [](lua_State* L)->int {
+		uint32_t v = (uint32_t)luaL_checkinteger(L,1);
+		if (g_ply->money >= v) { g_ply->money -= v; lua_pushboolean(L, 1); }
+		else lua_pushboolean(L, 0);
+		return 1;
+	});
+	lua_register(L, "altar_times",  [](lua_State* L)->int { lua_pushinteger(L, g_ev->getAltarTimes()); return 1; });
+	lua_register(L, "player_floor", [](lua_State* L)->int { lua_pushinteger(L, g_ply->floor); return 1; });
+	lua_register(L, "choose_menu",  [](lua_State* L)->int {
+		int n = lua_gettop(L);
+		if (n > 8) n = 8;
+		char* list[8];
+		for (int i = 0; i < n; i++) list[i] = (char*)lua_tostring(L, i+1);
+		lua_pushinteger(L, chooseFromSomething(n, list));
+		return 1;
+	});
+	lua_register(L, "drain", [](lua_State* L)->int { drainInput(); return 0; });
 }

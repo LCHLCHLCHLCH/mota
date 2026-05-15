@@ -111,52 +111,20 @@ static void run_event_actions(lua_State* L, int ev_idx, uint8_t floor, Player* p
 			lua_pop(L, 1);
 			if (player->money >= val) player->money -= val;
 		}
-		else if (strcmp(type, "altar_tick") == 0 && player && player->events) {
-			player->events->setAltarTimes(player->events->getAltarTimes() + 1);
-		}
 		else if (strcmp(type, "msg") == 0) {
 			if (!check_if_choice(L, -1)) { lua_pop(L, 1); continue; }
 			lua_getfield(L, -1, "text");
 			term_set_message((char*)lua_tostring(L, -1));
 			lua_pop(L, 1);
 		}
-		// altar_show: 计算费用/增益，显示提示和选择框
-		else if (strcmp(type, "altar_show") == 0 && player && player->events) {
-			EventManager* ev = player->events;
-			unsigned ratio = (floor - 1) / 10 + 1;
-			unsigned cost = ev->getAltarCost();
-			unsigned hp = 100 * (ev->getAltarTimes() + 1);
-			unsigned atk = 2 * ratio;
-			unsigned def = 4 * ratio;
-			char tb[80], ca[32], cb[32], cc[32], cd[8];
-			snprintf(tb, sizeof(tb), "供奉%d金币，便可以增加你的力量，你想要什么呢……", cost);
-			snprintf(ca, sizeof(ca), "生命+%d", hp);
-			snprintf(cb, sizeof(cb), "攻击+%d", atk);
-			snprintf(cc, sizeof(cc), "防御+%d", def);
-			snprintf(cd, sizeof(cd), "离开");
-			saySomething(tb);
-			char* list[4] = { ca, cb, cc, cd };
-			g_last_choice = (int)chooseFromSomething(4, list);
-		}
-		// altar_apply: 根据选择扣钱/加属性/tick
-		else if (strcmp(type, "altar_apply") == 0 && player && player->events) {
-			if (g_last_choice == 3 || g_last_choice == 255) { /* 离开 */ }
-			else {
-				EventManager* ev = player->events;
-				if (player->money < ev->getAltarCost()) {
-					saySomething((char*)"你的金币不足，无法供奉！");
-				} else {
-					player->money -= ev->getAltarCost();
-					unsigned ratio = (floor - 1) / 10 + 1;
-					switch (g_last_choice) {
-						case 0: player->health += 100 * (ev->getAltarTimes() + 1); break;
-						case 1: player->attack += 2 * ratio; break;
-						case 2: player->defence += 4 * ratio; break;
-					}
-					ev->setAltarTimes(ev->getAltarTimes() + 1);
-					drainInput();
+		else if (strcmp(type, "call") == 0) {
+			lua_getfield(L, -1, "func");
+			if (lua_isfunction(L, -1)) {
+				if (lua_pcall(L, 0, 0, 0) != LUA_OK) {
+					fprintf(stderr, "event call error: %s\n", lua_tostring(L, -1));
+					lua_pop(L, 1);
 				}
-			}
+			} else { lua_pop(L, 1); }
 		}
 
 		lua_pop(L, 1);

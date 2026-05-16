@@ -36,6 +36,7 @@
 *.app
 
 build/
+build3d/
 _build/
 
 # IDE / editor

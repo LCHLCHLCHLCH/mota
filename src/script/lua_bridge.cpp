@@ -259,6 +259,8 @@ void lua_register_game_api(lua_State* L, Player* player, EventManager* events) {
 		return 1;
 	});
 	lua_register(L, "drain", [](lua_State* L)->int { drainInput(); return 0; });
+	lua_register(L, "altar_tick", [](lua_State* L)->int {
+		(void)L; g_ev->setAltarTimes(g_ev->getAltarTimes() + 1); return 0; });
 	lua_register(L, "set_tile", [](lua_State* L)->int {
 		int x = (int)luaL_checkinteger(L, 1);
 		int y = (int)luaL_checkinteger(L, 2);

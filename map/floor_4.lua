@@ -45,10 +45,12 @@ return {
         {
             trigger = "on_tile",
             tile = 151,
-            condition_flag = 3,
-            set_flag = 3,
+            once = true,
             actions = {
-                { type = "say", text = "有些门不能用钥匙打开，只有当你击败它的守卫后才会自动打开。" },
+                { type = "call", func = function()
+                    say("有些门不能用钥匙打开，只有当你击败它的守卫后才会自动打开。")
+                    set_tile(10, 1, 1)
+                end },
             }
         }
     }

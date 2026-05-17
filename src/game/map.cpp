@@ -22,6 +22,15 @@ void map_init() {
 	for (int f = 0; f <= 50; f++) {
 		char file[32];
 		snprintf(file, sizeof(file), "floor_%d", f);
+
+		// 清除 require 缓存，确保热加载生效
+		lua_getglobal(L, "package");
+		lua_getfield(L, -1, "loaded");
+		lua_pushstring(L, file);
+		lua_pushnil(L);
+		lua_settable(L, -3);
+		lua_pop(L, 2);
+
 		lua_getglobal(L, "require");
 		lua_pushstring(L, file);
 		if (lua_pcall(L, 1, 1, 0) != LUA_OK) {
@@ -51,6 +60,13 @@ void map_init() {
 void map_init_default() {
 	if (!g_map_ready) map_init();
 	memcpy(g_map_default, g_map, sizeof(g_map));
+}
+
+void map_reload() {
+	g_map_ready = false;
+	std::memset(g_map, 0, sizeof(g_map));
+	map_init();
+	map_init_default();
 }
 
 uint8_t map_get(uint8_t floor, uint8_t x, uint8_t y) {
@@ -136,7 +152,7 @@ int map_kill_monster(uint8_t floor, uint8_t x, uint8_t y, Player* player) {
 						// 检查 condition_flag
 						lua_getfield(L, -1, "condition_flag");
 						int cf = (int)lua_tointeger(L, -1); lua_pop(L, 1);
-						if (cf > 0 && player->events && player->events->hasFlag((uint8_t)cf)) { lua_pop(L, 1); continue; }
+						if (cf > 0 && player->events && player->events->hasFlag(floor, (uint8_t)cf)) { lua_pop(L, 1); continue; }
 
 						// 执行 actions
 						lua_getfield(L, -1, "actions");
@@ -164,7 +180,7 @@ int map_kill_monster(uint8_t floor, uint8_t x, uint8_t y, Player* player) {
 						// 设置 flag
 						lua_getfield(L, -1, "set_flag");
 						int sf = (int)lua_tointeger(L, -1); lua_pop(L, 1);
-						if (sf > 0 && player->events) player->events->setFlag((uint8_t)sf);
+						if (sf > 0 && player->events) player->events->setFlag(floor, (uint8_t)sf);
 
 						lua_pop(L, 1); break; // event_i
 					}

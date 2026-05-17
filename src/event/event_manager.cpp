@@ -17,8 +17,13 @@ void EventManager::init() {
 	altar_times_ = 0;
 }
 
-void EventManager::setFlag(uint8_t id) { if (id < MAX_FLAGS) flags_[id] = 1; }
-bool EventManager::hasFlag(uint8_t id) const { return (id >= MAX_FLAGS) ? true : (flags_[id] != 0); }
+void EventManager::setFlag(uint8_t floor, uint8_t id) {
+	if (floor < MAX_FLOORS && id < MAX_FLAGS) flags_[floor][id] = 1;
+}
+bool EventManager::hasFlag(uint8_t floor, uint8_t id) const {
+	if (floor >= MAX_FLOORS || id >= MAX_FLAGS) return true;
+	return flags_[floor][id] != 0;
+}
 
 static bool check_if_choice(lua_State* L, int idx) {
 	lua_getfield(L, idx, "if_choice");
@@ -139,6 +144,48 @@ static void run_event_actions(lua_State* L, int ev_idx, uint8_t floor, Player* p
 	lua_pop(L, 1);
 }
 
+// 读取事件的 once/condition_flag，返回是否应该跳过（已触发过）
+// 若不需要跳过且 once 为 true，自动分配内部 flag ID = event_index
+static bool check_event_skip(lua_State* L, int ev_idx, uint8_t floor, int event_index,
+                             EventManager* em, bool* out_once, int* out_auto_flag) {
+	*out_once = false;
+	*out_auto_flag = -1;
+
+	// once 字段优先
+	lua_getfield(L, ev_idx, "once");
+	bool has_once = lua_toboolean(L, -1);
+	lua_pop(L, 1);
+
+	if (has_once) {
+		*out_once = true;
+		int auto_id = event_index;
+		if (auto_id >= MAX_FLAGS) auto_id = MAX_FLAGS - 1;
+		*out_auto_flag = auto_id;
+		return em->hasFlag(floor, (uint8_t)auto_id);
+	}
+
+	// 回退到 condition_flag
+	lua_getfield(L, ev_idx, "condition_flag");
+	int cf = (int)lua_tointeger(L, -1);
+	lua_pop(L, 1);
+	if (cf > 0 && em->hasFlag(floor, (uint8_t)cf)) return true;
+	return false;
+}
+
+// 根据 once 或 set_flag 设置 flag
+static void apply_event_flag(lua_State* L, int ev_idx, uint8_t floor, EventManager* em,
+                             bool is_once, int auto_flag) {
+	if (is_once) {
+		if (auto_flag >= 0 && auto_flag < MAX_FLAGS)
+			em->setFlag(floor, (uint8_t)auto_flag);
+	} else {
+		lua_getfield(L, ev_idx, "set_flag");
+		int sf = (int)lua_tointeger(L, -1);
+		lua_pop(L, 1);
+		if (sf > 0) em->setFlag(floor, (uint8_t)sf);
+	}
+}
+
 static bool load_floor_events(lua_State* L, uint8_t floor) {
 	char file[32];
 	snprintf(file, sizeof(file), "floor_%d", floor);
@@ -152,7 +199,62 @@ static bool load_floor_events(lua_State* L, uint8_t floor) {
 	return true;
 }
 
-void EventManager::checkTile(uint8_t floor, uint8_t tile_id, Player& player) {
+// ============================================================
+// 事件分发
+// ============================================================
+
+bool EventManager::tryHandleTile(uint8_t floor, uint8_t px, uint8_t py, uint8_t tile_id, Player& player) {
+	lua_State* L = script_init();
+	if (!L) return false;
+	if (player.events) lua_register_game_api(L, &player, player.events);
+
+	if (!load_floor_events(L, floor)) return false;
+
+	lua_getfield(L, -1, "events");
+	if (!lua_istable(L, -1)) { lua_pop(L, 2); return false; }
+
+	int n = (int)lua_objlen(L, -1);
+	for (int i = 1; i <= n; i++) {
+		lua_rawgeti(L, -1, i);
+		lua_getfield(L, -1, "trigger");
+		const char* trigger = lua_tostring(L, -1);
+		lua_pop(L, 1);
+		if (!trigger || strcmp(trigger, "on_tile") != 0) { lua_pop(L, 1); continue; }
+
+		lua_getfield(L, -1, "x");
+		int ev_x = lua_isnil(L, -1) ? -1 : (int)lua_tointeger(L, -1);
+		lua_pop(L, 1);
+		lua_getfield(L, -1, "y");
+		int ev_y = lua_isnil(L, -1) ? -1 : (int)lua_tointeger(L, -1);
+		lua_pop(L, 1);
+
+		bool match;
+		if (ev_x >= 0 && ev_y >= 0) {
+			match = (ev_x == (int)px && ev_y == (int)py);
+		} else {
+			lua_getfield(L, -1, "tile");
+			match = ((int)lua_tointeger(L, -1) == (int)tile_id);
+			lua_pop(L, 1);
+		}
+
+		if (!match) { lua_pop(L, 1); continue; }
+
+		bool is_once; int auto_flag;
+		if (check_event_skip(L, lua_gettop(L), floor, i - 1, this, &is_once, &auto_flag))
+			{ lua_pop(L, 1); continue; }
+
+		run_event_actions(L, lua_gettop(L), floor, &player);
+		apply_event_flag(L, lua_gettop(L), floor, this, is_once, auto_flag);
+
+		lua_pop(L, 1); // event
+		lua_pop(L, 2); // events + floor table
+		return true;
+	}
+	lua_pop(L, 2);
+	return false;
+}
+
+void EventManager::checkTile(uint8_t floor, uint8_t px, uint8_t py, uint8_t tile_id, Player& player) {
 	lua_State* L = script_init();
 	if (!L) return;
 	if (player.events) lua_register_game_api(L, &player, player.events);
@@ -170,19 +272,30 @@ void EventManager::checkTile(uint8_t floor, uint8_t tile_id, Player& player) {
 		lua_pop(L, 1);
 		if (!trigger || strcmp(trigger, "on_tile") != 0) { lua_pop(L, 1); continue; }
 
-		lua_getfield(L, -1, "tile");
-		if ((int)lua_tointeger(L, -1) != (int)tile_id) { lua_pop(L, 2); continue; }
+		lua_getfield(L, -1, "x");
+		int ev_x = lua_isnil(L, -1) ? -1 : (int)lua_tointeger(L, -1);
+		lua_pop(L, 1);
+		lua_getfield(L, -1, "y");
+		int ev_y = lua_isnil(L, -1) ? -1 : (int)lua_tointeger(L, -1);
 		lua_pop(L, 1);
 
-		lua_getfield(L, -1, "condition_flag");
-		int cf = (int)lua_tointeger(L, -1); lua_pop(L, 1);
-		if (cf > 0 && hasFlag((uint8_t)cf)) { lua_pop(L, 1); continue; }
+		bool match;
+		if (ev_x >= 0 && ev_y >= 0) {
+			match = (ev_x == (int)px && ev_y == (int)py);
+		} else {
+			lua_getfield(L, -1, "tile");
+			match = ((int)lua_tointeger(L, -1) == (int)tile_id);
+			lua_pop(L, 1);
+		}
+
+		if (!match) { lua_pop(L, 1); continue; }
+
+		bool is_once; int auto_flag;
+		if (check_event_skip(L, lua_gettop(L), floor, i - 1, this, &is_once, &auto_flag))
+			{ lua_pop(L, 1); continue; }
 
 		run_event_actions(L, lua_gettop(L), floor, &player);
-
-		lua_getfield(L, -1, "set_flag");
-		int sf = (int)lua_tointeger(L, -1); lua_pop(L, 1);
-		if (sf > 0) setFlag((uint8_t)sf);
+		apply_event_flag(L, lua_gettop(L), floor, this, is_once, auto_flag);
 
 		lua_pop(L, 1); break;
 	}
@@ -206,15 +319,12 @@ void EventManager::checkClear(uint8_t floor) {
 		lua_pop(L, 1);
 		if (!trigger || strcmp(trigger, "on_clear") != 0) { lua_pop(L, 1); continue; }
 
-		lua_getfield(L, -1, "condition_flag");
-		int cf = (int)lua_tointeger(L, -1); lua_pop(L, 1);
-		if (cf > 0 && hasFlag((uint8_t)cf)) { lua_pop(L, 1); continue; }
+		bool is_once; int auto_flag;
+		if (check_event_skip(L, lua_gettop(L), floor, i - 1, this, &is_once, &auto_flag))
+			{ lua_pop(L, 1); continue; }
 
 		run_event_actions(L, lua_gettop(L), floor, NULL);
-
-		lua_getfield(L, -1, "set_flag");
-		int sf = (int)lua_tointeger(L, -1); lua_pop(L, 1);
-		if (sf > 0) setFlag((uint8_t)sf);
+		apply_event_flag(L, lua_gettop(L), floor, this, is_once, auto_flag);
 
 		lua_pop(L, 1); break;
 	}
@@ -265,15 +375,12 @@ void EventManager::checkGuardKill(uint8_t floor, uint8_t killed_x, uint8_t kille
 		lua_pop(L, 1);
 		if (!all_cleared) { lua_pop(L, 1); continue; }
 
-		lua_getfield(L, -1, "condition_flag");
-		int cf = (int)lua_tointeger(L, -1); lua_pop(L, 1);
-		if (cf > 0 && hasFlag((uint8_t)cf)) { lua_pop(L, 1); continue; }
+		bool is_once; int auto_flag;
+		if (check_event_skip(L, lua_gettop(L), floor, i - 1, this, &is_once, &auto_flag))
+			{ lua_pop(L, 1); continue; }
 
 		run_event_actions(L, lua_gettop(L), floor, &player);
-
-		lua_getfield(L, -1, "set_flag");
-		int sf = (int)lua_tointeger(L, -1); lua_pop(L, 1);
-		if (sf > 0) setFlag((uint8_t)sf);
+		apply_event_flag(L, lua_gettop(L), floor, this, is_once, auto_flag);
 
 		lua_pop(L, 1); break;
 	}
@@ -289,10 +396,3 @@ uint8_t EventManager::countMonsters(uint8_t floor) {
 		}
 	return count;
 }
-
-uint16_t EventManager::getAltarCost() const {
-	uint16_t t = altar_times_;
-	return 20 + 10 * (t + 1) * t;
-}
-
-

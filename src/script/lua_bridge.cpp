@@ -9,6 +9,8 @@
 #include "save_system.h"
 #include "ui/backpack.h"
 #include "sdl_3dwindow.h"
+#include "render/display.h"
+#include "render/status_bar.h"
 extern "C" {
 #include "lua.h"
 #include "lauxlib.h"
@@ -20,16 +22,22 @@ extern "C" {
 // Lua 可调用的标记读写
 // ============================================================
 static EventManager* g_ev = NULL;
+static Player*     g_ply = NULL;
+
+// 前向声明（定义在 g_display/g_statusBar 之后）
+static void refresh_and_present();
 
 static int l_has_flag(lua_State* L) {
 	int id = (int)luaL_checkinteger(L, 1);
-	lua_pushboolean(L, g_ev ? g_ev->hasFlag((uint8_t)id) : 0);
+	bool result = false;
+	if (g_ev && g_ply) result = g_ev->hasFlag(g_ply->floor, (uint8_t)id);
+	lua_pushboolean(L, result);
 	return 1;
 }
 
 static int l_set_flag(lua_State* L) {
 	int id = (int)luaL_checkinteger(L, 1);
-	if (g_ev) g_ev->setFlag((uint8_t)id);
+	if (g_ev && g_ply) g_ev->setFlag(g_ply->floor, (uint8_t)id);
 	return 0;
 }
 
@@ -38,6 +46,7 @@ static int l_set_flag(lua_State* L) {
 // ============================================================
 static int l_say(lua_State* L) {
 	const char* text = luaL_checkstring(L, 1);
+	refresh_and_present();
 	saySomething((char*)text);
 	return 0;
 }
@@ -76,7 +85,19 @@ static int l_count_monsters(lua_State* L) {
 // ============================================================
 // 控制台用 API
 // ============================================================
-static Player* g_ply = NULL;
+static Display*    g_display = NULL;
+static StatusBar*  g_statusBar = NULL;
+
+static bool g_debug = false;
+
+// 重新生成并呈现一帧（sleep / say 等阻塞操作前调用）
+static void refresh_and_present() {
+	if (!g_display || !g_statusBar || !g_ply) return;
+	touchwin_term();
+	g_display->generateFrame(*g_ply);
+	g_statusBar->draw(*g_ply);
+	term_present();
+}
 
 static int l_set(lua_State* L) {
 	const char* attr = luaL_checkstring(L, 1);
@@ -92,7 +113,6 @@ static int l_set(lua_State* L) {
 	else if (strcmp(attr, "floor") == 0)   { p.floor = (uint8_t)val; if (p.floor > p.maxFloorVisited) p.maxFloorVisited = p.floor; }
 	else if (strcmp(attr, "x") == 0)       p.x = (uint8_t)val;
 	else if (strcmp(attr, "y") == 0)       p.y = (uint8_t)val;
-	printf("%s = %d\n", attr, val);
 	return 0;
 }
 
@@ -152,12 +172,12 @@ static int l_give(lua_State* L) {
 		case 68: p.hasTeleporter = true; printf("获得楼层传送器\n"); break;
 	case 69:
 	case 70: {
-		static Item cmdItem;
-		cmdItem.name = (char*)getItemName((uint8_t)id);
-		cmdItem.id = (uint8_t)id;
-		if (p.backpack) p.backpack->addItem(&cmdItem);
-		printf("获得%s\n", getItemName((uint8_t)id));
-		break;
+		Item* it = new Item();
+		it->name = (char*)getItemName((uint8_t)id);
+		it->id = (uint8_t)id;
+		it->lastItem = nullptr;
+		it->nextItem = nullptr;
+		if (p.backpack) p.backpack->addItem(it);
 	}
 	default: printf("未知道具 ID\n"); break;
 	}
@@ -176,13 +196,9 @@ static int l_light(lua_State* L) {
 
 static int l_restart(lua_State* L) {
 	(void)L;
+	map_reload();
 	g_ply->init();
 	if (g_ev) g_ev->init();
-	for (int fl = 0; fl <= 50; fl++)
-		for (int y = 0; y < 13; y++)
-			for (int x = 0; x < 13; x++)
-				map_set((uint8_t)fl, (uint8_t)x, (uint8_t)y,
-					map_get_default((uint8_t)fl, (uint8_t)x, (uint8_t)y));
 	printf("游戏已重启\n");
 	return 0;
 }
@@ -212,6 +228,24 @@ static int l_close3d(lua_State* L) {
 	(void)L;
 	shutdown_3d_window();
 	return 0;
+}
+
+
+// ============================================================
+// debug 模式（无视碰撞、事件、怪物）
+// ============================================================
+bool is_debug() { return g_debug; }
+
+static int l_debug_on(lua_State* L) {
+	(void)L; g_debug = true; term_set_message("debug ON"); return 0;
+}
+
+static int l_debug_off(lua_State* L) {
+	(void)L; g_debug = false; term_set_message("debug OFF"); return 0;
+}
+void lua_set_frame_context(Display* display, StatusBar* statusBar) {
+	g_display   = display;
+	g_statusBar = statusBar;
 }
 
 void lua_register_game_api(lua_State* L, Player* player, EventManager* events) {
@@ -268,4 +302,26 @@ void lua_register_game_api(lua_State* L, Player* player, EventManager* events) {
 		map_set(g_ply->floor, (uint8_t)x, (uint8_t)y, (uint8_t)v);
 		return 0;
 	});
+	lua_register(L, "sleep_ms", [](lua_State* L)->int {
+		int ms = (int)luaL_checkinteger(L, 1);
+		if (ms <= 0) return 0;
+		refresh_and_present();
+		uint32_t end = SDL_GetTicks() + (uint32_t)ms;
+		while (SDL_GetTicks() < end) {
+			SDL_Event ev;
+			while (SDL_PollEvent(&ev)) {
+				if (ev.type == SDL_EVENT_QUIT) return 0;
+			}
+			SDL_Delay(10);
+		}
+		return 0;
+	});
+	lua_register(L, "darken_map", [](lua_State* L)->int {
+		(void)L; term_set_darkened(true); return 0;
+	});
+	lua_register(L, "lighten_map", [](lua_State* L)->int {
+		(void)L; term_set_darkened(false); return 0;
+	});
+	lua_register(L, "debug_on",  l_debug_on);
+	lua_register(L, "debug_off", l_debug_off);
 }

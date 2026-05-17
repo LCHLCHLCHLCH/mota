@@ -34,6 +34,7 @@ static bool g_quit = false;
 
 // 浅色模式
 static bool g_light_mode = false;
+static bool g_darkened   = false;
 
 // 底部消息
 static char g_message[128] = "";
@@ -175,6 +176,12 @@ static void draw_cell_sdl(int col, int row) {
 	int cx = col * g_cell_w;
 	int cy = row * g_cell_h;
 	SDL_FRect rect = { (float)cx, (float)cy, (float)g_cell_w, (float)g_cell_h };
+
+	if (g_darkened) {
+		SDL_SetRenderDrawColor(g_renderer, 0, 0, 0, 255);
+		SDL_RenderFillRect(g_renderer, &rect);
+		return;
+	}
 
 	SDL_Color& bg_c = g_palette[c->bg];
 	SDL_SetRenderDrawColor(g_renderer, bg_c.r, bg_c.g, bg_c.b, bg_c.a);
@@ -461,6 +468,9 @@ void term_set_light_mode(bool on) {
 	g_palette[0] = g_palette[4];
 	g_palette[4] = tmp;
 }
+
+void term_set_darkened(bool on) { g_darkened = on; }
+bool term_is_darkened()         { return g_darkened; }
 
 void term_set_message(const char* msg) {
 	strncpy(g_message, msg, 127);

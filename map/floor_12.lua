@@ -18,6 +18,60 @@ return {
     },
     events = {
         {
+            trigger = "on_tile",
+            x = 1, y = 1,
+            actions = {
+                { type = "call", func = function()
+                    if has_flag(3) then
+                        set("x", 1)
+                        set("y", 1)
+                        return
+                    end
+                    if has_flag(2) then
+                        say("商人：你是否注意到5、9、14、16、18楼的墙与众不同？")
+                        set_tile(1, 1, 1)
+                        set_flag(3)
+                        return
+                    end
+                    say("商人：我有一把红钥匙，你出800个金币我就卖给你")
+                    local c = choose_menu("我太需要了", "下次再说")
+                    if c == 0 then
+                        if take_money(800) then
+                            give(53)
+                            set_flag(2)
+                        else
+                            say("商人：你的金币不够！")
+                        end
+                    end
+                    drain()
+                end },
+            }
+        },
+        {
+            trigger = "on_tile",
+            x = 11, y = 1,
+            actions = {
+                { type = "call", func = function()
+                    if not has_flag(1) then
+                        set_tile(11, 1, 152)
+                        set_flag(1)
+                        msg("墙壁裂开，出现了一个商人！")
+                        return
+                    end
+                    say("商人：我有很多黄钥匙，1000金币一把你要吗？")
+                    local c = choose_menu("我太需要了", "下次再说")
+                    if c == 0 then
+                        if take_money(1000) then
+                            give(51)
+                        else
+                            say("商人：你的金币不够！")
+                        end
+                    end
+                    drain()
+                end },
+            }
+        },
+        {
                         trigger = "on_tile",
             tile = 155,
             actions = {

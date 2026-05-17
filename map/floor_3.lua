@@ -20,10 +20,42 @@ return {
         {
             trigger = "on_tile",
             tile = 151,
-            condition_flag = 1,
-            set_flag = 1,
+            once = true,
             actions = {
-                { type = "say", text = "我可以给你一本怪物手册，你可以用它预测该楼层各怪物对你造成的伤害。" },
+                { type = "call", func = function()
+                    say("我可以给你一本怪物手册，你可以用它预测该楼层各怪物对你造成的伤害。")
+                    set_tile(11, 4, 1)
+                end },
+            }
+        },
+        {
+            trigger = "on_tile",
+            x = 5, y = 9,
+            once = true,
+            actions = {
+                { type = "call", func = function()
+                    set("x", 5)
+                    set("y", 9)
+                    set_tile(5, 7, 135)
+                    set_tile(5, 8, 131)
+                    set_tile(5, 10, 131)
+                    set_tile(4, 9, 131)
+                    set_tile(6, 9, 131)
+                    sleep_ms(2000)
+                    say("魔王：欢迎来到魔塔，你是第一百位挑战者。你若能打败我所有的手下，我就与你一对一的决斗。现在你必须接受我的安排。")
+                    say("勇者：什么？")
+                    darken_map()
+                    set_tile(5, 7, 1)
+                    set_tile(5, 8, 1)
+                    set_tile(5, 10, 1)
+                    set_tile(4, 9, 1)
+                    set_tile(6, 9, 1)
+                    set("x", 4)
+                    set("y", 8)
+                    set("floor", 2)
+                    sleep_ms(2000)
+                    lighten_map()
+                end },
             }
         }
     }

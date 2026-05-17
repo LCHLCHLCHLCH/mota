@@ -3,23 +3,25 @@
 
 class Player;
 
-#define MAX_FLAGS  64
+#define MAX_FLOORS 51
+#define MAX_FLAGS  16
 #define MAX_EVENTS 64
 
 class EventManager {
 public:
 	void init();
-	void checkTile(uint8_t floor, uint8_t tile_id, Player& player);
+	void checkTile(uint8_t floor, uint8_t x, uint8_t y, uint8_t tile_id, Player& player);
 	void checkClear(uint8_t floor);
+	// 通用 on_tile 钩子：如果该坐标有 Lua 事件则执行并返回 true
+	bool tryHandleTile(uint8_t floor, uint8_t x, uint8_t y, uint8_t tile_id, Player& player);
 	void checkGuardKill(uint8_t floor, uint8_t killed_x, uint8_t killed_y, Player& player);
-	bool hasFlag(uint8_t id) const;
-	void setFlag(uint8_t id);
+	bool hasFlag(uint8_t floor, uint8_t id) const;
+	void setFlag(uint8_t floor, uint8_t id);
 	uint8_t  getAltarTimes() const { return altar_times_; }
 	void     setAltarTimes(uint8_t t) { altar_times_ = t; }
-	uint16_t getAltarCost() const;
 
 private:
-	uint8_t flags_[MAX_FLAGS];
+	uint8_t flags_[MAX_FLOORS][MAX_FLAGS];
 	uint8_t event_count_;
 	Event   events_[MAX_EVENTS];
 	uint8_t altar_times_;

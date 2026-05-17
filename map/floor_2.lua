@@ -18,10 +18,22 @@ return {
     },
         events = {
         {
+            trigger = "on_tile",
+            x = 3, y = 7,
+            once = true,
+            actions = {
+                { type = "call", func = function()
+                    say("小偷：你清醒了吗？你到监狱时还处在昏迷中，魔法警卫把你扔到我这个房间。但你很幸运，我刚完成逃跑的暗道你就醒了，我们一起越狱吧。")
+                    say("小偷：你的剑和盾被警卫拿走了，你必须先找到武器。我知道铁剑在5楼，铁盾在9楼，你最好先取到它们。我现在有事要做没法帮你，再见。")
+                    set_tile(3, 7, 1)
+                    set_tile(2, 7, 1)
+                end },
+            }
+        },
+        {
             trigger = "on_guard_kill",
             guards = {{x = 6, y = 2}, {x = 8, y = 2}},
-            condition_flag = 2,
-            set_flag = 2,
+            once = true,
             actions = {
                 { type = "replace_all", from = 8, to = 1 },
             }

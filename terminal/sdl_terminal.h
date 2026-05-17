@@ -36,6 +36,8 @@ void erase_term();
 int  getch_term();
 bool term_quit_requested();
 void term_set_light_mode(bool on);
+void term_set_darkened(bool on);
+bool term_is_darkened();
 
 // ============================================================
 // printf 风格输出（替代 ncurses printw）

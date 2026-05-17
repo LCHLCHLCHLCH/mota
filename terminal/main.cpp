@@ -2,6 +2,7 @@
 #include "sdl_terminal.h"
 #include "console_cmd.h"
 #include "script/lua_state.h"
+#include "script/lua_bridge.h"
 #include "sdl_3dwindow.h"
 #include "game/player.h"
 #include "game/monster.h"
@@ -33,6 +34,7 @@ int main(int argc, char** argv) {
 	events.init();
 	player.events = &events;
 	player.backpack = &backpack;
+	lua_set_frame_context(&display, &statusBar);
 
 	map_init();
 	map_init_default();

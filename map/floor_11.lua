@@ -20,8 +20,7 @@ return {
         {
             trigger = "on_guard_kill",
             guards = {{x = 1, y = 5}, {x = 3, y = 5}},
-            condition_flag = 4,
-            set_flag = 4,
+            once = true,
             actions = {
                 { type = "replace_all", from = 8, to = 1 },
             }

@@ -54,10 +54,12 @@ bool save_game(const char* name, const Player& player, const EventManager& event
 	fprintf(f, "player.hasTeleporter=%d\n", player.hasTeleporter ? 1 : 0);
 	fprintf(f, "player.maxFloorVisited=%u\n", player.maxFloorVisited);
 
-	// --- 事件标记 ---
-	for (int i = 0; i < 64; i++) {
-		if (events.hasFlag(i))
-			fprintf(f, "event.flag.%d=1\n", i);
+	// --- 事件标记（每层独立） ---
+	for (int fl = 0; fl < 51; fl++) {
+		for (int fi = 0; fi < 16; fi++) {
+			if (events.hasFlag((uint8_t)fl, (uint8_t)fi))
+				fprintf(f, "event.flag.%d.%d=1\n", fl, fi);
+		}
 	}
 	fprintf(f, "event.altar_times=%u\n", events.getAltarTimes());
 
@@ -131,6 +133,7 @@ bool load_game(const char* name, Player& player, EventManager& events) {
 
 		char key[64] = "";
 		unsigned int val = 0, val2 = 0;
+		uint8_t tkey = 0, tkey2 = 0;
 
 		// player.*
 		if (sscanf(line, "player.health=%u", &val) == 1) player.health = val;
@@ -148,7 +151,7 @@ bool load_game(const char* name, Player& player, EventManager& events) {
 		else if (sscanf(line, "player.maxFloorVisited=%u", &val) == 1) player.maxFloorVisited = (uint8_t)val;
 
 		// event.*
-		else if (sscanf(line, "event.flag.%63[0-9]=%u", key, &val) == 2) events.setFlag((uint8_t)atoi(key));
+		else if (sscanf(line, "event.flag.%hhu.%hhu=%u", &tkey, &tkey2, &val) == 3) events.setFlag(tkey, tkey2);
 		else if (sscanf(line, "event.altar_times=%u", &val) == 1) events.setAltarTimes((uint8_t)val);
 
 		// backpack.*

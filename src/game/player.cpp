@@ -2,6 +2,7 @@
 #include "game/player.h"
 #include "game/monster.h"
 #include "event/event_manager.h"
+#include "script/lua_bridge.h"
 #include <render/cursor.h>
 #include "ui/backpack.h"
 
@@ -10,10 +11,10 @@
  */
 void Player::init()
 {
-	floor = 1;
-	x = 7;
-	y = 11;
-	// y = 6;
+	floor = 3;
+	x = 5;
+	y = 10;
+	money = 80000;
 	yellowKey = 90;
 	blueKey = 90;
 	redKey = 90;
@@ -71,6 +72,20 @@ void Player::respondToMap(uint8_t floor_going, uint8_t x_going, uint8_t y_going)
 {
 	uint8_t tile = map_get(floor_going, x_going, y_going);
 
+	// debug 模式：无视碰撞、事件、怪物，纯移动，显示坐标
+	if (is_debug()) {
+		this->x = x_going;
+		this->y = y_going;
+		char buf[32];
+		snprintf(buf, sizeof(buf), "DEBUG 楼层:%d 坐标:(%d,%d)", this->floor, this->x, this->y);
+		term_set_message(buf);
+		return;
+	}
+
+	// 通用 Lua on_tile 钩子：有事件走 Lua，跳过 C++ 默认行为
+	if (this->events && this->events->tryHandleTile(floor_going, x_going, y_going, tile, *this))
+		return;
+
 	switch (tile_category(tile)) {
 	case TILE_OBJECT:
 		reactToObject(floor_going, x_going, y_going);
@@ -82,8 +97,7 @@ void Player::respondToMap(uint8_t floor_going, uint8_t x_going, uint8_t y_going)
 		reactToMonster(floor_going, x_going, y_going);
 		break;
 	case TILE_NPC:
-		if (this->events)
-			this->events->checkTile(floor_going, tile, *this);
+		// 全部交由 Lua on_tile 事件处理，C++ 无默认行为
 		break;
 	default:
 		break;

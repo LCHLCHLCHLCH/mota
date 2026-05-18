@@ -8,6 +8,8 @@ on:
 jobs:
   build:
     runs-on: windows-latest
+    permissions:
+      contents: write
 
     steps:
       - name: 检出代码
@@ -33,6 +35,12 @@ jobs:
           copy build\simsun.ttc dist\
           xcopy /E /I build\map dist\map
           Compress-Archive -Path dist\* -DestinationPath mota-${{ github.ref_name }}.zip
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: mota-${{ github.ref_name }}
+          path: mota-${{ github.ref_name }}.zip
 
       - name: 发布 Release
         uses: softprops/action-gh-release@v2

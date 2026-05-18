@@ -53,6 +53,9 @@ return {
                     set("x", 4)
                     set("y", 8)
                     set("floor", 2)
+                    set("health", 400)
+                    set("attack", 10)
+                    set("defence", 10)
                     sleep_ms(2000)
                     lighten_map()
                 end },

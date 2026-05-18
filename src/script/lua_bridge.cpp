@@ -1,4 +1,5 @@
 #include "script/lua_bridge.h"
+#include "script/lua_state.h"
 #include "game/player.h"
 #include "game/map.h"
 #include "game/monster.h"
@@ -154,32 +155,10 @@ static int l_killall(lua_State* L) {
 
 static int l_give(lua_State* L) {
 	int id = (int)luaL_checkinteger(L, 1);
-	Player& p = *g_ply;
-	switch (id) {
-		case 51: p.yellowKey++; printf("获得黄钥匙\n"); break;
-		case 52: p.blueKey++;   printf("获得蓝钥匙\n"); break;
-		case 53: p.redKey++;    printf("获得红钥匙\n"); break;
-		case 58: p.attack += 10;  printf("攻击+10\n"); break;
-		case 59: p.defence += 10; printf("防御+10\n"); break;
-		case 60: p.attack += 20;  printf("攻击+20\n"); break;
-		case 61: p.defence += 20; printf("防御+20\n"); break;
-		case 62: p.attack += 40;  printf("攻击+40\n"); break;
-		case 63: p.defence += 40; printf("防御+40\n"); break;
-		case 64: p.attack += 50;  printf("攻击+50\n"); break;
-		case 65: p.defence += 50; printf("防御+50\n"); break;
-		case 66: p.attack += 100;  printf("攻击+100\n"); break;
-		case 67: p.defence += 100; printf("防御+100\n"); break;
-		case 68: p.hasTeleporter = true; printf("获得楼层传送器\n"); break;
-	case 69:
-	case 70: {
-		Item* it = new Item();
-		it->name = (char*)getItemName((uint8_t)id);
-		it->id = (uint8_t)id;
-		it->lastItem = nullptr;
-		it->nextItem = nullptr;
-		if (p.backpack) p.backpack->addItem(it);
-	}
-	default: printf("未知道具 ID\n"); break;
+	if (lua_item_on_acquire((uint8_t)id)) {
+		printf("给予道具 %d\n", id);
+	} else {
+		printf("未知道具 ID: %d\n", id);
 	}
 	return 0;
 }
@@ -201,6 +180,73 @@ static int l_restart(lua_State* L) {
 	if (g_ev) g_ev->init();
 	printf("游戏已重启\n");
 	return 0;
+}
+
+// ============================================================
+// 道具系统 Lua API（供 items.lua 中的 on_acquire / on_use 调用）
+// ============================================================
+static int l_add_yellow_key(lua_State* L) {
+	int n = (int)luaL_optinteger(L, 1, 1);
+	if (g_ply) g_ply->yellowKey = (uint8_t)(g_ply->yellowKey + n);
+	return 0;
+}
+static int l_add_blue_key(lua_State* L) {
+	int n = (int)luaL_optinteger(L, 1, 1);
+	if (g_ply) g_ply->blueKey = (uint8_t)(g_ply->blueKey + n);
+	return 0;
+}
+static int l_add_red_key(lua_State* L) {
+	int n = (int)luaL_optinteger(L, 1, 1);
+	if (g_ply) g_ply->redKey = (uint8_t)(g_ply->redKey + n);
+	return 0;
+}
+static int l_set_teleporter(lua_State* L) {
+	bool v = lua_toboolean(L, 1);
+	if (g_ply) g_ply->hasTeleporter = v;
+	return 0;
+}
+static int l_backpack_add(lua_State* L) {
+	int id = (int)luaL_checkinteger(L, 1);
+	if (!g_ply || !g_ply->backpack) return 0;
+	Item* it = new Item();
+	it->id = (uint8_t)id;
+	it->name = (char*)getItemName((uint8_t)id);
+	it->lastItem = nullptr;
+	it->nextItem = nullptr;
+	g_ply->backpack->addItem(it);
+	return 0;
+}
+static int l_backpack_has(lua_State* L) {
+	int id = (int)luaL_checkinteger(L, 1);
+	if (!g_ply || !g_ply->backpack || g_ply->backpack->isEmpty) {
+		lua_pushboolean(L, 0); return 1;
+	}
+	for (Item* it = g_ply->backpack->headPtr; it; it = it->nextItem)
+		if (it->id == (uint8_t)id) { lua_pushboolean(L, 1); return 1; }
+	lua_pushboolean(L, 0);
+	return 1;
+}
+static int l_freeze_lava(lua_State* L) {
+	(void)L;
+	if (g_ply) g_ply->freezeLava();
+	return 0;
+}
+static int l_detonate(lua_State* L) {
+	(void)L;
+	if (!g_ply) { lua_pushinteger(L, 0); return 1; }
+	int killed = 0;
+	uint8_t px = g_ply->x, py = g_ply->y;
+	uint8_t dirs[4][2] = {{px,(uint8_t)(py-1)},{px,(uint8_t)(py+1)},{(uint8_t)(px-1),py},{(uint8_t)(px+1),py}};
+	for (int i = 0; i < 4; i++) {
+		uint8_t tx = dirs[i][0], ty = dirs[i][1];
+		uint8_t t = map_get(g_ply->floor, tx, ty);
+		if (t >= 101 && t <= 150 && !isBossMonster(t)) {
+			map_kill_monster(g_ply->floor, tx, ty, g_ply);
+			killed++;
+		}
+	}
+	lua_pushinteger(L, killed);
+	return 1;
 }
 
 // ============================================================
@@ -324,4 +370,110 @@ void lua_register_game_api(lua_State* L, Player* player, EventManager* events) {
 	});
 	lua_register(L, "debug_on",  l_debug_on);
 	lua_register(L, "debug_off", l_debug_off);
+
+	// 道具系统 API
+	lua_register(L, "add_yellow_key", l_add_yellow_key);
+	lua_register(L, "add_blue_key",   l_add_blue_key);
+	lua_register(L, "add_red_key",    l_add_red_key);
+	lua_register(L, "set_teleporter", l_set_teleporter);
+	lua_register(L, "backpack_add",   l_backpack_add);
+	lua_register(L, "backpack_has",   l_backpack_has);
+	lua_register(L, "freeze_lava",    l_freeze_lava);
+	lua_register(L, "detonate",       l_detonate);
+}
+
+// ============================================================
+// 道具系统调度函数（C++ 侧调用，桥接到 Lua items 表）
+// ============================================================
+static bool lua_item_dispatch(uint8_t id, const char* field) {
+	lua_State* L = script_init();
+	if (!L) return false;
+
+	// 压栈: require + "items" → pcall → items_module
+	lua_getglobal(L, "require");
+	lua_pushstring(L, "items");
+	if (lua_pcall(L, 1, 1, 0) != LUA_OK) {
+		fprintf(stderr, "require items: %s\n", lua_tostring(L, -1));
+		lua_pop(L, 1);  // pop error string
+		return false;
+	}
+	// 栈: ..., items_module
+
+	lua_getfield(L, -1, "items");   // 栈: ..., items_module, items_table
+	lua_pushinteger(L, id);          // 栈: ..., items_module, items_table, id
+	lua_gettable(L, -2);             // 栈: ..., items_module, items_table, item_def
+	if (!lua_istable(L, -1)) {
+		lua_pop(L, 3);  // pop item_def, items_table, items_module
+		return false;
+	}
+
+	lua_getfield(L, -1, field);     // 栈: ..., items_module, items_table, item_def, handler
+	if (!lua_isfunction(L, -1)) {
+		lua_pop(L, 4);  // pop handler, item_def, items_table, items_module
+		return false;
+	}
+
+	// lua_pcall 弹出 handler，压入 0 个返回值
+	// 栈变为: ..., items_module, items_table, item_def
+	if (lua_pcall(L, 0, 0, 0) != LUA_OK) {
+		// 错误时栈: ..., items_module, items_table, item_def, error_msg
+		fprintf(stderr, "item %d %s: %s\n", id, field, lua_tostring(L, -1));
+		lua_pop(L, 4);  // pop error, item_def, items_table, items_module
+		return false;
+	}
+
+	lua_pop(L, 3);  // pop item_def, items_table, items_module
+	return true;
+}
+
+bool lua_item_on_pickup(uint8_t tile_id) {
+	lua_State* L = script_init();
+	if (!L) return false;
+
+	// 压栈: require + "items" → pcall → items_module
+	lua_getglobal(L, "require");
+	lua_pushstring(L, "items");
+	if (lua_pcall(L, 1, 1, 0) != LUA_OK) {
+		fprintf(stderr, "require items: %s\n", lua_tostring(L, -1));
+		lua_pop(L, 1);  // pop error
+		return false;
+	}
+	// 栈: ..., items_module
+
+	// 查 pickup_map[tile_id]
+	lua_getfield(L, -1, "pickup_map");  // 栈: ..., items_module, pickup_map
+	if (!lua_istable(L, -1)) { lua_pop(L, 2); return false; }
+	lua_pushinteger(L, tile_id);        // 栈: ..., items_module, pickup_map, tile_id
+	lua_gettable(L, -2);                // 栈: ..., items_module, pickup_map, item_id
+	if (lua_isnil(L, -1)) { lua_pop(L, 3); return false; }
+	int item_id = (int)lua_tointeger(L, -1);
+	lua_pop(L, 2);  // pop item_id, pickup_map
+	// 栈: ..., items_module
+
+	// 查 items[item_id]
+	lua_getfield(L, -1, "items");       // 栈: ..., items_module, items_table
+	lua_pushinteger(L, item_id);        // 栈: ..., items_module, items_table, id
+	lua_gettable(L, -2);                // 栈: ..., items_module, items_table, item_def
+	if (!lua_istable(L, -1)) { lua_pop(L, 3); return false; }
+
+	// 调 on_acquire
+	lua_getfield(L, -1, "on_acquire");  // 栈: ..., items_module, items_table, item_def, handler
+	if (!lua_isfunction(L, -1)) { lua_pop(L, 4); return false; }
+
+	if (lua_pcall(L, 0, 0, 0) != LUA_OK) {
+		fprintf(stderr, "item %d on_acquire: %s\n", item_id, lua_tostring(L, -1));
+		lua_pop(L, 4);  // pop error, item_def, items_table, items_module
+		return false;
+	}
+
+	lua_pop(L, 3);  // pop item_def, items_table, items_module
+	return true;
+}
+
+bool lua_item_on_acquire(uint8_t item_id) {
+	return lua_item_dispatch(item_id, "on_acquire");
+}
+
+bool lua_item_on_use(uint8_t item_id) {
+	return lua_item_dispatch(item_id, "on_use");
 }

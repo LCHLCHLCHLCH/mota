@@ -57,29 +57,8 @@ int main(int argc, char** argv) {
 
 		if (key == KEY_X) {
 			Item* chosen = backpack.selectItem();
-			if (chosen && chosen->id == 69) {
-				player.freezeLava();
-			}
-			else if (chosen && chosen->id == 70) {
-				int killed = 0;
-				uint8_t px = player.x, py = player.y;
-				uint8_t dirs[4][2] = {{px,(uint8_t)(py-1)},{px,(uint8_t)(py+1)},{(uint8_t)(px-1),py},{(uint8_t)(px+1),py}};
-				for (int i = 0; i < 4; i++) {
-					uint8_t tx = dirs[i][0], ty = dirs[i][1];
-					uint8_t t = map_get(player.floor, tx, ty);
-					if (t >= 101 && t <= 150 && !isBossMonster(t)) {
-						map_kill_monster(player.floor, tx, ty, &player);
-						killed++;
-					}
-				}
+			if (chosen && lua_item_on_use(chosen->id)) {
 				backpack.delItem(chosen);
-				if (killed > 0) {
-					char _m[64];
-					snprintf(_m, sizeof(_m), "炸药炸死了%d个怪物", killed);
-					term_set_message(_m);
-				} else {
-					term_set_message("炸药没有效果");
-				}
 			}
 		} else {
 			switch (key) {

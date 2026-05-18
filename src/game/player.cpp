@@ -11,15 +11,15 @@
  */
 void Player::init()
 {
-	floor = 3;
-	x = 5;
-	y = 10;
-	money = 80000;
-	yellowKey = 90;
-	blueKey = 90;
-	redKey = 90;
-	attack = 130;
-	defence = 110;
+	floor = 1;
+	x = 6;
+	y = 11;
+	money = 100000;
+	yellowKey = 100;
+	blueKey = 100;
+	redKey = 100;
+	attack = 1000;
+	defence = 1000;
 	health = 10000;
 }
 
@@ -212,187 +212,12 @@ void Player::reactToObject(uint8_t floor_going, uint8_t x_going, uint8_t y_going
  */
 void Player::reactToProp(uint8_t floor_going, uint8_t x_going, uint8_t y_going)
 {
-	switch (map_get(floor_going, x_going, y_going))
-	{
-	case 51: // 黄钥匙
+	uint8_t tile_id = map_get(floor_going, x_going, y_going);
+	// 委托 Lua items 表：tile_id → item_id → on_acquire
+	if (lua_item_on_pickup(tile_id)) {
 		this->x = x_going;
 		this->y = y_going;
 		map_set(floor_going, x_going, y_going, 1);
-		this->yellowKey++;
-		term_set_message("获得黄钥匙");
-		break;
-	case 52: // 蓝钥匙
-		this->x = x_going;
-		this->y = y_going;
-		map_set(floor_going, x_going, y_going, 1);
-		this->blueKey++;
-		term_set_message("获得蓝钥匙");
-		break;
-	case 53: // 红钥匙
-		this->x = x_going;
-		this->y = y_going;
-		map_set(floor_going, x_going, y_going, 1);
-		this->redKey++;
-		term_set_message("获得红钥匙");
-		break;
-	case 54: // 红血瓶
-		this->x = x_going;
-		this->y = y_going;
-		map_set(floor_going, x_going, y_going, 1);
-		this->health = this->health + (((this->floor) - 1) / 10 + 1) * 50;
-		{
-			char _m[32];
-			snprintf(_m, sizeof(_m), "获得红血瓶，生命增加%d",
-				(((this->floor) - 1) / 10 + 1) * 50);
-			term_set_message(_m);
-		}
-		break;
-	case 55: // 蓝血瓶
-		this->x = x_going;
-		this->y = y_going;
-		map_set(floor_going, x_going, y_going, 1);
-		this->health = this->health + (((this->floor) - 1) / 10 + 1) * 200;
-		{
-			char _m[32];
-			snprintf(_m, sizeof(_m), "获得蓝血瓶，生命增加%d",
-				(((this->floor) - 1) / 10 + 1) * 200);
-			term_set_message(_m);
-		}
-		break;
-	case 56: // 红宝石
-		this->x = x_going;
-		this->y = y_going;
-		map_set(floor_going, x_going, y_going, 1);
-		this->attack = this->attack + (((this->floor) - 1) / 10 + 1);
-		{
-			char _m[32];
-			snprintf(_m, sizeof(_m), "获得红宝石，攻击增加%d",
-				(((this->floor) - 1) / 10 + 1));
-			term_set_message(_m);
-		}
-		break;
-	case 57: // 蓝宝石
-		this->x = x_going;
-		this->y = y_going;
-		map_set(floor_going, x_going, y_going, 1);
-		this->defence = this->defence + (((this->floor) - 1) / 10 + 1);
-		{
-			char _m[32];
-			snprintf(_m, sizeof(_m), "获得蓝宝石，防御增加%d",
-				(((this->floor) - 1) / 10 + 1));
-			term_set_message(_m);
-		}
-		break;
-	case 58: // 铁剑
-		this->x = x_going;
-		this->y = y_going;
-		map_set(floor_going, x_going, y_going, 1);
-		this->attack = this->attack + 10;
-		term_set_message("获得铁剑，攻击增加10");
-		break;
-	case 59: // 铁盾
-		this->x = x_going;
-		this->y = y_going;
-		map_set(floor_going, x_going, y_going, 1);
-		this->defence = this->defence + 10;
-		term_set_message("获得铁盾，防御增加10");
-		break;
-	case 60: // 银剑
-		this->x = x_going;
-		this->y = y_going;
-		map_set(floor_going, x_going, y_going, 1);
-		this->attack = this->attack + 20;
-		term_set_message("获得银剑，攻击增加20");
-		break;
-	case 61: // 银盾
-		this->x = x_going;
-		this->y = y_going;
-		map_set(floor_going, x_going, y_going, 1);
-		this->defence = this->defence + 20;
-		term_set_message("获得银盾，防御增加20");
-		break;
-	case 62: // 骑士剑
-		this->x = x_going;
-		this->y = y_going;
-		map_set(floor_going, x_going, y_going, 1);
-		this->attack = this->attack + 40;
-		term_set_message("获得骑士剑，攻击增加40");
-		break;
-	case 63: // 骑士盾
-		this->x = x_going;
-		this->y = y_going;
-		map_set(floor_going, x_going, y_going, 1);
-		this->defence = this->defence + 40;
-		term_set_message("获得骑士盾，防御增加40");
-		break;
-	case 64: // 圣剑
-		this->x = x_going;
-		this->y = y_going;
-		map_set(floor_going, x_going, y_going, 1);
-		this->attack = this->attack + 50;
-		term_set_message("获得圣剑，攻击增加50");
-		break;
-	case 65: // 圣盾
-		this->x = x_going;
-		this->y = y_going;
-		map_set(floor_going, x_going, y_going, 1);
-		this->defence = this->defence + 50;
-		term_set_message("获得圣盾，防御增加50");
-		break;
-	case 66: // 神圣剑
-		this->x = x_going;
-		this->y = y_going;
-		map_set(floor_going, x_going, y_going, 1);
-		this->attack = this->attack + 100;
-		term_set_message("获得神圣剑，攻击增加100");
-		break;
-	case 67: // 神圣盾
-		this->x = x_going;
-		this->y = y_going;
-		map_set(floor_going, x_going, y_going, 1);
-		this->defence = this->defence + 100;
-		term_set_message("获得神圣盾，防御增加100");
-		break;
-	case 68: // 楼层传送器
-		this->x = x_going;
-		this->y = y_going;
-		map_set(floor_going, x_going, y_going, 1);
-		this->hasTeleporter = true;
-		term_set_message("获得楼层传送器");
-		break;
-	case 69: // 冰霜魔法
-		this->x = x_going;
-		this->y = y_going;
-		map_set(floor_going, x_going, y_going, 1);
-		if (this->backpack) {
-			bool _has = false;
-			for (Item* _it = this->backpack->headPtr; _it; _it = _it->nextItem)
-				if (_it->id == 69) { _has = true; break; }
-			if (!_has) {
-				Item* _it = new Item();
-				_it->name = (char*)"冰霜魔法";
-				_it->id = 69;
-				_it->lastItem = nullptr;
-				_it->nextItem = nullptr;
-				this->backpack->addItem(_it);
-			}
-		}
-		term_set_message("获得冰霜魔法");
-		break;
-	case 70: // 炸药
-		this->x = x_going;
-		this->y = y_going;
-		map_set(floor_going, x_going, y_going, 1);
-		if (this->backpack) {
-			Item* _it = new Item();
-			_it->name = (char*)"炸药";
-			_it->id = 70;
-			_it->lastItem = nullptr;
-			_it->nextItem = nullptr;
-			this->backpack->addItem(_it);
-		}
-		term_set_message("获得炸药");
-		break;
 	}
 }
 

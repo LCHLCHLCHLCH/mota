@@ -1,11 +1,8 @@
 #pragma once
 #include <stdint.h>
 
-class Item
+struct Item
 {
-public:
-	Item*   lastItem;
-	Item*   nextItem;
 	uint8_t id;
 	char*   name;
 };

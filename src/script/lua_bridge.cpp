@@ -208,21 +208,16 @@ static int l_set_teleporter(lua_State* L) {
 static int l_backpack_add(lua_State* L) {
 	int id = (int)luaL_checkinteger(L, 1);
 	if (!g_ply || !g_ply->backpack) return 0;
-	Item* it = new Item();
-	it->id = (uint8_t)id;
-	it->name = (char*)getItemName((uint8_t)id);
-	it->lastItem = nullptr;
-	it->nextItem = nullptr;
-	g_ply->backpack->addItem(it);
+	g_ply->backpack->addItem((uint8_t)id, getItemName((uint8_t)id));
 	return 0;
 }
 static int l_backpack_has(lua_State* L) {
 	int id = (int)luaL_checkinteger(L, 1);
-	if (!g_ply || !g_ply->backpack || g_ply->backpack->isEmpty) {
+	if (!g_ply || !g_ply->backpack || g_ply->backpack->items.empty()) {
 		lua_pushboolean(L, 0); return 1;
 	}
-	for (Item* it = g_ply->backpack->headPtr; it; it = it->nextItem)
-		if (it->id == (uint8_t)id) { lua_pushboolean(L, 1); return 1; }
+	for (auto& it : g_ply->backpack->items)
+		if (it.id == (uint8_t)id) { lua_pushboolean(L, 1); return 1; }
 	lua_pushboolean(L, 0);
 	return 1;
 }

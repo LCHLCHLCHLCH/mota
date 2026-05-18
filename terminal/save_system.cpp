@@ -64,13 +64,9 @@ bool save_game(const char* name, const Player& player, const EventManager& event
 	fprintf(f, "event.altar_times=%u\n", events.getAltarTimes());
 
 	// --- 背包（存储物品 ID） ---
-	if (player.backpack && !player.backpack->isEmpty) {
-		Item* it = player.backpack->headPtr;
-		int idx = 0;
-		while (it) {
-			fprintf(f, "backpack.item.%d=%u\n", idx, it->id);
-			it = it->nextItem;
-			idx++;
+	if (player.backpack && !player.backpack->items.empty()) {
+		for (size_t idx = 0; idx < player.backpack->items.size(); idx++) {
+			fprintf(f, "backpack.item.%zu=%u\n", idx, player.backpack->items[idx].id);
 		}
 	}
 
@@ -172,17 +168,9 @@ bool load_game(const char* name, Player& player, EventManager& events) {
 
 	// 重建背包
 	if (player.backpack) {
-		player.backpack->isEmpty = true;
-		player.backpack->headPtr = nullptr;
-		player.backpack->tailPtr = nullptr;
-
+		player.backpack->items.clear();
 		for (int i = 0; i < bp_count; i++) {
-			Item* it = new Item();
-			it->id = bp_ids[i];
-			it->name = (char*)getItemName(bp_ids[i]);
-			it->lastItem = nullptr;
-			it->nextItem = nullptr;
-			player.backpack->addItem(it);
+			player.backpack->addItem(bp_ids[i], getItemName(bp_ids[i]));
 		}
 	}
 

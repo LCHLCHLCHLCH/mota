@@ -56,9 +56,9 @@ int main(int argc, char** argv) {
 		if (term_quit_requested()) break;
 
 		if (key == KEY_X) {
-			Item* chosen = backpack.selectItem();
-			if (chosen && lua_item_on_use(chosen->id)) {
-				backpack.delItem(chosen);
+			int chosen = backpack.selectItem();
+			if (chosen >= 0 && lua_item_on_use(backpack.items[chosen].id)) {
+				backpack.removeItem(chosen);
 			}
 		} else {
 			switch (key) {

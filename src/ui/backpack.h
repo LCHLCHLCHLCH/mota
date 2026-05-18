@@ -1,5 +1,6 @@
 #pragma once
 
+#include <vector>
 #include "game/item.h"
 #include "render/region_display.h"
 #include "event/dialog.h"
@@ -8,15 +9,11 @@
 class Backpack
 {
 public:
-	bool isEmpty = true; // 判断背包是否是空的
-	Item* headPtr;//指向第一件物品的指针
-	Item* tailPtr;//指向最后一件物品的指针
+	std::vector<Item> items;
 
-	void addItem(Item * i);
-	void delItem(Item * i);
+	void addItem(uint8_t id, const char* name);
+	void removeItem(size_t index);
 
-	//进入道具选择界面,如果选中了某个道具就返回该道具的地址,否则返回空指针
-	Item * selectItem();
+	// 进入道具选择界面，返回选中项的 index，-1 表示取消 / 背包为空
+	int selectItem();
 };
-
-uint16_t chooseFromPage(uint8_t num, Item **list);

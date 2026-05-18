@@ -1,0 +1,44 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 配置 CMake
+        run: cmake -G "MinGW Makefiles" -S . -B build
+
+      - name: 编译
+        run: cmake --build build
+
+      - name: 打包
+        shell: pwsh
+        run: |
+          mkdir dist
+          copy build\MotaSDL.exe dist\
+          copy build\SDL3.dll dist\
+          copy build\SDL3_ttf.dll dist\
+          copy build\lua.dll dist\
+          copy build\libstdc++-6.dll dist\
+          copy build\libgcc_s_seh-1.dll dist\
+          copy build\libwinpthread-1.dll dist\
+          copy build\simsun.ttc dist\
+          xcopy /E /I build\map dist\map
+          Compress-Archive -Path dist\* -DestinationPath mota-${{ github.ref_name }}.zip
+
+      - name: 发布 Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: mota-${{ github.ref_name }}.zip
+          body: |
+            ## 改动
+
+            自动构建，详见 git log。

@@ -55,7 +55,7 @@ return {
                     if not has_flag(1) then
                         set_tile(11, 1, 152)
                         set_flag(1)
-                        msg("墙壁裂开，出现了一个商人！")
+                        msg("发现了暗道！")
                         return
                     end
                     say("商人：我有很多黄钥匙，1000金币一把你要吗？")

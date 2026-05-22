@@ -336,6 +336,12 @@ void lua_register_game_api(lua_State* L, Player* player, EventManager* events) {
 	lua_register(L, "drain", [](lua_State* L)->int { drainInput(); return 0; });
 	lua_register(L, "altar_tick", [](lua_State* L)->int {
 		(void)L; g_ev->setAltarTimes(g_ev->getAltarTimes() + 1); return 0; });
+	lua_register(L, "get_tile", [](lua_State* L)->int {
+		int x = (int)luaL_checkinteger(L, 1);
+		int y = (int)luaL_checkinteger(L, 2);
+		lua_pushinteger(L, map_get(g_ply->floor, (uint8_t)x, (uint8_t)y));
+		return 1;
+	});
 	lua_register(L, "set_tile", [](lua_State* L)->int {
 		int x = (int)luaL_checkinteger(L, 1);
 		int y = (int)luaL_checkinteger(L, 2);
@@ -375,6 +381,9 @@ void lua_register_game_api(lua_State* L, Player* player, EventManager* events) {
 	lua_register(L, "backpack_has",   l_backpack_has);
 	lua_register(L, "freeze_lava",    l_freeze_lava);
 	lua_register(L, "detonate",       l_detonate);
+	lua_register(L, "player_dir",     [](lua_State* L)->int { lua_pushinteger(L, g_ply ? g_ply->direction : 0); return 1; });
+	lua_register(L, "player_x",       [](lua_State* L)->int { lua_pushinteger(L, g_ply ? g_ply->x : 0); return 1; });
+	lua_register(L, "player_y",       [](lua_State* L)->int { lua_pushinteger(L, g_ply ? g_ply->y : 0); return 1; });
 }
 
 // ============================================================
@@ -408,17 +417,23 @@ static bool lua_item_dispatch(uint8_t id, const char* field) {
 		return false;
 	}
 
-	// lua_pcall 弹出 handler，压入 0 个返回值
-	// 栈变为: ..., items_module, items_table, item_def
-	if (lua_pcall(L, 0, 0, 0) != LUA_OK) {
+	// lua_pcall 弹出 handler，压入 1 个返回值（用于控制道具是否消耗）
+	// 栈变为: ..., items_module, items_table, item_def, result
+	if (lua_pcall(L, 0, 1, 0) != LUA_OK) {
 		// 错误时栈: ..., items_module, items_table, item_def, error_msg
 		fprintf(stderr, "item %d %s: %s\n", id, field, lua_tostring(L, -1));
 		lua_pop(L, 4);  // pop error, item_def, items_table, items_module
 		return false;
 	}
 
+	// 若 handler 返回 boolean false 则不消耗道具
+	bool consumed = true;
+	if (lua_isboolean(L, -1))
+		consumed = lua_toboolean(L, -1);
+	lua_pop(L, 1);  // pop result
+
 	lua_pop(L, 3);  // pop item_def, items_table, items_module
-	return true;
+	return consumed;
 }
 
 bool lua_item_on_pickup(uint8_t tile_id) {

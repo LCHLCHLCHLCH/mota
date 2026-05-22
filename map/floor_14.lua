@@ -17,5 +17,14 @@ return {
         {2,2,2,2,2,2,2,2,2,2,2,2,2}
     },
     events = {
+        {
+            trigger = "on_guard_kill",
+            guards = {{x = 1, y = 1}, {x = 3, y = 1}, {x = 2, y = 2}},
+            once = true,
+            actions = {
+                { type = "set_tile", x = 1, y = 3, value = 53 },
+                { type = "msg", text = "砖块碎裂，露出一把红钥匙！" },
+            }
+        }
     }
 }

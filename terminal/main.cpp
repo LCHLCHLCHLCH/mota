@@ -34,6 +34,7 @@ int main(int argc, char** argv) {
 	events.init();
 	player.events = &events;
 	player.backpack = &backpack;
+	lua_register_game_api(script_init(), &player, &events);
 	lua_set_frame_context(&display, &statusBar);
 
 	map_init();

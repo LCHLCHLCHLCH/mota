@@ -265,28 +265,28 @@ void Player::respondToKey(KEY key)
 	switch (key)
 	{
 	case UP:
-		// y--;
+		this->direction = 0;
 		term_clear_message();
 		X_going = this->x;
 		Y_going = this->y - 1;
 		respondToMap(floor, X_going, Y_going);
 		break;
 	case DOWN:
-		// y++;
+		this->direction = 1;
 		term_clear_message();
 		X_going = this->x;
 		Y_going = this->y + 1;
 		respondToMap(floor, X_going, Y_going);
 		break;
 	case LEFT:
-		// x--;
+		this->direction = 2;
 		term_clear_message();
 		X_going = this->x - 1;
 		Y_going = this->y;
 		respondToMap(floor, X_going, Y_going);
 		break;
 	case RIGHT:
-		// x++;
+		this->direction = 3;
 		term_clear_message();
 		X_going = this->x + 1;
 		Y_going = this->y;

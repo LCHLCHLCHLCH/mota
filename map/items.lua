@@ -181,11 +181,43 @@ M.register(70, {
 })
 
 -- ============================================================
+-- 镐子（效果函数预留）
+-- ============================================================
+M.register(71, {
+    name = "镐子",
+    on_acquire = function()
+        backpack_add(71)
+        msg("获得镐子")
+    end,
+    on_use = function()
+        local dir = player_dir()
+        local dx, dy = 0, 0
+        if dir == 0 then dy = -1
+        elseif dir == 1 then dy = 1
+        elseif dir == 2 then dx = -1
+        elseif dir == 3 then dx = 1
+        end
+        local tx = player_x() + dx
+        local ty = player_y() + dy
+        -- 边界检查：最外圈不可破坏
+        if tx > 0 and tx < 12 and ty > 0 and ty < 12 and get_tile(tx, ty) == 2 then
+            set_tile(tx, ty, 1)
+            msg("镐子破坏了墙壁！")
+            return true
+        else
+            msg("没有可破坏的墙")
+            return false
+        end
+    end,
+})
+
+-- ============================================================
 -- 拾取映射：地面 tile_id → 道具 id
--- 所有 51-70 的地面道具都映射到同号道具
+-- 所有 51-71 的地面道具都映射到同号道具
 -- ============================================================
 for i = 51, 70 do
     M.map_pickup(i, i)
 end
+M.map_pickup(71, 71)
 
 return M

@@ -64,8 +64,9 @@ const TileDef g_tile_defs[256] = {
 	/*  68 */ { TILE_PROP,    C_YELLOW,      "杖", "楼层传送器" },
 	/*  69 */ { TILE_PROP,    C_BLUE,        "冰", "冰霜魔法" },
 	/*  70 */ { TILE_PROP,    C_RED,         "炸", "炸药" },
-	/*  71-100 */
-	{ TILE_NONE, C_WHITE, "", "" }, { TILE_NONE, C_WHITE, "", "" },
+	/*  71    */ { TILE_PROP,    C_YELLOW,      "镐", "镐子" },
+	/*  72-100 */
+	{ TILE_NONE, C_WHITE, "", "" },
 	{ TILE_NONE, C_WHITE, "", "" }, { TILE_NONE, C_WHITE, "", "" },
 	{ TILE_NONE, C_WHITE, "", "" }, { TILE_NONE, C_WHITE, "", "" },
 	{ TILE_NONE, C_WHITE, "", "" }, { TILE_NONE, C_WHITE, "", "" },

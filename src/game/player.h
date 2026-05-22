@@ -31,6 +31,7 @@ public:
 	uint8_t x;
 	uint8_t y;
 	uint8_t floor;
+	uint8_t direction = 0;  // 0=上 1=下 2=左 3=右
 
 	uint32_t hurt = 0;
 

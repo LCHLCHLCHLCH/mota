@@ -237,11 +237,18 @@ bool run_3d_window(SDL_Window* main_win, Player& player) {
 	int mx, my, mw, mh;
 	SDL_GetWindowPosition(main_win, &mx, &my);
 	SDL_GetWindowSize(main_win, &mw, &mh);
-	g_win3d = SDL_CreateWindow("魔塔 - 3D", SCR_W, SCR_H, SDL_WINDOW_HIDDEN);
+	g_win3d = SDL_CreateWindow("魔塔 - 3D", SCR_W, SCR_H,
+		SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE);
 	if (!g_win3d) return false;
+	float dpi = term_get_display_scale();
+	if (dpi < 1.0f) dpi = 1.0f;
+	SDL_SetWindowSize(g_win3d, (int)(SCR_W * dpi + 0.5f), (int)(SCR_H * dpi + 0.5f));
 	SDL_SetWindowPosition(g_win3d, mx + mw + 20, my);
 	g_ren3d = SDL_CreateRenderer(g_win3d, NULL);
 	if (!g_ren3d) { SDL_DestroyWindow(g_win3d); g_win3d = NULL; return false; }
+	// 等比缩放 + 居中留边：拖拽或最大化时画面不失真
+	SDL_SetRenderLogicalPresentation(g_ren3d, SCR_W, SCR_H,
+		SDL_LOGICAL_PRESENTATION_LETTERBOX);
 	g_tex3d = SDL_CreateTexture(g_ren3d, SDL_PIXELFORMAT_XRGB8888,
 		SDL_TEXTUREACCESS_STREAMING, TEX_W, TEX_H);
 	SDL_ShowWindow(g_win3d);

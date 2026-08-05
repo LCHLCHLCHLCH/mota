@@ -39,6 +39,9 @@ static bool g_darkened   = false;
 // 底部消息
 static char g_message[128] = "";
 
+// 高 DPI 显示缩放系数（跟随系统显示缩放，如 150% 时为 1.5）
+static float g_scale = 1.0f;
+
 // Cell 缓冲
 struct Cell {
 	wchar_t ch;
@@ -117,6 +120,9 @@ static void attr_to_colors(int attr, int& fg, int& bg) {
 // 加载字体
 // ============================================================
 static void load_font() {
+	if (g_ttf_font) { TTF_CloseFont(g_ttf_font); g_ttf_font = nullptr; }
+	int size = (int)((g_cell_h - 2) * g_scale + 0.5f);
+	if (size < 8) size = 8;
 	char exe_path[MAX_PATH];
 	GetModuleFileNameA(NULL, exe_path, MAX_PATH);
 	char* last_slash = strrchr(exe_path, '\\');
@@ -125,7 +131,7 @@ static void load_font() {
 		char font_path[MAX_PATH];
 		snprintf(font_path, sizeof(font_path), "%s\\simsun.ttc", exe_path);
 		if (GetFileAttributesA(font_path) != INVALID_FILE_ATTRIBUTES) {
-			g_ttf_font = TTF_OpenFont(font_path, g_cell_h - 2);
+			g_ttf_font = TTF_OpenFont(font_path, size);
 		}
 	}
 	if (!g_ttf_font) {
@@ -134,8 +140,34 @@ static void load_font() {
 		GetWindowsDirectoryA(sys_path, MAX_PATH);
 		char font_path[MAX_PATH];
 		snprintf(font_path, sizeof(font_path), "%s\\Fonts\\simsun.ttc", sys_path);
-		g_ttf_font = TTF_OpenFont(font_path, g_cell_h - 2);
+		g_ttf_font = TTF_OpenFont(font_path, size);
 	}
+}
+
+// ============================================================
+// 窗口适配：等比缩放画面以填满当前窗口（居中留边），
+// 同时兼顾高 DPI 缩放与用户手动拖拽 / 最大化
+// ============================================================
+static void apply_window_fit() {
+	int w = 0, h = 0;
+	SDL_GetWindowSizeInPixels(g_window, &w, &h);
+	if (w <= 0 || h <= 0) return;
+
+	float sx = (float)w / g_win_w;
+	float sy = (float)h / g_win_h;
+	float scale = (sx < sy) ? sx : sy;
+	if (scale < 0.2f) scale = 0.2f;
+
+	bool changed = (scale != g_scale);
+	g_scale = scale;
+
+	int vw = (int)(g_win_w * scale + 0.5f);
+	int vh = (int)(g_win_h * scale + 0.5f);
+	SDL_Rect vp = { (w - vw) / 2, (h - vh) / 2, vw, vh };
+	SDL_SetRenderViewport(g_renderer, &vp);
+	SDL_SetRenderScale(g_renderer, scale, scale);
+
+	if (changed || !g_ttf_font) load_font();
 }
 
 // ============================================================
@@ -197,10 +229,11 @@ static void draw_cell_sdl(int col, int row) {
 				if (tex) {
 					float tw = (float)surf->w;
 					float th = (float)surf->h;
+					float s = g_scale;
 					SDL_FRect trect = {
-						cx + (g_cell_w - tw) * 0.5f,
-						cy + (g_cell_h - th) * 0.5f,
-						tw, th
+						cx + (g_cell_w - tw / s) * 0.5f,
+						cy + (g_cell_h - th / s) * 0.5f,
+						tw / s, th / s
 					};
 					SDL_RenderTexture(g_renderer, tex, NULL, &trect);
 					SDL_DestroyTexture(tex);
@@ -227,10 +260,11 @@ static void draw_text_rect(int px, int py, int pw, int ph,
 		if (tex) {
 			float tw = (float)surf->w;
 			float th = (float)surf->h;
+			float s = g_scale;
 			SDL_FRect trect = {
-				px + (pw - tw) * 0.5f,
-				py + (ph - th) * 0.5f,
-				tw, th
+				px + (pw - tw / s) * 0.5f,
+				py + (ph - th / s) * 0.5f,
+				tw / s, th / s
 			};
 			SDL_RenderTexture(g_renderer, tex, NULL, &trect);
 			SDL_DestroyTexture(tex);
@@ -264,11 +298,17 @@ bool term_init(const char* title, int cols, int rows, int cell_w, int cell_h) {
 
 	TTF_Init();
 
-	g_window = SDL_CreateWindow(title, g_win_w, g_win_h, 0);
+	g_window = SDL_CreateWindow(title, g_win_w, g_win_h, SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE);
 	if (!g_window) {
 		fprintf(stderr, "SDL_CreateWindow failed: %s\n", SDL_GetError());
 		return false;
 	}
+
+	// 初始窗口尺寸 = 设计分辨率 × 显示器缩放，保证在高分屏上物理尺寸合适
+	float dpi = SDL_GetWindowDisplayScale(g_window);
+	if (dpi < 1.0f) dpi = 1.0f;
+	SDL_SetWindowSize(g_window,
+		(int)(g_win_w * dpi + 0.5f), (int)(g_win_h * dpi + 0.5f));
 
 	g_renderer = SDL_CreateRenderer(g_window, NULL);
 	if (!g_renderer) {
@@ -276,7 +316,8 @@ bool term_init(const char* title, int cols, int rows, int cell_w, int cell_h) {
 		return false;
 	}
 
-	load_font();
+	// 按窗口尺寸计算渲染缩放并加载相应字号字体
+	apply_window_fit();
 	if (!g_ttf_font) {
 		fprintf(stderr, "Failed to load font\n");
 		return false;
@@ -307,11 +348,13 @@ bool term_init(const char* title, int cols, int rows, int cell_w, int cell_h) {
 		}
 	}
 
+	SDL_ShowWindow(g_window);
 	return true;
 }
 
 SDL_Window* term_get_window() { return g_window; }
 TTF_Font* term_get_ttf_font() { return g_ttf_font; }
+float term_get_display_scale() { return g_scale; }
 
 void term_shutdown() {
 	delete[] g_cells; g_cells = nullptr;
@@ -420,6 +463,10 @@ int getch_term() {
 		if (!SDL_WaitEventTimeout(&ev, 100)) return -1;
 		switch (ev.type) {
 		case SDL_EVENT_QUIT: g_quit = true; return 0;
+		case SDL_EVENT_WINDOW_RESIZED:
+		case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
+		case SDL_EVENT_WINDOW_DISPLAY_CHANGED:
+			apply_window_fit(); break;
 		case SDL_EVENT_KEY_DOWN: {
 			int code = (int)ev.key.key;
 			switch (code) {

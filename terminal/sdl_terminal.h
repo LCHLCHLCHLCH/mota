@@ -10,6 +10,7 @@ void term_shutdown();
 void term_present();
 SDL_Window* term_get_window();
 TTF_Font*   term_get_ttf_font();
+float       term_get_display_scale();
 
 // ============================================================
 // ncurses 兼容 API（与 src/render/cursor.h 一致）

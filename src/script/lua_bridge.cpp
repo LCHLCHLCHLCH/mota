@@ -9,6 +9,7 @@
 #include "sdl_terminal.h"
 #include "save_system.h"
 #include "ui/backpack.h"
+#include "ui/monster_book.h"
 #include "sdl_3dwindow.h"
 #include "render/display.h"
 #include "render/status_bar.h"
@@ -190,6 +191,17 @@ static int l_add_yellow_key(lua_State* L) {
 	if (g_ply) g_ply->yellowKey = (uint8_t)(g_ply->yellowKey + n);
 	return 0;
 }
+static int l_take_yellow_key(lua_State* L) {
+	int n = (int)luaL_optinteger(L, 1, 1);
+	if (!g_ply) { lua_pushboolean(L, 0); return 1; }
+	if (g_ply->yellowKey >= (uint8_t)n) {
+		g_ply->yellowKey -= (uint8_t)n;
+		lua_pushboolean(L, 1);
+	} else {
+		lua_pushboolean(L, 0);
+	}
+	return 1;
+}
 static int l_add_blue_key(lua_State* L) {
 	int n = (int)luaL_optinteger(L, 1, 1);
 	if (g_ply) g_ply->blueKey = (uint8_t)(g_ply->blueKey + n);
@@ -204,6 +216,33 @@ static int l_set_teleporter(lua_State* L) {
 	bool v = lua_toboolean(L, 1);
 	if (g_ply) g_ply->hasTeleporter = v;
 	return 0;
+}
+static int l_set_monster_book(lua_State* L) {
+	bool v = lua_toboolean(L, 1);
+	if (g_ply) g_ply->hasMonsterBook = v;
+	return 0;
+}
+static int l_set_cross(lua_State* L) {
+	bool v = lua_toboolean(L, 1);
+	if (g_ply) g_ply->hasCross = v;
+	return 0;
+}
+static int l_show_monster_book(lua_State* L) {
+	(void)L;
+	if (g_ply) showMonsterBook(*g_ply);
+	return 0;
+}
+static int l_battle_monster(lua_State* L) {
+	int id = (int)luaL_checkinteger(L, 1);
+	if (!g_ply) { lua_pushboolean(L, 0); return 1; }
+	PREDICTION prd = g_ply->PredictAttack((uint8_t)id);
+	if (prd == LIVE) {
+		g_ply->health -= g_ply->hurt;
+		lua_pushboolean(L, 1);
+	} else {
+		lua_pushboolean(L, 0);
+	}
+	return 1;
 }
 static int l_backpack_add(lua_State* L) {
 	int id = (int)luaL_checkinteger(L, 1);
@@ -349,6 +388,21 @@ void lua_register_game_api(lua_State* L, Player* player, EventManager* events) {
 		map_set(g_ply->floor, (uint8_t)x, (uint8_t)y, (uint8_t)v);
 		return 0;
 	});
+	lua_register(L, "set_tile_floor", [](lua_State* L)->int {
+		int f = (int)luaL_checkinteger(L, 1);
+		int x = (int)luaL_checkinteger(L, 2);
+		int y = (int)luaL_checkinteger(L, 3);
+		int v = (int)luaL_checkinteger(L, 4);
+		map_set((uint8_t)f, (uint8_t)x, (uint8_t)y, (uint8_t)v);
+		return 0;
+	});
+	lua_register(L, "get_tile_floor", [](lua_State* L)->int {
+		int f = (int)luaL_checkinteger(L, 1);
+		int x = (int)luaL_checkinteger(L, 2);
+		int y = (int)luaL_checkinteger(L, 3);
+		lua_pushinteger(L, map_get((uint8_t)f, (uint8_t)x, (uint8_t)y));
+		return 1;
+	});
 	lua_register(L, "sleep_ms", [](lua_State* L)->int {
 		int ms = (int)luaL_checkinteger(L, 1);
 		if (ms <= 0) return 0;
@@ -374,9 +428,14 @@ void lua_register_game_api(lua_State* L, Player* player, EventManager* events) {
 
 	// 道具系统 API
 	lua_register(L, "add_yellow_key", l_add_yellow_key);
+	lua_register(L, "take_yellow_key", l_take_yellow_key);
 	lua_register(L, "add_blue_key",   l_add_blue_key);
 	lua_register(L, "add_red_key",    l_add_red_key);
 	lua_register(L, "set_teleporter", l_set_teleporter);
+	lua_register(L, "set_monster_book", l_set_monster_book);
+	lua_register(L, "set_cross", l_set_cross);
+	lua_register(L, "show_monster_book", l_show_monster_book);
+	lua_register(L, "battle_monster", l_battle_monster);
 	lua_register(L, "backpack_add",   l_backpack_add);
 	lua_register(L, "backpack_has",   l_backpack_has);
 	lua_register(L, "freeze_lava",    l_freeze_lava);

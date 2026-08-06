@@ -51,6 +51,9 @@ int  term_printw(const char* fmt, ...);
 // ============================================================
 void term_draw_text(int px, int py, int pw, int ph,
                     const char* text, int fg_color, int bg_color);
+// 大字号文本（巨型 Boss 角色渲染用）
+void term_draw_big_text(int px, int py, int pw, int ph,
+                        const char* text, int fg_color, int bg_color);
 void term_clear_draws();
 
 // ============================================================

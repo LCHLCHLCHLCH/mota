@@ -18,6 +18,15 @@ return {
     },
     events = {
         {
+            trigger = "on_guard_kill",
+            guards = {{x = 1, y = 10}, {x = 3, y = 10}},
+            once = true,
+            run = function()
+                set_tile(2, 9, 1)
+                msg("守卫门已打开")
+            end
+        },
+        {
                         trigger = "on_tile",
             tile = 155,
             run = function()

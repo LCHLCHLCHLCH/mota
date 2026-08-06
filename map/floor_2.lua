@@ -13,7 +13,7 @@ return {
         {2,1,2,1,1,8,1,1,1,8,1,1,2},
         {2,1,2,2,2,2,1,1,1,2,2,2,2},
         {2,1,2,55,55,2,1,1,1,2,1,1,2},
-        {2,9,2,55,1,8,1,1,1,8,1,154,2},
+        {2,9,2,55,1,8,1,1,1,8,1,1,2},
         {2,2,2,2,2,2,2,2,2,2,2,2,2}
     },
         events = {
@@ -34,6 +34,17 @@ return {
             once = true,
             run = function()
                 replace_all(player_floor(), 8, 1)
+            end
+        },
+        {
+            trigger = "on_tile",
+            tile = 154,
+            run = function()
+                if has_flag(2) then return end
+                say("小偷：谢谢你救了我，我现在就帮你打通第35层暗道。")
+                set_tile(11, 11, 1)
+                set_flag(2)
+                set_tile_floor(35, 5, 10, 154)
             end
         }
     }

@@ -28,7 +28,7 @@ return {
         },
         {
             trigger = "on_tile",
-            x = 8, y = 4,
+            tile = 152,
             run = function()
                 if has_flag(2) then return end
                 if has_flag(1) then

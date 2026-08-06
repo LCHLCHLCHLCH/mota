@@ -357,3 +357,11 @@ bool isBossMonster(uint8_t id) {
 			return false;
 	}
 }
+
+uint8_t bodyBossForFloor(uint8_t floor) {
+	switch (floor) {
+		case 15: return 115;  // 巨型章鱼
+		case 35: return 123;  // 魔龙
+		default: return 0;
+	}
+}

@@ -17,5 +17,17 @@ return {
         {2,2,2,2,2,2,2,2,2,2,2,2,2}
     },
     events = {
+        {
+            trigger = "on_guard_kill",
+            guards = {{x = 6, y = 6}},
+            once = true,
+            run = function()
+                set_tile(4, 8, 53)
+                set_tile(5, 8, 53)
+                set_tile(7, 8, 53)
+                set_tile(8, 8, 53)
+                msg("大法师被击败，掉落了四把红钥匙！")
+            end
+        }
     }
 }

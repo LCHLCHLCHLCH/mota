@@ -17,5 +17,14 @@ return {
         {2,2,2,2,2,2,2,2,2,2,2,2,2}
     },
     events = {
+        {
+            trigger = "on_tile",
+            tile = 151,
+            once = true,
+            run = function()
+                say("老人：在这区域不多次提升攻击力，就不能打败石头人。切记前人教训！")
+                set_tile(3, 2, 1)
+            end
+        }
     }
 }

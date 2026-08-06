@@ -46,6 +46,8 @@ int main(int argc, char** argv) {
 		touchwin_term();
 		display.generateFrame(player);
 		statusBar.draw(player);
+		drawMonsterLights(player);
+		drawBossGlyphs(player);
 		hideCursor();
 		term_present();
 

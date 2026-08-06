@@ -17,5 +17,41 @@ return {
         {2,2,2,2,2,2,2,2,2,2,2,2,2}
     },
     events = {
+        {
+            trigger = "on_guard_kill",
+            guards = {{x = 1, y = 5}, {x = 3, y = 5}},
+            once = true,
+            run = function()
+                set_tile(2, 4, 1)
+                msg("守卫门已打开")
+            end
+        },
+        {
+            trigger = "on_guard_kill",
+            guards = {{x = 9, y = 5}, {x = 11, y = 5}},
+            once = true,
+            run = function()
+                set_tile(10, 4, 1)
+                msg("守卫门已打开")
+            end
+        },
+        {
+            trigger = "on_guard_kill",
+            guards = {{x = 1, y = 8}, {x = 3, y = 8}},
+            once = true,
+            run = function()
+                set_tile(2, 7, 1)
+                msg("守卫门已打开")
+            end
+        },
+        {
+            trigger = "on_guard_kill",
+            guards = {{x = 9, y = 8}, {x = 11, y = 8}},
+            once = true,
+            run = function()
+                set_tile(10, 7, 1)
+                msg("守卫门已打开")
+            end
+        }
     }
 }

@@ -17,5 +17,23 @@ return {
         {2,2,2,2,2,2,2,2,2,2,2,2,2}
     },
     events = {
+        {
+            trigger = "on_guard_kill",
+            guards = {
+                {x = 5, y = 4}, {x = 7, y = 4}, {x = 9, y = 4}, {x = 11, y = 4},
+                {x = 5, y = 8}, {x = 7, y = 8}, {x = 9, y = 8}, {x = 11, y = 8},
+            },
+            once = true,
+            run = function()
+                -- (2,6) 墙壁变红钥匙
+                set_tile(2, 6, 53)
+                -- 四角各一把黄钥匙
+                set_tile(1, 5, 51)
+                set_tile(3, 5, 51)
+                set_tile(1, 7, 51)
+                set_tile(3, 7, 51)
+                msg("击败全部八只怪物，红钥匙与黄钥匙出现了！")
+            end
+        }
     }
 }

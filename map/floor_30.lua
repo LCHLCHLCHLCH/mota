@@ -17,5 +17,13 @@ return {
         {2,2,2,2,2,2,2,2,2,2,2,2,2}
     },
     events = {
+        {
+            trigger = "on_clear",
+            once = true,
+            run = function()
+                set_tile(6, 4, 1)
+                msg("本层怪物已被清除，守卫门打开了")
+            end
+        }
     }
 }

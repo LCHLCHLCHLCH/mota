@@ -17,5 +17,14 @@ return {
         {2,2,2,2,2,2,2,2,2,2,2,2,2}
     },
     events = {
+        {
+            trigger = "on_tile",
+            tile = 151,
+            once = true,
+            run = function()
+                say("老人：我听说塔内有2把隐藏的红钥匙。")
+                set_tile(1, 11, 1)
+            end
+        }
     }
 }

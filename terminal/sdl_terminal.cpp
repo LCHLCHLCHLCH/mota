@@ -17,6 +17,8 @@ static int g_win_w = 616, g_win_h = 484;
 
 // SDL_ttf 字体
 static TTF_Font* g_ttf_font = nullptr;
+// 大字号字体（巨型 Boss 角色渲染用，约 3 倍 cell 尺寸）
+static TTF_Font* g_ttf_font_big = nullptr;
 
 // 调色板
 static SDL_Color g_palette[16];
@@ -51,12 +53,14 @@ struct Cell {
 static Cell* g_cells = nullptr;
 
 // 延迟直接绘制
+#define MAX_DEFERRED 256
 struct DeferredDraw {
 	int  px, py, pw, ph;
 	char text[64];
 	int  fg, bg;
+	bool big;   // true 时用大字号字体渲染
 };
-static DeferredDraw g_deferred[16];
+static DeferredDraw g_deferred[MAX_DEFERRED];
 static int          g_deferred_count = 0;
 
 // ============================================================
@@ -121,6 +125,7 @@ static void attr_to_colors(int attr, int& fg, int& bg) {
 // ============================================================
 static void load_font() {
 	if (g_ttf_font) { TTF_CloseFont(g_ttf_font); g_ttf_font = nullptr; }
+	if (g_ttf_font_big) { TTF_CloseFont(g_ttf_font_big); g_ttf_font_big = nullptr; }
 	int size = (int)((g_cell_h - 2) * g_scale + 0.5f);
 	if (size < 8) size = 8;
 	char exe_path[MAX_PATH];
@@ -132,6 +137,7 @@ static void load_font() {
 		snprintf(font_path, sizeof(font_path), "%s\\simsun.ttc", exe_path);
 		if (GetFileAttributesA(font_path) != INVALID_FILE_ATTRIBUTES) {
 			g_ttf_font = TTF_OpenFont(font_path, size);
+			g_ttf_font_big = TTF_OpenFont(font_path, size * 3);
 		}
 	}
 	if (!g_ttf_font) {
@@ -141,6 +147,7 @@ static void load_font() {
 		char font_path[MAX_PATH];
 		snprintf(font_path, sizeof(font_path), "%s\\Fonts\\simsun.ttc", sys_path);
 		g_ttf_font = TTF_OpenFont(font_path, size);
+		g_ttf_font_big = TTF_OpenFont(font_path, size * 3);
 	}
 }
 
@@ -249,12 +256,13 @@ static void draw_cell_sdl(int col, int row) {
 // SDL 渲染文本（状态栏数值、底部消息等）
 // ============================================================
 static void draw_text_rect(int px, int py, int pw, int ph,
-                           const char* utf8_text, SDL_Color fg, SDL_Color bg) {
+                           const char* utf8_text, SDL_Color fg, SDL_Color bg,
+                           TTF_Font* font) {
 	SDL_FRect rect = { (float)px, (float)py, (float)pw, (float)ph };
 	SDL_SetRenderDrawColor(g_renderer, bg.r, bg.g, bg.b, bg.a);
 	SDL_RenderFillRect(g_renderer, &rect);
 
-	SDL_Surface* surf = TTF_RenderText_Blended(g_ttf_font, utf8_text, 0, fg);
+	SDL_Surface* surf = TTF_RenderText_Blended(font, utf8_text, 0, fg);
 	if (surf) {
 		SDL_Texture* tex = SDL_CreateTextureFromSurface(g_renderer, surf);
 		if (tex) {
@@ -383,13 +391,14 @@ void term_present() {
 	for (int i = 0; i < g_deferred_count; i++) {
 		DeferredDraw& d = g_deferred[i];
 		draw_text_rect(d.px, d.py, d.pw, d.ph, d.text,
-			g_palette[d.fg], g_palette[d.bg]);
+			g_palette[d.fg], g_palette[d.bg],
+			d.big ? g_ttf_font_big : g_ttf_font);
 	}
 
 	// 4. 底部消息
 	if (g_message[0]) {
 		draw_text_rect(0, (g_rows - 1) * g_cell_h, g_win_w, g_cell_h,
-			g_message, g_palette[4], g_palette[0]);
+			g_message, g_palette[4], g_palette[0], g_ttf_font);
 	}
 
 	// 5. 呈现
@@ -531,12 +540,24 @@ void term_clear_message() { g_message[0] = 0; }
 // ============================================================
 void term_draw_text(int px, int py, int pw, int ph,
                     const char* text, int fg_color, int bg_color) {
-	if (g_deferred_count >= 16) return;
+	if (g_deferred_count >= MAX_DEFERRED) return;
 	DeferredDraw& d = g_deferred[g_deferred_count++];
 	d.px = px; d.py = py; d.pw = pw; d.ph = ph;
 	strncpy(d.text, text, 63);
 	d.text[63] = 0;
 	d.fg = fg_color; d.bg = bg_color;
+	d.big = false;
+}
+
+void term_draw_big_text(int px, int py, int pw, int ph,
+                        const char* text, int fg_color, int bg_color) {
+	if (g_deferred_count >= MAX_DEFERRED) return;
+	DeferredDraw& d = g_deferred[g_deferred_count++];
+	d.px = px; d.py = py; d.pw = pw; d.ph = ph;
+	strncpy(d.text, text, 63);
+	d.text[63] = 0;
+	d.fg = fg_color; d.bg = bg_color;
+	d.big = true;
 }
 
 void term_clear_draws() { g_deferred_count = 0; }

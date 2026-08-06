@@ -17,5 +17,15 @@ return {
         {2,2,2,2,2,2,2,2,2,2,2,2,2}
     },
     events = {
+        {
+            trigger = "on_tile",
+            tile = 154,
+            once = true,
+            run = function()
+                say("小偷：哦，我刚完成暗道。你每次都及时赶到，看在朋友的份上，你可以免费试用。好了，下次见。")
+                set_tile(6, 2, 1)
+                set_tile(6, 3, 1)
+            end
+        }
     }
 }

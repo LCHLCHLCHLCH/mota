@@ -17,5 +17,14 @@ return {
         {2,2,2,2,2,2,2,2,2,2,2,2,2}
     },
     events = {
+        {
+            trigger = "on_tile",
+            tile = 151,
+            once = true,
+            run = function()
+                say("老人：我没有什么可说的，但有一个确切的消息藏在这个楼层里。")
+                set_tile(11, 11, 1)
+            end
+        }
     }
 }

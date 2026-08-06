@@ -25,6 +25,7 @@ add_executable(MotaSDL
 	src/event/event_manager.cpp
 	src/render/display.cpp src/render/frame_print.cpp
 	src/render/region_display.cpp src/ui/backpack.cpp
+	src/ui/monster_book.cpp
 	terminal/main.cpp
 	terminal/sdl_dialog.cpp terminal/sdl_key.cpp
 	terminal/sdl_statusBar.cpp terminal/sdl_terminal.cpp
@@ -77,3 +78,15 @@ add_custom_command(TARGET MotaSDL POST_BUILD
 	COMMAND ${CMAKE_COMMAND} -E copy_directory
 	"${CMAKE_SOURCE_DIR}/map" "$<TARGET_FILE_DIR:MotaSDL>/map"
 )
+
+# 地图 Lua 文件变更时独立同步到输出目录
+# （POST_BUILD 仅在重链接时执行，纯 Lua 改动不会触发，故单独处理）
+file(GLOB MAP_LUA_FILES "${CMAKE_SOURCE_DIR}/map/*.lua")
+add_custom_command(
+	OUTPUT "${CMAKE_BINARY_DIR}/map_synced.stamp"
+	COMMAND ${CMAKE_COMMAND} -E copy_directory
+	"${CMAKE_SOURCE_DIR}/map" "$<TARGET_FILE_DIR:MotaSDL>/map"
+	COMMAND ${CMAKE_COMMAND} -E touch "${CMAKE_BINARY_DIR}/map_synced.stamp"
+	DEPENDS ${MAP_LUA_FILES}
+)
+add_custom_target(map_sync ALL DEPENDS "${CMAKE_BINARY_DIR}/map_synced.stamp")

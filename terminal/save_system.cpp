@@ -52,6 +52,8 @@ bool save_game(const char* name, const Player& player, const EventManager& event
 	fprintf(f, "player.floor=%u\n", player.floor);
 	fprintf(f, "player.hurt=%u\n", player.hurt);
 	fprintf(f, "player.hasTeleporter=%d\n", player.hasTeleporter ? 1 : 0);
+	fprintf(f, "player.hasMonsterBook=%d\n", player.hasMonsterBook ? 1 : 0);
+	fprintf(f, "player.hasCross=%d\n", player.hasCross ? 1 : 0);
 	fprintf(f, "player.maxFloorVisited=%u\n", player.maxFloorVisited);
 
 	// --- 事件标记（每层独立） ---
@@ -144,6 +146,8 @@ bool load_game(const char* name, Player& player, EventManager& events) {
 		else if (sscanf(line, "player.floor=%u", &val) == 1) player.floor = (uint8_t)val;
 		else if (sscanf(line, "player.hurt=%u", &val) == 1) player.hurt = val;
 		else if (sscanf(line, "player.hasTeleporter=%u", &val) == 1) player.hasTeleporter = (val != 0);
+		else if (sscanf(line, "player.hasMonsterBook=%u", &val) == 1) player.hasMonsterBook = (val != 0);
+		else if (sscanf(line, "player.hasCross=%u", &val) == 1) player.hasCross = (val != 0);
 		else if (sscanf(line, "player.maxFloorVisited=%u", &val) == 1) player.maxFloorVisited = (uint8_t)val;
 
 		// event.*

@@ -17,5 +17,40 @@ return {
         {2,2,2,2,2,2,2,2,2,2,2,2,2}
     },
     events = {
+        {
+            trigger = "on_tile",
+            tile = 151,
+            condition_flag = 3,
+            set_flag = 3,
+            run = function()
+                say("老人：双手剑士的攻击力太高，你最好能到一击必杀时再与他战斗。")
+                set_tile(11, 1, 1)
+            end
+        },
+        {
+            trigger = "on_tile",
+            tile = 152,
+            run = function()
+                if has_flag(2) then return end
+                if has_flag(1) then
+                    say("商人：魔塔有50层高，但似乎你不能直接到50楼。")
+                    set_tile(1, 11, 1)
+                    set_flag(2)
+                    return
+                end
+                say("商人：我有4把黄钥匙1把蓝钥匙，你出1000个金币就都给你。")
+                local c = choose_menu("我太需要了", "下次再说")
+                if c == 0 then
+                    if take_money(1000) then
+                        for i = 1, 4 do give(51) end
+                        give(52)
+                        set_flag(1)
+                    else
+                        say("商人：你的金币不够！")
+                    end
+                end
+                drain()
+            end
+        }
     }
 }

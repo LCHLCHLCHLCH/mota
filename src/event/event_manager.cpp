@@ -23,11 +23,13 @@ bool EventManager::hasFlag(uint8_t floor, uint8_t id) const {
 	return flags_[floor][id] != 0;
 }
 
-// 执行事件的 run 函数
-static bool run_event_run(lua_State* L, int ev_idx) {
+// 执行事件的 run 函数（传入触发坐标，供 Lua 事件使用）
+static bool run_event_run(lua_State* L, int ev_idx, int px, int py) {
 	lua_getfield(L, ev_idx, "run");
 	if (!lua_isfunction(L, -1)) { lua_pop(L, 1); return false; }
-	if (lua_pcall(L, 0, 0, 0) != LUA_OK) {
+	lua_pushinteger(L, px);
+	lua_pushinteger(L, py);
+	if (lua_pcall(L, 2, 0, 0) != LUA_OK) {
 		fprintf(stderr, "event run error: %s\n", lua_tostring(L, -1));
 		lua_pop(L, 1);
 		return false;
@@ -134,7 +136,7 @@ bool EventManager::tryHandleTile(uint8_t floor, uint8_t px, uint8_t py, uint8_t 
 		if (check_event_skip(L, lua_gettop(L), floor, i - 1, this, &is_once, &auto_flag))
 			{ lua_pop(L, 1); continue; }
 
-		run_event_run(L, lua_gettop(L));
+		run_event_run(L, lua_gettop(L), px, py);
 		apply_event_flag(L, lua_gettop(L), floor, this, is_once, auto_flag);
 
 		lua_pop(L, 1); // event
@@ -166,7 +168,7 @@ void EventManager::checkClear(uint8_t floor) {
 		if (check_event_skip(L, lua_gettop(L), floor, i - 1, this, &is_once, &auto_flag))
 			{ lua_pop(L, 1); continue; }
 
-		run_event_run(L, lua_gettop(L));
+		run_event_run(L, lua_gettop(L), 0, 0);
 		apply_event_flag(L, lua_gettop(L), floor, this, is_once, auto_flag);
 
 		lua_pop(L, 1); break;
@@ -222,7 +224,7 @@ void EventManager::checkGuardKill(uint8_t floor, uint8_t killed_x, uint8_t kille
 		if (check_event_skip(L, lua_gettop(L), floor, i - 1, this, &is_once, &auto_flag))
 			{ lua_pop(L, 1); continue; }
 
-		run_event_run(L, lua_gettop(L));
+		run_event_run(L, lua_gettop(L), killed_x, killed_y);
 		apply_event_flag(L, lua_gettop(L), floor, this, is_once, auto_flag);
 
 		lua_pop(L, 1); break;

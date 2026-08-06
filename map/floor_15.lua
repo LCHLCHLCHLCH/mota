@@ -7,9 +7,9 @@ return {
         {2,112,1,1,2,1,1,1,2,1,1,109,2},
         {2,1,1,109,2,2,8,2,2,2,2,3,2},
         {2,3,2,2,2,1,1,1,2,110,1,1,2},
-        {2,1,2,51,2,6,6,6,2,1,110,1,2},
-        {2,1,2,52,2,6,6,6,2,3,2,111,2},
-        {2,109,2,51,2,6,115,6,2,1,2,1,2},
+        {2,1,2,51,2,136,136,136,2,1,110,1,2},
+        {2,1,2,52,2,136,136,136,2,3,2,111,2},
+        {2,109,2,51,2,136,136,136,2,1,2,1,2},
         {2,1,2,1,2,1,1,1,2,1,2,55,2},
         {2,1,3,1,2,2,1,2,2,3,2,2,2},
         {2,110,2,110,2,1,1,1,2,1,103,1,2},
@@ -18,28 +18,29 @@ return {
     },
     events = {
         {
-            trigger = "on_guard_kill",
-            guards = {{x = 6, y = 7}},
-            once = true,
-            run = function()
-                -- 清除 8 块岩浆 (3x3 区域除章鱼位置)
-                for y = 5, 7 do
-                    for x = 5, 7 do
-                        if not (x == 6 and y == 7) then
-                            set_tile(x, y, 1)
-                        end
+            trigger = "on_tile",
+            tile = 136,
+            run = function(x, y)
+                if not battle_monster(115) then
+                    msg("你还不能击败它！")
+                    return
+                end
+                -- 章鱼身体消散
+                for yy = 5, 7 do
+                    for xx = 5, 7 do
+                        set_tile(xx, yy, 1)
                     end
                 end
-                -- 清除守卫门
+                set("x", x)
+                set("y", y)
                 set_tile(6, 3, 1)
-                -- 放置镐子
                 set_tile(6, 5, 71)
-                msg("章鱼倒下，岩浆退去，一把镐子出现在原地！")
+                msg("章鱼倒下，身体消散，一把镐子出现在原地！")
             end
         },
         {
             trigger = "on_tile",
-            x = 11, y = 11,
+            tile = 152,
             run = function()
                 if has_flag(2) then return end
                 if has_flag(1) then
@@ -59,6 +60,17 @@ return {
                     end
                 end
                 drain()
+            end
+        },
+        {
+            trigger = "on_tile",
+            tile = 154,
+            condition_flag = 3,
+            set_flag = 3,
+            run = function()
+                say("啊哈！你还好吗？这大章鱼挡住了我前进的道路，现在暗道终于完工了，你现在最好也躲开它。我要走了，再见。")
+                set_tile(8, 1, 1)
+                set_tile(9, 1, 1)
             end
         }
     }

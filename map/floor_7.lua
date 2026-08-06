@@ -19,7 +19,7 @@ return {
     events = {
         {
             trigger = "on_tile",
-            x = 6, y = 1,
+            tile = 152,
             run = function()
                 if has_flag(2) then return end
                 if has_flag(1) then

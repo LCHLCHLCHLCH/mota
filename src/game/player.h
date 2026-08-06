@@ -36,13 +36,15 @@ public:
 	uint32_t hurt = 0;
 
 	bool     hasTeleporter = false;
+	bool     hasMonsterBook = false;
+	bool     hasCross = false;
 	uint8_t  maxFloorVisited = 1;
 
 	EventManager* events = nullptr;
 	Backpack*     backpack = nullptr;
 
 	void init();
-	PREDICTION PredictAttack(Monster monster);
+	PREDICTION PredictAttack(uint8_t monster_id);
 	void respondToKey(KEY key);
 
 	void respondToMap(uint8_t floor_going, uint8_t x_going, uint8_t y_going);
@@ -60,3 +62,7 @@ private:
 
 void upStair(uint8_t *Floor, uint8_t *X, uint8_t *Y);
 void downStair(uint8_t *Floor, uint8_t *X, uint8_t *Y);
+
+// 模拟战斗，返回击败怪物损失的生命值；无法击败（破不了防或战败）返回 -1
+// 持有十字架时对兽人/兽人武士/吸血鬼（112/113/116）攻击力加倍
+int32_t SimulateCombat(const Player& player, uint8_t monster_id);

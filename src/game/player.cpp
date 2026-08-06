@@ -21,48 +21,69 @@ void Player::init()
 	attack = 1000;
 	defence = 1000;
 	health = 10000;
+	hasTeleporter = false;
+	hasMonsterBook = false;
+	hasCross = false;
+}
+
+// 十字架加成目标：兽人(112)、兽人武士(113)、吸血鬼(116)
+static bool isCrossTarget(uint8_t id) {
+	return id == 112 || id == 113 || id == 116;
 }
 
 /**
- * @brief 预测假如攻击某个怪物会发生什么,若能打过则更新伤害值
- * @param Monster 要攻击的怪物
- *
- * @return LIVE:能打过 DIE:打不过
+ * @brief 模拟战斗，返回击败怪物损失的生命值
+ * @note 无法击败（破不了防或战败）返回 -1
+ * @note 持有十字架时对十字架目标攻击力加倍
  */
-PREDICTION Player::PredictAttack(Monster monster)
+int32_t SimulateCombat(const Player& player, uint8_t monster_id)
 {
-	int32_t player_health_temp = this->health;
-	int32_t monster_health_temp = monster.health;
-	int32_t damage_PlayerToMonster = this->attack - monster.defence;
-	int32_t damage_MonsterToPlayer = monster.attack - this->defence;
+	Monster* monster = getMonsterType(monster_id);
+	int32_t player_health_temp = (int32_t)player.health;
+	int32_t monster_health_temp = (int32_t)monster->health;
+	int32_t player_attack = (int32_t)player.attack;
+	if (player.hasCross && isCrossTarget(monster_id))
+		player_attack *= 2;
+	int32_t damage_PlayerToMonster = player_attack - (int32_t)monster->defence;
+	int32_t damage_MonsterToPlayer = (int32_t)monster->attack - (int32_t)player.defence;
 
 	if (damage_MonsterToPlayer < 0)
 		damage_MonsterToPlayer = 0;
 	if (damage_PlayerToMonster < 0)
 		damage_PlayerToMonster = 0;
 
-	// 攻击小于怪物的防御,无法击败
+	// 攻击小于怪物的防御,无法攻击
 	if (damage_PlayerToMonster == 0)
-		return DIE;
-	else
+		return -1;
+
+	while (1)
 	{
-		while (1)
-		{
-			// 玩家攻击阶段
-			monster_health_temp = monster_health_temp - damage_PlayerToMonster;
-			if (monster_health_temp <= 0)
-			{
-				this->hurt = this->health - player_health_temp;
-				return LIVE;
-			}
-			// 怪物攻击阶段
-			player_health_temp = player_health_temp - damage_MonsterToPlayer;
-			if (player_health_temp <= 0)
-			{
-				return DIE;
-			}
-		}
+		// 玩家攻击阶段
+		monster_health_temp = monster_health_temp - damage_PlayerToMonster;
+		if (monster_health_temp <= 0)
+			return (int32_t)player.health - player_health_temp;
+		// 怪物攻击阶段
+		player_health_temp = player_health_temp - damage_MonsterToPlayer;
+		if (player_health_temp <= 0)
+			return (int32_t)player.health - player_health_temp;
 	}
+}
+
+/**
+ * @brief 预测假如攻击某个怪物会发生什么,若能打过则更新伤害值
+ * @param monster_id 要攻击的怪物
+ *
+ * @return LIVE:能打过 DIE:打不过
+ * @note SimulateCombat 返回值：-1=无法攻击；>=0 为耗血，
+ *       其中 耗血 < 当前生命 表示可击败，耗血 >= 当前生命 表示会战败
+ */
+PREDICTION Player::PredictAttack(uint8_t monster_id)
+{
+	int32_t dmg = SimulateCombat(*this, monster_id);
+	if (dmg < 0 || (uint32_t)dmg >= this->health)
+		return DIE;
+	this->hurt = (uint32_t)dmg;
+	return LIVE;
 }
 
 /**
@@ -111,7 +132,7 @@ void Player::reactToMonster(uint8_t floor_going, uint8_t x_going, uint8_t y_goin
 {
 	uint8_t id = map_get(floor_going, x_going, y_going);
 	Monster *m = getMonsterType(id);
-	PREDICTION prd = this->PredictAttack(*m);
+	PREDICTION prd = this->PredictAttack(id);
 	if (prd == LIVE)
 	{
 		// 移动

@@ -20,28 +20,26 @@ return {
         {
             trigger = "on_tile",
             x = 6, y = 1,
-            actions = {
-                { type = "call", func = function()
-                    if has_flag(2) then return end
-                    if has_flag(1) then
-                        say("商人：在祭坛你最好选择提升防御，只有在攻击力低于敌人的防御力时才提升攻击")
-                        set_tile(6, 1, 1)
-                        set_flag(2)
-                        return
+            run = function()
+                if has_flag(2) then return end
+                if has_flag(1) then
+                    say("商人：在祭坛你最好选择提升防御，只有在攻击力低于敌人的防御力时才提升攻击")
+                    set_tile(6, 1, 1)
+                    set_flag(2)
+                    return
+                end
+                say("商人：我有五把黄钥匙，你出50个金币我就卖给你")
+                local c = choose_menu("我太需要了", "下次再说")
+                if c == 0 then
+                    if take_money(50) then
+                        for i = 1, 5 do give(51) end
+                        set_flag(1)
+                    else
+                        say("商人：你的金币不够！")
                     end
-                    say("商人：我有五把黄钥匙，你出50个金币我就卖给你")
-                    local c = choose_menu("我太需要了", "下次再说")
-                    if c == 0 then
-                        if take_money(50) then
-                            for i = 1, 5 do give(51) end
-                            set_flag(1)
-                        else
-                            say("商人：你的金币不够！")
-                        end
-                    end
-                    drain()
-                end },
-            }
+                end
+                drain()
+            end
         }
     }
 }

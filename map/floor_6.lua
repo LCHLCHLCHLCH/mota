@@ -21,38 +21,34 @@ return {
             trigger = "on_tile",
             x = 4, y = 8,
             once = true,
-            actions = {
-                { type = "call", func = function()
-                    say("老人：你购买了商品后再与商人对话，他会告诉你一些重要的信息")
-                    set_tile(4, 8, 1)
-                end },
-            }
+            run = function()
+                say("老人：你购买了商品后再与商人对话，他会告诉你一些重要的信息")
+                set_tile(4, 8, 1)
+            end
         },
         {
             trigger = "on_tile",
             x = 8, y = 4,
-            actions = {
-                { type = "call", func = function()
-                    if has_flag(2) then return end
-                    if has_flag(1) then
-                        say("商人：魔塔一共50层，每10层为一个区域。如果不打败此区域的头目就不能到达更高的地方。")
-                        set_tile(8, 4, 1)
-                        set_flag(2)
-                        return
+            run = function()
+                if has_flag(2) then return end
+                if has_flag(1) then
+                    say("商人：魔塔一共50层，每10层为一个区域。如果不打败此区域的头目就不能到达更高的地方。")
+                    set_tile(8, 4, 1)
+                    set_flag(2)
+                    return
+                end
+                say("商人：我有一把蓝钥匙，你出50个金币我就卖给你")
+                local c = choose_menu("我太需要了", "下次再说")
+                if c == 0 then
+                    if take_money(50) then
+                        give(52)
+                        set_flag(1)
+                    else
+                        say("商人：你的金币不够！")
                     end
-                    say("商人：我有一把蓝钥匙，你出50个金币我就卖给你")
-                    local c = choose_menu("我太需要了", "下次再说")
-                    if c == 0 then
-                        if take_money(50) then
-                            give(52)
-                            set_flag(1)
-                        else
-                            say("商人：你的金币不够！")
-                        end
-                    end
-                    drain()
-                end },
-            }
+                end
+                drain()
+            end
         }
     }
 }

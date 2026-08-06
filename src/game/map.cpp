@@ -86,7 +86,6 @@ uint8_t map_get_default(uint8_t floor, uint8_t x, uint8_t y) {
 
 // ============================================================
 // 杀死怪物并通知事件系统
-// 为保证可靠性，Lua 事件和 C++ 内联检查双路径并行
 // ============================================================
 int map_kill_monster(uint8_t floor, uint8_t x, uint8_t y, Player* player) {
 	uint8_t t = map_get(floor, x, y);
@@ -101,97 +100,7 @@ int map_kill_monster(uint8_t floor, uint8_t x, uint8_t y, Player* player) {
 		// Lua 事件系统
 		if (player->events)
 			player->events->checkGuardKill(floor, x, y, *player);
-
-		// C++ 内联守卫检查（双保险）
-		lua_State* L = script_init();
-		int _top = 0;
-		if (L) {
-			_top = lua_gettop(L);
-			char file[32];
-			snprintf(file, sizeof(file), "floor_%d", floor);
-			lua_getglobal(L, "require");
-			lua_pushstring(L, file);
-			if (lua_pcall(L, 1, 1, 0) == LUA_OK) {
-				lua_getfield(L, -1, "events");
-				if (lua_istable(L, -1)) {
-					int n = (int)lua_objlen(L, -1);
-					for (int i = 1; i <= n; i++) {
-						lua_rawgeti(L, -1, i);
-						lua_getfield(L, -1, "trigger");
-						const char* trig = lua_tostring(L, -1);
-						lua_pop(L, 1);
-
-						if (!trig || strcmp(trig, "on_guard_kill") != 0) { lua_pop(L, 1); continue; }
-
-						lua_getfield(L, -1, "guards");
-						bool is_guard = false;
-						int ng = (int)lua_objlen(L, -1);
-						for (int g = 1; g <= ng; g++) {
-							lua_rawgeti(L, -1, g);
-							lua_getfield(L, -1, "x"); int gx = (int)lua_tointeger(L, -1); lua_pop(L, 1);
-							lua_getfield(L, -1, "y"); int gy = (int)lua_tointeger(L, -1); lua_pop(L, 1);
-							if (gx == (int)x && gy == (int)y) { is_guard = true; lua_pop(L, 1); break; }
-							lua_pop(L, 1);
-						}
-						lua_pop(L, 1);
-						if (!is_guard) { lua_pop(L, 1); continue; }
-
-						bool all_cleared = true;
-						lua_getfield(L, -1, "guards");
-						ng = (int)lua_objlen(L, -1);
-						for (int g = 1; g <= ng; g++) {
-							lua_rawgeti(L, -1, g);
-							lua_getfield(L, -1, "x"); int gx = (int)lua_tointeger(L, -1); lua_pop(L, 1);
-							lua_getfield(L, -1, "y"); int gy = (int)lua_tointeger(L, -1); lua_pop(L, 1);
-							if (map_get(floor, (uint8_t)gx, (uint8_t)gy) != 1) { all_cleared = false; lua_pop(L, 1); break; }
-							lua_pop(L, 1);
-						}
-						lua_pop(L, 1);
-						if (!all_cleared) { lua_pop(L, 1); continue; }
-
-						// 检查 condition_flag
-						lua_getfield(L, -1, "condition_flag");
-						int cf = (int)lua_tointeger(L, -1); lua_pop(L, 1);
-						if (cf > 0 && player->events && player->events->hasFlag(floor, (uint8_t)cf)) { lua_pop(L, 1); continue; }
-
-						// 执行 actions
-						lua_getfield(L, -1, "actions");
-						int an = (int)lua_objlen(L, -1);
-						for (int ai = 1; ai <= an; ai++) {
-							lua_rawgeti(L, -1, ai);
-							lua_getfield(L, -1, "type");
-							const char* atype = lua_tostring(L, -1);
-							lua_pop(L, 1);
-
-							if (strcmp(atype, "replace_all") == 0) {
-								lua_getfield(L, -1, "from"); int from = (int)lua_tointeger(L, -1); lua_pop(L, 1);
-								lua_getfield(L, -1, "to");   int to   = (int)lua_tointeger(L, -1); lua_pop(L, 1);
-								for (int my = 0; my < 13; my++)
-									for (int mx = 0; mx < 13; mx++)
-										if (map_get(floor, (uint8_t)mx, (uint8_t)my) == (uint8_t)from)
-											map_set(floor, (uint8_t)mx, (uint8_t)my, (uint8_t)to);
-								if (from == 8 && to == 1)
-									term_set_message("守卫门已打开");
-							}
-							lua_pop(L, 1);
-						}
-						lua_pop(L, 1); // actions
-
-						// 设置 flag
-						lua_getfield(L, -1, "set_flag");
-						int sf = (int)lua_tointeger(L, -1); lua_pop(L, 1);
-						if (sf > 0 && player->events) player->events->setFlag(floor, (uint8_t)sf);
-
-						lua_pop(L, 1); break; // event_i
-					}
-				}
-				lua_pop(L, 2); // events + floor table
-			} else {
-				lua_pop(L, 1); // error string
-			}
-		}
-			lua_settop(L, _top);
-		}
+	}
 
 	return gold;
 }

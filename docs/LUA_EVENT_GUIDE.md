@@ -39,9 +39,7 @@ map = {
 
 ---
 
-## 事件类型
-
-### 事件结构
+## 事件结构
 
 每个事件是一个 table，通用字段如下：
 
@@ -51,14 +49,29 @@ map = {
 | `once` | bool | 否 | **推荐**。设为 `true` 即自动一次性触发，无需手动管理 flag 编号 |
 | `condition_flag` | int | 否 | 前置 flag ID（0~15）。仅当本层该 flag 未设置时触发。与 `once` 互斥 |
 | `set_flag` | int | 否 | 事件执行后设置的本层 flag ID（0~15）。与 `once` 互斥 |
-| `actions` | table | 是 | 动作列表，按顺序执行 |
+| `run` | function | 是 | 事件触发后执行的 Lua 函数 |
 
 > **推荐**：直接使用 `once = true` 实现一次性触发，让系统自动管理 flag。
 > 详见 [`docs/FLAGS.md`](FLAGS.md)。
 
+事件的所有逻辑都写在 `run` 函数里，可直接调用全部注册的 Lua API（见下文 [Lua API](#lua-api)）：
+
+```lua
+{
+    trigger = "on_tile",
+    x = 5, y = 3,
+    once = true,
+    run = function()
+        say("买把黄钥匙吧，10金币。")
+    end
+}
+```
+
 不同 trigger 类型有额外字段，见下。
 
 ---
+
+## 触发器类型
 
 ### 1. `on_tile` — 踩踏地块触发
 
@@ -84,18 +97,18 @@ map = {
 {
     trigger = "on_tile",
     x = 5, y = 3,
-    actions = {
-        { type = "say", text = "买把黄钥匙吧，10金币。" },
-    }
+    run = function()
+        say("买把黄钥匙吧，10金币。")
+    end
 }
 
 -- 坐标 (9,7) 的商人卖蓝钥匙
 {
     trigger = "on_tile",
     x = 9, y = 7,
-    actions = {
-        { type = "say", text = "蓝钥匙20金币一把。" },
-    }
+    run = function()
+        say("蓝钥匙20金币一把。")
+    end
 }
 ```
 
@@ -105,11 +118,11 @@ map = {
 {
     trigger = "on_tile",
     tile = 151,
-    condition_flag = 1,
-    set_flag = 1,
-    actions = {
-        { type = "say", text = "我可以给你一本怪物手册，你可以用它预测该楼层各怪物对你造成的伤害。" },
-    }
+    once = true,
+    run = function()
+        say("我可以给你一本怪物手册，你可以用它预测该楼层各怪物对你造成的伤害。")
+        set_tile(11, 4, 1)
+    end
 }
 ```
 
@@ -117,7 +130,7 @@ map = {
 
 ### 2. `on_guard_kill` — 击败全部守卫后触发
 
-当玩家击败指定的**全部**守卫后触发。游戏会检查每个守卫位置是否已变为空地（ID=1），全部清空时才执行动作。
+当玩家击败指定的**全部**守卫后触发。游戏会检查每个守卫位置是否已变为空地（ID=1），全部清空时才执行函数。
 
 额外字段：
 
@@ -131,20 +144,19 @@ map = {
 {
     trigger = "on_guard_kill",
     guards = {{x = 6, y = 2}, {x = 8, y = 2}},
-    condition_flag = 2,
-    set_flag = 2,
-    actions = {
-        { type = "replace_all", from = 8, to = 1 },
-    }
+    once = true,
+    run = function()
+        replace_all(player_floor(), 8, 1)   -- 守卫门 → 空地
+    end
 }
 ```
 
-守卫门初始 ID 为 8，击败全部守卫后 `replace_all` 将门变为空地（1）。
+守卫门初始 ID 为 8，全部守卫被击败后 `replace_all` 将门变为空地（1）。
 
 **注意**：
 - 守卫必须是怪物（ID 101~150），玩家需通过战斗或炸药消灭它们
 - 使用炸药消灭守卫也能正确触发此事件
-- 每个事件只有一个守卫组；若楼层有多组守卫门，需创建多个事件各配不同的 `condition_flag`
+- 每个事件只有一个守卫组；若楼层有多组守卫门，需创建多个事件各配不同的 `condition_flag` 或 `once`
 
 ---
 
@@ -155,12 +167,11 @@ map = {
 ```lua
 {
     trigger = "on_clear",
-    condition_flag = 10,
-    set_flag = 10,
-    actions = {
-        { type = "say", text = "你已消灭了本层所有怪物！" },
-        { type = "replace_all", from = 8, to = 1 },
-    }
+    once = true,
+    run = function()
+        say("你已消灭了本层所有怪物！")
+        replace_all(player_floor(), 8, 1)
+    end
 }
 ```
 
@@ -168,177 +179,54 @@ map = {
 
 ---
 
-## 动作类型
-
-### `say` — 弹出对话框
-
-```lua
-{ type = "say", text = "显示的对话文字" }
-```
-
-弹出模态对话框，用户按任意键关闭。支持中文。
-
----
-
-### `msg` — 底部消息栏
-
-```lua
-{ type = "msg", text = "守卫门已打开" }
-```
-
-在窗口底部消息栏显示一行文字提示。
-
----
-
-### `replace_all` — 全图批量替换地块
-
-```lua
-{ type = "replace_all", from = 8, to = 1 }
-```
-
-将楼层中所有值为 `from` 的地块替换为 `to`。常用于：
-- 守卫门打开：`from = 8, to = 1`
-- 场景变化：将某种地块批量替换为另一种
-
-内置提示：当 `from=8, to=1` 时自动显示"守卫门已打开"。
-
----
-
-### `set_tile` — 设置单个地块
-
-```lua
-{ type = "set_tile", x = 5, y = 3, value = 1 }
-```
-
-将指定坐标的地块设为指定值。用于精确修改单个地块。
-
----
-
-### `add_health` / `add_attack` / `add_defence` / `add_money` — 增减属性
-
-```lua
-{ type = "add_health",  value = 200 }   -- 生命 +200
-{ type = "add_attack",  value = 10 }    -- 攻击 +10
-{ type = "add_defence", value = 5 }     -- 防御 +5
-{ type = "add_money",   value = 50 }    -- 金币 +50
-```
-
-正值增加，负值减少。
-
----
-
-### `take_money` — 扣除金币
-
-```lua
-{ type = "take_money", value = 100 }
-```
-
-金币不足时不会扣除（需要配合 `choose` 的 `if_choice` 进行分支处理，见下文）。
-
----
-
-### `choose` — 显示选择菜单
-
-```lua
-{ type = "choose", choices = { "生命+100", "攻击+2", "防御+4", "离开" } }
-```
-
-显示选项列表，玩家用上下方向键选择、Z 键确认、X 键取消。返回值：0=第一项、1=第二项、……、255=取消。
-
-**必须配合 `if_choice` 使用**（见下文），以便不同选项执行不同后续动作。
-
----
-
-### `call` — 执行 Lua 函数
-
-```lua
-{ type = "call", func = function()
-    say("你好！")
-    add_health(100)
-end }
-```
-
-执行任意 Lua 代码。函数内部可使用所有注册的 Lua API（见下文）。这是最灵活的动作类型，可实现任意复杂逻辑。
-
----
-
-## `if_choice` — 基于选择的分支
-
-当一个 `choose` 动作之后紧跟带 `if_choice` 的动作时，这些动作只在用户选择了指定选项时才执行。
-
-```lua
-actions = {
-    -- 第一步：弹出选择
-    { type = "choose", choices = { "生命+100", "攻击+2", "离开" } },
-
-    -- 选"生命+100"时才执行
-    { type = "add_health", value = 100, if_choice = 0 },
-
-    -- 选"攻击+2"时才执行
-    { type = "add_attack", value = 2, if_choice = 1 },
-
-    -- 选"离开"时才执行（可选：什么也不做）
-}
-```
-
-`if_choice` 可以是单个数字或数字数组：
-
-```lua
--- 选 0 或 1 都执行
-{ type = "say", text = "你接受了祝福", if_choice = {0, 1} }
-
--- 只选 0 时执行
-{ type = "add_health", value = 100, if_choice = 0 }
-```
-
-**注意**：不带 `if_choice` 的动作在任何选择后都会执行。通常你应该给 `choose` 之后的每个动作都加上 `if_choice`。
-
----
-
 ## Flag 机制
 
-Flag 是一个 64 位的布尔数组（ID 0~63）。用于：
+Flag 是按楼层隔离的布尔数组（每层 16 个，ID 0~15）。用于：
 
-- **防止事件重复触发**：设置 `condition_flag` 让事件只触发一次
-- **跨楼层状态**：flag 在所有楼层间共享，可用于"在第 5 层拿到某道具后第 10 层才开门"这类跨层谜题
+- **防止事件重复触发**：使用 `once = true` 或 `condition_flag` / `set_flag`
+- **跨事件状态**：同一楼层内多个事件共享 flag，可用于"先触发 A 后 B 才生效"这类顺序谜题
 
 ```lua
 -- 此事件仅在 flag 3 未设置时触发，触发后设置 flag 3
 {
     trigger = "on_tile",
-    tile = 151,
-    condition_flag = 3,   -- 仅当 flag 3 == 0 时触发
-    set_flag = 3,         -- 触发后将 flag 3 设为 1
-    actions = { ... }
+    x = 3, y = 7,
+    condition_flag = 3,   -- 仅当本层 flag 3 == 0 时触发
+    set_flag = 3,         -- 触发后将本层 flag 3 设为 1
+    run = function()
+        say("第一次来到这里吧？")
+    end
 }
 ```
 
-在 `call` 动作中也可直接操作 flag：
+在 `run` 函数中也可直接操作 flag：
 
 ```lua
-{ type = "call", func = function()
+run = function()
     if has_flag(5) then
         say("flag 5 已设置")
     else
         set_flag(5)
     end
-end }
+end
 ```
+
+**注意**：`has_flag` / `set_flag` 操作的始终是**当前玩家所在楼层**的 flag 空间。`once` 与 `condition_flag` 同时存在时，`once` 优先。
 
 ---
 
-## Lua 脚本 API（call 动作可用）
+## Lua API
 
-以下函数可在 `call` 的 `func()` 中直接调用：
+`run` 函数内可直接调用以下注册的 Lua 函数：
 
 ### 对话与消息
 
 | 函数 | 说明 |
 |---|---|
-| `say(text)` | 弹出对话框 |
-| `msg(text)` | 底部消息栏 |
+| `say(text)` | 弹出模态对话框，按任意键关闭 |
+| `msg(text)` | 在窗口底部消息栏显示一行文字 |
 | `choose_menu(a, b, c, ...)` | 显示选择菜单，最多 8 项。返回 0~7 或 255（取消） |
-| `drain()` | 清空输入缓冲区 |
+| `drain()` | 清空输入缓冲区（弹出菜单后调用，避免残留按键） |
 
 ### 属性操作
 
@@ -349,27 +237,42 @@ end }
 | `add_defence(n)` | 防御 +n |
 | `add_money(n)` | 金币 +n |
 | `take_money(n)` | 扣除 n 金币。成功返回 `true`，不足返回 `false` |
+| `set(attr, value)` | 直接设置属性，`attr` 为 `health`/`attack`/`defence`/`money`/`yellow`/`blue`/`red`/`floor`/`x`/`y` |
 
 ### 地图操作
 
 | 函数 | 说明 |
 |---|---|
-| `replace_all(floor, from, to)` | 指定楼层全图替换 |
 | `set_tile(x, y, value)` | 设置当前楼层单格地块 |
+| `replace_all(floor, from, to)` | 指定楼层全图替换（`from=8, to=1` 时自动提示"守卫门已打开"） |
+| `get_tile(x, y)` | 读取当前楼层指定坐标的地块 ID |
 | `count_monsters(floor)` | 返回指定楼层怪物数量 |
+| `freeze_lava()` | 冰冻四周岩浆（V 键功能） |
+| `detonate()` | 引爆四周炸药，返回击杀的怪物数 |
 
 ### 标记操作
 
 | 函数 | 说明 |
 |---|---|
-| `has_flag(id)` | 查询 flag 是否已设置，返回 boolean |
-| `set_flag(id)` | 设置 flag |
+| `has_flag(id)` | 查询当前楼层 flag 是否已设置，返回 boolean |
+| `set_flag(id)` | 设置当前楼层 flag 为 1 |
 
-### 其他
+### 道具
+
+| 函数 | 说明 |
+|---|---|
+| `give(id)` | 给予指定道具（放入背包） |
+| `add_yellow_key(n)` / `add_blue_key(n)` / `add_red_key(n)` | 增加钥匙 |
+| `set_teleporter(v)` | 设置是否拥有楼层传送器 |
+| `backpack_add(id)` | 向背包添加道具 |
+| `backpack_has(id)` | 背包中是否持有某道具，返回 boolean |
+
+### 演出与调试
 
 | 函数 | 说明 |
 |---|---|
 | `player_floor()` | 返回玩家当前楼层号 |
+| `player_x()` / `player_y()` / `player_dir()` | 玩家坐标与朝向 |
 | `altar_times()` | 返回祭坛已使用次数 |
 | `altar_tick()` | 祭坛使用次数 +1 |
 | `sleep_ms(n)` | 暂停 n 毫秒（先刷新画面再等待） |
@@ -389,13 +292,12 @@ events = {
     {
         trigger = "on_tile",
         x = 3, y = 5,
-        condition_flag = 1,
-        set_flag = 1,
-        actions = {
-            { type = "say", text = "少年，前方的道路充满危险。" },
-            { type = "add_health", value = 200 },
-            { type = "msg", text = "获得老人的祝福，生命+200" },
-        }
+        once = true,
+        run = function()
+            say("少年，前方的道路充满危险。")
+            add_health(200)
+            msg("获得老人的祝福，生命+200")
+        end
     }
 }
 ```
@@ -407,45 +309,42 @@ events = {
     {
         trigger = "on_guard_kill",
         guards = {{x = 1, y = 5}, {x = 3, y = 5}},
-        condition_flag = 4,
-        set_flag = 4,
-        actions = {
-            { type = "replace_all", from = 8, to = 1 },
-        }
+        once = true,
+        run = function()
+            replace_all(player_floor(), 8, 1)
+        end
     }
 }
 ```
 
-### 示例 3：祭坛（带选择的分支逻辑）
+### 示例 3：祭坛（选择分支）
 
 ```lua
 events = {
     {
         trigger = "on_tile",
         tile = 155,
-        actions = {
-            { type = "call", func = function()
-                local t = altar_times()
-                local r = (player_floor() - 1) // 10 + 1
-                local cost = 20 + 10 * (t + 1) * t
-                local hp  = 100 * (t + 1)
-                local atk = 2 * r
-                local def = 4 * r
+        run = function()
+            local t = altar_times()
+            local r = (player_floor() - 1) // 10 + 1
+            local cost = 20 + 10 * (t + 1) * t
+            local hp  = 100 * (t + 1)
+            local atk = 2 * r
+            local def = 4 * r
 
-                say("供奉"..cost.."金币，便可以增加你的力量，你想要什么呢……")
-                local c = choose_menu("生命+"..hp, "攻击+"..atk, "防御+"..def, "离开")
+            say("供奉"..cost.."金币，便可以增加你的力量，你想要什么呢……")
+            local c = choose_menu("生命+"..hp, "攻击+"..atk, "防御+"..def, "离开")
 
-                if c < 3 and take_money(cost) then
-                    if c == 0 then add_health(hp)
-                    elseif c == 1 then add_attack(atk)
-                    elseif c == 2 then add_defence(def) end
-                    altar_tick()
-                    drain()
-                elseif c < 3 then
-                    say("你的金币不足，无法供奉！")
-                end
-            end }
-        }
+            if c < 3 and take_money(cost) then
+                if c == 0 then add_health(hp)
+                elseif c == 1 then add_attack(atk)
+                elseif c == 2 then add_defence(def) end
+                altar_tick()
+                drain()
+            elseif c < 3 then
+                say("你的金币不足，无法供奉！")
+            end
+        end
     }
 }
 ```
@@ -457,16 +356,17 @@ events = {
     {
         trigger = "on_tile",
         x = 5, y = 3,   -- 精确匹配 (5,3) 的商人
-        condition_flag = 5,
-        set_flag = 5,
-        actions = {
-            { type = "say", text = "你想买点什么？" },
-            { type = "choose", choices = { "黄钥匙(10金)", "蓝钥匙(20金)", "不买" } },
-            { type = "take_money", value = 10, if_choice = 0 },
-            { type = "call", func = function() give(51) end, if_choice = 0 },
-            { type = "take_money", value = 20, if_choice = 1 },
-            { type = "call", func = function() give(52) end, if_choice = 1 },
-        }
+        run = function()
+            local c = choose_menu("黄钥匙(10金)", "蓝钥匙(20金)", "不买")
+            if c == 0 and take_money(10) then
+                give(51)
+            elseif c == 1 and take_money(20) then
+                give(52)
+            elseif c < 2 then
+                say("金币不足！")
+            end
+            drain()
+        end
     }
 }
 ```
@@ -576,14 +476,14 @@ events = {
 
 ## 注意事项
 
-1. **执行优先级**：玩家移动时，引擎**先查 Lua 事件**，若该坐标有匹配的 `on_tile` 事件则走 Lua 逻辑（跳过 C++ 默认行为）；若没有则走 C++ 内置逻辑（开门/捡道具/战斗/移动）。因此 Lua 事件可以完全覆盖任何地块类型的默认行为。同一 trigger 类型的多个事件，只会执行**第一个**满足条件的（执行后 `break`）。
+1. **执行优先级**：玩家移动时，引擎**先查 Lua 事件**，若该坐标有匹配的 `on_tile` 事件则执行其 `run` 函数（跳过 C++ 默认行为）；若没有则走 C++ 内置逻辑（开门/捡道具/战斗/移动）。因此 Lua 事件可以完全覆盖任何地块类型的默认行为。同一 trigger 类型的多个事件，只会执行**第一个**满足条件的（执行后 `break`）。
 
-2. **Flag 范围**：ID 范围 0~63。不要超过 63。
+2. **Flag 范围**：ID 范围 0~15（按楼层隔离）。不要超过 15。`once = true` 的自动 flag 由事件索引决定，每层最多 16 个事件。
 
 3. **坐标系统**：x 是列号（0~12），y 是行号（0~12）。地图数组中第 1 行是 y=0，第 1 列是 x=0。使用坐标匹配时，不同位置的相同 NPC 可以拥有完全不同的事件逻辑，解决了"一楼层多商人"的问题。
 
 4. **守卫门初始值**：守卫门必须在地图中写为 ID=8，否则 `replace_all` 的 `from=8` 匹配不到。
 
-5. **call 中的错误**：Lua 语法错误会输出到 stderr，游戏不会崩溃。编写复杂逻辑时建议先在控制台 REPL 中测试。
+5. **run 中的错误**：`run` 函数内的 Lua 错误会输出到 stderr，游戏不会崩溃。编写复杂逻辑时建议先在控制台 REPL 中测试。
 
 6. **文件编码**：地图文件使用 UTF-8 编码保存。

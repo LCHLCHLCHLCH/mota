@@ -1,16 +1,14 @@
 #pragma once
-#include "event_data.h"
+#include <stdint.h>
 
 class Player;
 
 #define MAX_FLOORS 51
 #define MAX_FLAGS  16
-#define MAX_EVENTS 64
 
 class EventManager {
 public:
 	void init();
-	void checkTile(uint8_t floor, uint8_t x, uint8_t y, uint8_t tile_id, Player& player);
 	void checkClear(uint8_t floor);
 	// 通用 on_tile 钩子：如果该坐标有 Lua 事件则执行并返回 true
 	bool tryHandleTile(uint8_t floor, uint8_t x, uint8_t y, uint8_t tile_id, Player& player);
@@ -22,13 +20,7 @@ public:
 
 private:
 	uint8_t flags_[MAX_FLOORS][MAX_FLAGS];
-	uint8_t event_count_;
-	Event   events_[MAX_EVENTS];
 	uint8_t altar_times_;
 
 	static uint8_t countMonsters(uint8_t floor);
-
-	void executeEvent(const Event& ev, Player& player);
-	void executeAction(const EventAction& act, Player& player, uint8_t ev_floor);
-	void addEvent(const Event& ev);
 };

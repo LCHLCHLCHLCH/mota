@@ -21,9 +21,9 @@ return {
             trigger = "on_guard_kill",
             guards = {{x = 9, y = 5}, {x = 11, y = 5}},
             once = true,
-            actions = {
-                { type = "replace_all", from = 8, to = 1 },
-            }
+            run = function()
+                replace_all(player_floor(), 8, 1)
+            end
         }
     }
 }

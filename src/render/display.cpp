@@ -1,4 +1,4 @@
-#include "render/display.h"
+﻿#include "render/display.h"
 #include "render/frame_print.h"
 #include <render/cursor.h>
 #include "game/map.h"
@@ -25,7 +25,7 @@ void Display::generateFrame(const Player& ply)
 // ============================================================
 // 怪物威胁指示灯：绿=无伤击败，黄=受伤可击败，红=无法击败
 // 仅持有怪物手册时绘制；黑屏演出（darken_map）时不显示，避免剧透
-// 多格 Boss（怪物身躯 136）整块只画一个灯，位于块的右下角
+// 多格 Boss（怪物身躯）整块只画一个灯，位于块的右下角
 // ============================================================
 void drawMonsterLights(const Player& ply)
 {
@@ -57,9 +57,9 @@ void drawMonsterLights(const Player& ply)
 	for (uint8_t y = 0; y < 13; y++)
 		for (uint8_t x = 0; x < 13; x++)
 		{
-			if (map_get(ply.floor, x, y) != 136) continue;
-			bool hasBelow = (y + 1 < 13) && map_get(ply.floor, x, y + 1) == 136;
-			bool hasRight = (x + 1 < 13) && map_get(ply.floor, x + 1, y) == 136;
+			if (map_get(ply.floor, x, y) != TILE_MONSTER_BODY) continue;
+			bool hasBelow = (y + 1 < 13) && map_get(ply.floor, x, y + 1) == TILE_MONSTER_BODY;
+			bool hasRight = (x + 1 < 13) && map_get(ply.floor, x + 1, y) == TILE_MONSTER_BODY;
 			if (hasBelow || hasRight) continue;   // 不是块的右下角格
 			uint8_t boss = bodyBossForFloor(ply.floor);
 			if (boss == 0) continue;
@@ -68,7 +68,7 @@ void drawMonsterLights(const Player& ply)
 }
 
 // ============================================================
-// 巨型 Boss 渲染：检测怪物身躯(136)块，叠加一个覆盖整块的大号首领字符
+// 巨型 Boss 渲染：检测怪物身躯块，叠加一个覆盖整块的大号首领字符
 // ============================================================
 void drawBossGlyphs(const Player& ply)
 {
@@ -78,14 +78,14 @@ void drawBossGlyphs(const Player& ply)
 	for (uint8_t y = 0; y < 13; y++)
 		for (uint8_t x = 0; x < 13; x++)
 		{
-			if (map_get(ply.floor, x, y) != 136) continue;
+			if (map_get(ply.floor, x, y) != TILE_MONSTER_BODY) continue;
 			// 找块的左上角（上方/左方都不是身躯）
-			if (x > 0 && map_get(ply.floor, x - 1, y) == 136) continue;
-			if (y > 0 && map_get(ply.floor, x, y - 1) == 136) continue;
+			if (x > 0 && map_get(ply.floor, x - 1, y) == TILE_MONSTER_BODY) continue;
+			if (y > 0 && map_get(ply.floor, x, y - 1) == TILE_MONSTER_BODY) continue;
 
 			int w = 0, h = 0;
-			while (x + w < 13 && map_get(ply.floor, x + w, y) == 136) w++;
-			while (y + h < 13 && map_get(ply.floor, x, y + h) == 136) h++;
+			while (x + w < 13 && map_get(ply.floor, x + w, y) == TILE_MONSTER_BODY) w++;
+			while (y + h < 13 && map_get(ply.floor, x, y + h) == TILE_MONSTER_BODY) h++;
 
 			uint8_t boss = bodyBossForFloor(ply.floor);
 			if (boss == 0) continue;

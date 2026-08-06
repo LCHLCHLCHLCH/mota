@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include "game/player.h"
 #include "game/monster.h"
+#include "game/zone.h"
 #include "event/event_manager.h"
 #include "script/lua_bridge.h"
 #include <render/cursor.h>
@@ -24,6 +25,7 @@ void Player::init()
 	hasTeleporter = false;
 	hasMonsterBook = false;
 	hasCross = false;
+	hasHolyShield = false;
 }
 
 // 十字架加成目标：兽人(112)、兽人武士(113)、吸血鬼(116)
@@ -35,11 +37,12 @@ static bool isCrossTarget(uint8_t id) {
  * @brief 模拟战斗，返回击败怪物损失的生命值
  * @note 无法击败（破不了防或战败）返回 -1
  * @note 持有十字架时对十字架目标攻击力加倍
+ * @note health 可指定玩家生命值（用于区域伤害后的战斗判定）
  */
-int32_t SimulateCombat(const Player& player, uint8_t monster_id)
+int32_t SimulateCombatHealth(const Player& player, uint32_t health, uint8_t monster_id)
 {
 	Monster* monster = getMonsterType(monster_id);
-	int32_t player_health_temp = (int32_t)player.health;
+	int32_t player_health_temp = (int32_t)health;
 	int32_t monster_health_temp = (int32_t)monster->health;
 	int32_t player_attack = (int32_t)player.attack;
 	if (player.hasCross && isCrossTarget(monster_id))
@@ -61,12 +64,17 @@ int32_t SimulateCombat(const Player& player, uint8_t monster_id)
 		// 玩家攻击阶段
 		monster_health_temp = monster_health_temp - damage_PlayerToMonster;
 		if (monster_health_temp <= 0)
-			return (int32_t)player.health - player_health_temp;
+			return (int32_t)health - player_health_temp;
 		// 怪物攻击阶段
 		player_health_temp = player_health_temp - damage_MonsterToPlayer;
 		if (player_health_temp <= 0)
-			return (int32_t)player.health - player_health_temp;
+			return (int32_t)health - player_health_temp;
 	}
+}
+
+int32_t SimulateCombat(const Player& player, uint8_t monster_id)
+{
+	return SimulateCombatHealth(player, player.health, monster_id);
 }
 
 /**
@@ -103,6 +111,11 @@ void Player::respondToMap(uint8_t floor_going, uint8_t x_going, uint8_t y_going)
 		return;
 	}
 
+	// 魔法区域伤害（领域/夹击）：先判定并扣血，被阻止则无法行动
+	recomputeZoneDamage(floor_going);
+	if (!checkZoneEntry(*this, floor_going, x_going, y_going, tile))
+		return;
+
 	// 通用 Lua on_tile 钩子：有事件走 Lua，跳过 C++ 默认行为
 	if (this->events && this->events->tryHandleTile(floor_going, x_going, y_going, tile, *this))
 		return;
@@ -138,10 +151,10 @@ void Player::reactToMonster(uint8_t floor_going, uint8_t x_going, uint8_t y_goin
 		// 移动
 		this->x = x_going;
 		this->y = y_going;
+		// 受到伤害（先结算，使击杀事件能看到战斗后的状态）
+		this->health = this->health - this->hurt;
 		// 清除怪物
 		map_kill_monster(floor_going, x_going, y_going, this);
-		// 受到伤害
-		this->health = this->health - this->hurt;
 		// 消息
 		{
 			char _m[64];

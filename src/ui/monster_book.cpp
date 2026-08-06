@@ -3,6 +3,7 @@
 #include "game/map.h"
 #include "game/tile_data.h"
 #include "render/region_display.h"
+#include "render/display.h"
 #include "render/key.h"
 #include "sdl_terminal.h"
 #include <cstdio>
@@ -18,7 +19,7 @@ void showMonsterBook(Player& player)
 			uint8_t t = map_get(player.floor, x, y);
 			uint8_t add = 0;
 			if (t >= 101 && t <= 150) add = t;
-			else if (t == 136) add = bodyBossForFloor(player.floor);  // 多格 Boss 身躯
+			else if (t == TILE_MONSTER_BODY) add = bodyBossForFloor(player.floor);  // 多格 Boss 身躯
 			if (add == 0) continue;
 			bool dup = false;
 			for (int i = 0; i < count; i++)
@@ -36,6 +37,10 @@ void showMonsterBook(Player& player)
 	term_clear_draws();
 	term_clear_message();
 	for (int r = 0; r < 22; r++) regionErase(15, r, 13);
+
+	// 保持多格 Boss 与威胁指示灯可见（手册打开期间）
+	drawBossGlyphs(player);
+	drawMonsterLights(player);
 
 	const int perPage = 8;
 	int pageStart = 0;

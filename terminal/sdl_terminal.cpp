@@ -517,6 +517,8 @@ int term_printw(const char* fmt, ...) {
 // ============================================================
 bool term_quit_requested() { return g_quit; }
 
+void term_set_quit() { g_quit = true; }
+
 void term_set_light_mode(bool on) {
 	if (g_light_mode == on) return;
 	g_light_mode = on;

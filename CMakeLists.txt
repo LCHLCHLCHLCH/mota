@@ -21,11 +21,11 @@ set_target_properties(lua PROPERTIES PREFIX "")
 
 add_executable(MotaSDL
 	src/game/map.cpp src/game/monster.cpp src/game/player.cpp
-	src/game/item.cpp src/game/tile_data.cpp
+	src/game/item.cpp src/game/tile_data.cpp src/game/zone.cpp
 	src/event/event_manager.cpp
 	src/render/display.cpp src/render/frame_print.cpp
 	src/render/region_display.cpp src/ui/backpack.cpp
-	src/ui/monster_book.cpp
+	src/ui/monster_book.cpp src/ui/victory.cpp
 	terminal/main.cpp
 	terminal/sdl_dialog.cpp terminal/sdl_key.cpp
 	terminal/sdl_statusBar.cpp terminal/sdl_terminal.cpp

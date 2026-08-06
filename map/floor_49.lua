@@ -17,5 +17,20 @@ return {
         {2,2,2,2,2,2,2,2,2,2,2,2,2}
     },
     events = {
+        {
+            trigger = "on_guard_kill",
+            guards = {
+                {x = 6, y = 2}, {x = 5, y = 3}, {x = 7, y = 3}, {x = 6, y = 4},
+            },
+            once = true,
+            run = function()
+                -- 当且仅当正方向四守卫(2,4,6,8)全死、且对角四守卫(1,3,7,9)全存活时，假魔王被封印
+                if get_tile(5, 2) ~= 1 and get_tile(7, 2) ~= 1 and
+                   get_tile(5, 4) ~= 1 and get_tile(7, 4) ~= 1 then
+                    set_tile(6, 3, 134)
+                    msg("假魔王被封印了！")
+                end
+            end
+        }
     }
 }

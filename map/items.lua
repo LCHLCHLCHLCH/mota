@@ -134,7 +134,11 @@ M.register(66, {
 })
 M.register(67, {
     name = "神圣盾",
-    on_acquire = function() add_defence(100); msg("获得神圣盾，防御增加100") end,
+    on_acquire = function()
+        set_holy_shield(true)
+        add_defence(100)
+        msg("获得神圣盾，防御增加100，免疫魔法伤害")
+    end,
 })
 
 -- ============================================================
@@ -181,7 +185,7 @@ M.register(70, {
 })
 
 -- ============================================================
--- 镐子（效果函数预留）
+-- 镐子
 -- ============================================================
 M.register(71, {
     name = "镐子",
@@ -219,7 +223,7 @@ M.register(72, {
     on_acquire = function()
         set_monster_book(true)
         backpack_add(72)
-        msg("获得怪物手册，地图上会显示怪物威胁指示灯")
+        msg("获得怪物手册")
     end,
     on_use = function()
         show_monster_book()

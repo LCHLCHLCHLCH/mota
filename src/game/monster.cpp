@@ -197,19 +197,19 @@ Monster RedGuard = {180, 460, 360, 200};
  * @brief 假魔王
  * @note id = 133
  */
-Monster BlackKing = {1000, 500, 0, 1000};
+Monster BlackKing = {8000, 5000, 1000, 500};
 
 /**
  * @brief 假魔王(被封印)
  * @note id = 134
  */
-Monster SealedBlackKing = {1000, 500, 0, 1000};
+Monster SealedBlackKing = {800, 500, 100, 500};
 
 /**
  * @brief 真魔王
  * @note id = 135
  */
-Monster RedKing = {8000, 5000, 1000, 500};
+Monster RedKing = {1000, 625, 125, 500};
 
 /**
  * @brief 要是能碰到这个怪物说明出问题了

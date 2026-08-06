@@ -21,6 +21,9 @@ struct TileDef {
 // 256 个 tile 的定义表
 extern const TileDef g_tile_defs[256];
 
+// 多格 Boss 身躯 tile id（必须在怪物区间 101-150 之外）
+#define TILE_MONSTER_BODY 156
+
 // 便捷访问
 inline TileCategory tile_category(uint8_t id) { return g_tile_defs[id].category; }
 inline const char*  tile_name(uint8_t id)     { return g_tile_defs[id].name; }

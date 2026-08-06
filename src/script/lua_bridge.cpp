@@ -10,6 +10,7 @@
 #include "save_system.h"
 #include "ui/backpack.h"
 #include "ui/monster_book.h"
+#include "ui/victory.h"
 #include "sdl_3dwindow.h"
 #include "render/display.h"
 #include "render/status_bar.h"
@@ -227,6 +228,11 @@ static int l_set_cross(lua_State* L) {
 	if (g_ply) g_ply->hasCross = v;
 	return 0;
 }
+static int l_set_holy_shield(lua_State* L) {
+	bool v = lua_toboolean(L, 1);
+	if (g_ply) g_ply->hasHolyShield = v;
+	return 0;
+}
 static int l_show_monster_book(lua_State* L) {
 	(void)L;
 	if (g_ply) showMonsterBook(*g_ply);
@@ -243,6 +249,11 @@ static int l_battle_monster(lua_State* L) {
 		lua_pushboolean(L, 0);
 	}
 	return 1;
+}
+static int l_show_victory(lua_State* L) {
+	(void)L;
+	if (g_ply) showVictory(*g_ply);
+	return 0;
 }
 static int l_backpack_add(lua_State* L) {
 	int id = (int)luaL_checkinteger(L, 1);
@@ -434,8 +445,10 @@ void lua_register_game_api(lua_State* L, Player* player, EventManager* events) {
 	lua_register(L, "set_teleporter", l_set_teleporter);
 	lua_register(L, "set_monster_book", l_set_monster_book);
 	lua_register(L, "set_cross", l_set_cross);
+	lua_register(L, "set_holy_shield", l_set_holy_shield);
 	lua_register(L, "show_monster_book", l_show_monster_book);
 	lua_register(L, "battle_monster", l_battle_monster);
+	lua_register(L, "show_victory", l_show_victory);
 	lua_register(L, "backpack_add",   l_backpack_add);
 	lua_register(L, "backpack_has",   l_backpack_has);
 	lua_register(L, "freeze_lava",    l_freeze_lava);

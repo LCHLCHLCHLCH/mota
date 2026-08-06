@@ -38,6 +38,7 @@ public:
 	bool     hasTeleporter = false;
 	bool     hasMonsterBook = false;
 	bool     hasCross = false;
+	bool     hasHolyShield = false;
 	uint8_t  maxFloorVisited = 1;
 
 	EventManager* events = nullptr;
@@ -66,3 +67,6 @@ void downStair(uint8_t *Floor, uint8_t *X, uint8_t *Y);
 // 模拟战斗，返回击败怪物损失的生命值；无法击败（破不了防或战败）返回 -1
 // 持有十字架时对兽人/兽人武士/吸血鬼（112/113/116）攻击力加倍
 int32_t SimulateCombat(const Player& player, uint8_t monster_id);
+
+// 同 SimulateCombat，但可指定玩家生命值（用于区域伤害后的战斗判定）
+int32_t SimulateCombatHealth(const Player& player, uint32_t health, uint8_t monster_id);

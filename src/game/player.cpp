@@ -84,6 +84,13 @@ int32_t SimulateCombatHealth(const Player& player, uint32_t health, uint8_t mons
 	if (damage_PlayerToMonster == 0)
 		return -1;
 
+	// 先攻：怪物先攻击一次
+	if (hasFirstStrike(monster_id)) {
+		player_health_temp = player_health_temp - damage_MonsterToPlayer;
+		if (player_health_temp <= 0)
+			return (int32_t)health - player_health_temp;
+	}
+
 	while (1)
 	{
 		// 玩家攻击阶段
@@ -163,8 +170,11 @@ void Player::respondToMap(uint8_t floor_going, uint8_t x_going, uint8_t y_going)
 	}
 
 	// 移动/交互后的 Lua on_step 钩子
-	if (this->events)
+	if (this->events) {
 		this->events->callOnStep(this->floor, *this);
+		// 首次进入新楼层（楼梯跨层）时触发 first_arrive 事件
+		this->events->checkFirstArrive(this->floor, *this);
+	}
 }
 
 /**
@@ -460,4 +470,6 @@ void Player::teleportTo(uint8_t target_floor, uint8_t stair_id)
 		this->x = 1;
 		this->y = 1;
 	}
+	if (this->events)
+		this->events->checkFirstArrive(this->floor, *this);
 }

@@ -42,6 +42,8 @@ int main(int argc, char** argv) {
 
 	SetColor(WHITE);
 
+	uint8_t prevFloor = player.floor;
+
 	while (!term_quit_requested()) {
 		touchwin_term();
 		display.generateFrame(player);
@@ -82,6 +84,12 @@ int main(int argc, char** argv) {
 			default: break;
 			}
 			player.respondToKey(key);
+		}
+
+		// 楼层变化 → 触发该层的首次到达事件（first_arrive）
+		if (player.floor != prevFloor) {
+			prevFloor = player.floor;
+			events.checkFirstArrive(player.floor, player);
 		}
 	}
 

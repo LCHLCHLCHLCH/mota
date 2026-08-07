@@ -12,6 +12,7 @@ extern "C" {
 
 void EventManager::init() {
 	std::memset(flags_, 0, sizeof(flags_));
+	std::memset(arrived_, 0, sizeof(arrived_));
 	altar_times_ = 0;
 }
 
@@ -21,6 +22,14 @@ void EventManager::setFlag(uint8_t floor, uint8_t id) {
 bool EventManager::hasFlag(uint8_t floor, uint8_t id) const {
 	if (floor >= MAX_FLOORS || id >= MAX_FLAGS) return true;
 	return flags_[floor][id] != 0;
+}
+
+bool EventManager::hasArrived(uint8_t floor) const {
+	if (floor >= MAX_FLOORS) return true;
+	return arrived_[floor] != 0;
+}
+void EventManager::setArrived(uint8_t floor) {
+	if (floor < MAX_FLOORS) arrived_[floor] = 1;
 }
 
 // 执行事件的 run 函数（传入触发坐标，供 Lua 事件使用）
@@ -56,6 +65,38 @@ void EventManager::callOnStep(uint8_t floor, Player& player)
 		lua_pop(L, 1);
 	}
 	lua_pop(L, 1); // floor module
+}
+
+// ============================================================
+// 首次到达：玩家第一次进入某层时，执行该层的 first_arrive 事件
+// ============================================================
+void EventManager::checkFirstArrive(uint8_t floor, Player& player)
+{
+	if (hasArrived(floor)) return;
+	setArrived(floor);   // 先标记，防止事件内再次进入递归
+
+	lua_State* L = script_init();
+	if (!L) return;
+	if (player.events) lua_register_game_api(L, &player, player.events);
+
+	if (!load_floor_events(L, floor)) return;
+
+	lua_getfield(L, -1, "events");
+	if (!lua_istable(L, -1)) { lua_pop(L, 2); return; }
+
+	int n = (int)lua_objlen(L, -1);
+	for (int i = 1; i <= n; i++) {
+		lua_rawgeti(L, -1, i);
+		lua_getfield(L, -1, "trigger");
+		const char* trigger = lua_tostring(L, -1);
+		lua_pop(L, 1);
+		if (!trigger || strcmp(trigger, "first_arrive") != 0) { lua_pop(L, 1); continue; }
+
+		run_event_run(L, lua_gettop(L), player.x, player.y);
+		lua_pop(L, 1); // event
+		break;
+	}
+	lua_pop(L, 2);
 }
 
 // 读取事件的 once/condition_flag，返回是否应该跳过（已触发过）

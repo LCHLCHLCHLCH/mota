@@ -21,6 +21,7 @@ void recomputeZoneDamage(uint8_t floor)
 			int32_t v = 0;
 			if (t == 126) v = 100;
 			else if (t == 127) v = 200;
+			else if (t == 136) v = 200;  // 逃亡高级巫师（机制同 127）
 			else continue;
 
 			if (y > 0)  g_zone_domain[y - 1][x] += v;

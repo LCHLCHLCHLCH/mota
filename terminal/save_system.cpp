@@ -65,8 +65,16 @@ bool save_game(const char* name, const Player& player, const EventManager& event
 			if (events.hasFlag((uint8_t)fl, (uint8_t)fi))
 				fprintf(f, "event.flag.%d.%d=1\n", fl, fi);
 		}
+		if (events.hasArrived((uint8_t)fl))
+			fprintf(f, "event.arrived.%d=1\n", fl);
 	}
 	fprintf(f, "event.altar_times=%u\n", events.getAltarTimes());
+
+	// --- 首次到达标记 ---
+	for (int fl = 0; fl < 51; fl++) {
+		if (events.hasArrived((uint8_t)fl))
+			fprintf(f, "event.arrived.%d=1\n", fl);
+	}
 
 	// --- 背包（存储物品 ID 与剩余次数） ---
 	if (player.backpack && !player.backpack->items.empty()) {
@@ -173,7 +181,9 @@ bool load_game(const char* name, Player& player, EventManager& events) {
 
 		// event.*
 		else if (sscanf(line, "event.flag.%hhu.%hhu=%u", &tkey, &tkey2, &val) == 3) events.setFlag(tkey, tkey2);
+		else if (sscanf(line, "event.arrived.%hhu=%u", &tkey, &val) == 2) events.setArrived(tkey);
 		else if (sscanf(line, "event.altar_times=%u", &val) == 1) events.setAltarTimes((uint8_t)val);
+		else if (sscanf(line, "event.arrived.%hhu=%u", &tkey, &val) == 2) { if (val) events.setArrived(tkey); }
 
 		// backpack.*
 		else if (sscanf(line, "backpack.item.%d=%u", (int*)&val, &val2) == 2) {

@@ -164,6 +164,36 @@ Monster BrownWizard = {220, 370, 110, 80};
 Monster RedWizard = {200, 380, 130, 90};
 
 /**
+ * @brief 高级巫师(会逃亡)：外观/数值/机制与 127 相同，仅在特定关卡中会移动
+ * @note id = 136
+ */
+Monster FleeingWizard = {200, 380, 130, 90};
+
+/**
+ * @brief 战士(先攻)：外观/数值同 119，40 层骑士队长手下，战斗时先攻击
+ * @note id = 137
+ */
+Monster FirstStrikeSoldier = {210, 200, 65, 45};
+
+/**
+ * @brief 骑士(先攻)：外观/数值同 124
+ * @note id = 138
+ */
+Monster FirstStrikeRedKnight = {160, 230, 105, 65};
+
+/**
+ * @brief 鬼战士(先攻)：外观/数值同 118
+ * @note id = 139
+ */
+Monster FirstStrikeGhostSoldier = {220, 180, 30, 35};
+
+/**
+ * @brief 双手剑士(先攻)：外观/数值同 122
+ * @note id = 141
+ */
+Monster FirstStrikeSwordsman = {100, 680, 50, 55};
+
+/**
  * @brief 史莱姆王
  * @note id = 128
  */
@@ -306,6 +336,21 @@ Monster * getMonsterType(uint8_t id)
 		case 127:
 			a = &RedWizard;
 			break;
+		case 136:
+			a = &FleeingWizard;
+			break;
+		case 137:
+			a = &FirstStrikeSoldier;
+			break;
+		case 138:
+			a = &FirstStrikeRedKnight;
+			break;
+		case 139:
+			a = &FirstStrikeGhostSoldier;
+			break;
+		case 141:
+			a = &FirstStrikeSwordsman;
+			break;
 		case 128:
 			a = &SlimeLord;
 			break;
@@ -342,6 +387,21 @@ const char* getMonsterName(uint8_t id) {
 	return g_tile_defs[id].name;
 }
 
+// 该怪物是否"先攻"：战斗时怪物先攻击
+// 骑士队长(125)全局先攻（32/40 两次遭遇均先攻，42 层仅过场不战斗）；
+// 137/138/139/141 为 40 层骑士队长的 12 个手下
+bool hasFirstStrike(uint8_t id) {
+	switch (id) {
+		case 125:  // 骑士队长
+		case 137:  // 战士(先攻)
+		case 138:  // 骑士(先攻)
+		case 139:  // 鬼战士(先攻)
+		case 141:  // 双手剑士(先攻)
+			return true;
+		default:
+			return false;
+	}
+}
 
 bool isBossMonster(uint8_t id) {
 	switch (id) {

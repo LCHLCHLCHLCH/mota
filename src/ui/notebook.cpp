@@ -53,17 +53,28 @@ void showNotebook(Player& player)
 		for (int r = 0; r < 22; r++) regionErase(15, r, 13);
 		{
 			const DialogueEntry& e = player.dialogueLog[selected];
+			const size_t total = strlen(e.text);
 			const char* p = e.text;
 			int row = 0;
 			while (*p && row < 20)
 			{
-				int n = 0;
-				while (p[n] && n < 12) n++;
-				char tmp[13];
-				memcpy(tmp, p, (size_t)n);
-				tmp[n] = 0;
+				// 按"字符"计数换行：汉字 3 字节、数字 1 字节，按字节切会切破 UTF-8 汉字
+				const char* q = p;
+				int chars = 0;
+				while (chars < 12 && (size_t)(q - e.text) < total)
+				{
+					unsigned char c = (unsigned char)*q;
+					int clen = (c >= 0xF0) ? 4 : (c >= 0xE0) ? 3 : (c >= 0xC0) ? 2 : 1;
+					q += clen;
+					chars++;
+				}
+				if ((size_t)(q - e.text) > total) q = e.text + total;
+				int bytes = (int)(q - p);
+				char tmp[64];
+				memcpy(tmp, p, (size_t)bytes);
+				tmp[bytes] = 0;
 				regionPrint(15, row, tmp);
-				p += n;
+				p = q;
 				row++;
 			}
 			snprintf(buf, sizeof(buf), "%d/%d", selected + 1, count);

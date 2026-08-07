@@ -129,7 +129,7 @@ static int l_set(lua_State* L) {
 	else if (strcmp(attr, "yellow") == 0)  p.yellowKey = (uint8_t)val;
 	else if (strcmp(attr, "blue") == 0)    p.blueKey   = (uint8_t)val;
 	else if (strcmp(attr, "red") == 0)     p.redKey    = (uint8_t)val;
-	else if (strcmp(attr, "floor") == 0)   { p.floor = (uint8_t)val; if (p.floor > p.maxFloorVisited) p.maxFloorVisited = p.floor; }
+	else if (strcmp(attr, "floor") == 0)   { p.floor = (uint8_t)val; if (p.floor > p.maxFloorVisited) p.maxFloorVisited = p.floor; if (g_ev) g_ev->checkFirstArrive(p.floor, *g_ply); }
 	else if (strcmp(attr, "x") == 0)       p.x = (uint8_t)val;
 	else if (strcmp(attr, "y") == 0)       p.y = (uint8_t)val;
 	return 0;
@@ -154,6 +154,7 @@ static int l_tp(lua_State* L) {
 	if (f >= 0 && f <= 50) {
 		g_ply->floor = (uint8_t)f;
 		if (g_ply->floor > g_ply->maxFloorVisited) g_ply->maxFloorVisited = g_ply->floor;
+		if (g_ev) g_ev->checkFirstArrive(g_ply->floor, *g_ply);
 		printf("已传送到楼层 %d\n", f);
 	} else printf("楼层范围: 0-50\n");
 	return 0;

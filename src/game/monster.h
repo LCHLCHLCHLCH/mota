@@ -15,5 +15,8 @@ Monster* getMonsterType(uint8_t id);
 const char* getMonsterName(uint8_t id);
 bool isBossMonster(uint8_t id);
 
+// 该怪物是否"先攻"（战斗时怪物先攻击）
+bool hasFirstStrike(uint8_t id);
+
 // 怪物身躯(136)所在楼层对应的首领怪物 id；无则返回 0
 uint8_t bodyBossForFloor(uint8_t floor);

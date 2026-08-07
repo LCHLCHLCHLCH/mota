@@ -15,6 +15,10 @@ public:
 	void checkGuardKill(uint8_t floor, uint8_t killed_x, uint8_t killed_y, Player& player);
 	// 每次移动后的 Lua 钩子（楼层文件可定义 on_step）
 	void callOnStep(uint8_t floor, Player& player);
+	// 首次到达钩子：玩家第一次进入某层时触发（楼层文件可定义 trigger = "first_arrive"）
+	void checkFirstArrive(uint8_t floor, Player& player);
+	bool hasArrived(uint8_t floor) const;
+	void setArrived(uint8_t floor);
 	bool hasFlag(uint8_t floor, uint8_t id) const;
 	void setFlag(uint8_t floor, uint8_t id);
 	uint8_t  getAltarTimes() const { return altar_times_; }
@@ -22,6 +26,7 @@ public:
 
 private:
 	uint8_t flags_[MAX_FLOORS][MAX_FLAGS];
+	uint8_t arrived_[MAX_FLOORS];
 	uint8_t altar_times_;
 
 	static uint8_t countMonsters(uint8_t floor);

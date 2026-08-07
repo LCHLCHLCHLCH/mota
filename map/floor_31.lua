@@ -24,6 +24,7 @@ return {
             set_flag = 3,
             run = function()
                 say("老人：双手剑士的攻击力太高，你最好能到一击必杀时再与他战斗。")
+                note("老人", "双手剑士的攻击力太高，你最好能到一击必杀时再与他战斗。")
                 set_tile(11, 1, 1)
             end
         },
@@ -34,6 +35,7 @@ return {
                 if has_flag(2) then return end
                 if has_flag(1) then
                     say("商人：魔塔有50层高，但似乎你不能直接到50楼。")
+                    note("商人", "魔塔有50层高，但似乎你不能直接到50楼。")
                     set_tile(1, 11, 1)
                     set_flag(2)
                     return

@@ -17,5 +17,14 @@ return {
         {2,2,2,2,2,2,2,2,2,2,2,2,2}
     },
     events = {
+        {
+            trigger = "on_tile",
+            tile = 7,
+            run = function()
+                set("x", 6)
+                set("y", 7)
+                set("floor", 50)
+            end
+        }
     }
 }

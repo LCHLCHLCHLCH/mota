@@ -95,7 +95,8 @@ int map_kill_monster(uint8_t floor, uint8_t x, uint8_t y, Player* player) {
 	int gold = getMonsterType(t)->money;
 
 	if (player) {
-		player->money += gold;
+		// 幸运金币：击败敌人获得 2 倍金钱
+		player->money += player->hasLuckyCoin ? gold * 2 : gold;
 
 		// Lua 事件系统
 		if (player->events)

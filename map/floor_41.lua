@@ -16,6 +16,26 @@ return {
         {2,55,2,51,56,2,9,2,57,51,2,55,2},
         {2,2,2,2,2,2,2,2,2,2,2,2,2}
     },
+    on_step = function()
+        -- 左巫师(2,2)已清除、右巫师(10,2)已出现(flag 7)并清除 → 奖励
+        if has_flag(9) then return end
+        if get_tile(2, 2) == 1 and has_flag(7) and get_tile(10, 2) == 1 then
+            set_tile(6, 5, 2)
+            set_tile(6, 4, 75)
+            set_flag(9)
+            msg("下楼飞行器出现了！")
+        end
+    end,
     events = {
+        {
+            trigger = "on_tile",
+            x = 10, y = 2,
+            once = true,
+            run = function()
+                -- 触碰后变为高级巫师；本步不触发领域扣血，之后经过会触发
+                set_tile(10, 2, 127)
+                set_flag(7)
+            end
+        }
     }
 }

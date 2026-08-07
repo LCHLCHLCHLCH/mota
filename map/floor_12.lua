@@ -28,6 +28,7 @@ return {
                 end
                 if has_flag(2) then
                     say("商人：你是否注意到5、9、14、16、18楼的墙与众不同？")
+                    note("商人", "你是否注意到5、9、14、16、18楼的墙与众不同？")
                     set_tile(1, 1, 1)
                     set_flag(3)
                     return

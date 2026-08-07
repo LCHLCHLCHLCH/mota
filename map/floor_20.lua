@@ -51,6 +51,22 @@ return {
                 set_tile(6, 3, 1)
                 set_tile(6, 9, 1)
                 set_flag(3)
+                -- 奖励物品：红宝石 (4,5)(4,6)(4,7)
+                set_tile(4, 5, 56)
+                set_tile(4, 6, 56)
+                set_tile(4, 7, 56)
+                -- 蓝宝石 (8,5)(8,6)(8,7)
+                set_tile(8, 5, 57)
+                set_tile(8, 6, 57)
+                set_tile(8, 7, 57)
+                -- 蓝血瓶 (5,8)(6,8)(7,8)
+                set_tile(5, 8, 55)
+                set_tile(6, 8, 55)
+                set_tile(7, 8, 55)
+                -- 黄钥匙 (5,4)(6,4)(7,4)
+                set_tile(5, 4, 51)
+                set_tile(6, 4, 51)
+                set_tile(7, 4, 51)
             end
         }
     }

@@ -24,6 +24,7 @@ return {
                 if has_flag(2) then return end
                 if has_flag(1) then
                     say("商人：在祭坛你最好选择提升防御，只有在攻击力低于敌人的防御力时才提升攻击")
+                    note("商人", "在祭坛你最好选择提升防御，只有在攻击力低于敌人的防御力时才提升攻击")
                     set_tile(6, 1, 1)
                     set_flag(2)
                     return

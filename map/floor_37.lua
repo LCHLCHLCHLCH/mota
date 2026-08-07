@@ -17,5 +17,15 @@ return {
         {2,2,2,2,2,2,2,2,2,2,2,2,2}
     },
     events = {
+        {
+            trigger = "on_tile",
+            tile = 151,
+            once = true,
+            run = function()
+                say("老人：你需要用地震卷轴取出仓库内的所有宝物。")
+                note("老人", "你需要用地震卷轴取出仓库内的所有宝物。")
+                set_tile(1, 11, 1)
+            end
+        }
     }
 }

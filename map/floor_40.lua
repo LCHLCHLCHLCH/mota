@@ -17,5 +17,52 @@ return {
         {2,2,2,2,2,2,2,2,2,2,2,2,2}
     },
     events = {
+        {
+            trigger = "on_tile",
+            x = 6, y = 1,
+            condition_flag = 5,
+            run = function()
+                say("骑士队长：你必须打败我的手下才有资格和我单挑。")
+            end
+        },
+        {
+            trigger = "on_guard_kill",
+            guards = {
+                {x = 2, y = 2}, {x = 3, y = 2}, {x = 4, y = 2},
+                {x = 8, y = 2}, {x = 9, y = 2}, {x = 10, y = 2},
+                {x = 3, y = 4}, {x = 4, y = 4}, {x = 5, y = 4},
+                {x = 7, y = 4}, {x = 8, y = 4}, {x = 9, y = 4},
+            },
+            once = true,
+            run = function()
+                say("骑士队长：你怎么会击败我所有手下？我和你势不两立我绝对不认输。（骑士队长失去了理智）")
+                set_flag(5)
+            end
+        },
+        {
+            trigger = "on_guard_kill",
+            guards = {{x = 6, y = 1}},
+            once = true,
+            run = function()
+                say("骑士队长：这次先饶了你，下次碰到我会和你正式决斗，你最好投降。（骑士队长逃走了）")
+                set_tile(6, 11, 9)
+                -- 奖励物品：战士→蓝宝石 (7,4)(8,4)(9,4)
+                set_tile(7, 4, 57)
+                set_tile(8, 4, 57)
+                set_tile(9, 4, 57)
+                -- 骑士→红宝石 (8,2)(9,2)(10,2)
+                set_tile(8, 2, 56)
+                set_tile(9, 2, 56)
+                set_tile(10, 2, 56)
+                -- 鬼战士→蓝血瓶 (3,4)(4,4)(5,4)
+                set_tile(3, 4, 55)
+                set_tile(4, 4, 55)
+                set_tile(5, 4, 55)
+                -- 双手剑士→黄钥匙 (2,2)(3,2)(4,2)
+                set_tile(2, 2, 51)
+                set_tile(3, 2, 51)
+                set_tile(4, 2, 51)
+            end
+        }
     }
 }

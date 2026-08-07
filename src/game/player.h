@@ -1,5 +1,7 @@
 #pragma once
 #include <stdint.h>
+#include <vector>
+#include <cstring>
 #include "game/map.h"
 #include "render/key.h"
 #include "game/monster.h"
@@ -7,6 +9,15 @@
 
 class EventManager;
 class Backpack;
+
+// 记事本：一条有用的对话记录
+// label: 左侧列表标签（如"老人"/"商人"，显示时自动加楼层前缀）
+// text:  右侧显示的对话具体内容
+struct DialogueEntry {
+	uint8_t floor;
+	char label[16];
+	char text[160];
+};
 
 enum PREDICTION
 {
@@ -39,12 +50,18 @@ public:
 	bool     hasMonsterBook = false;
 	bool     hasCross = false;
 	bool     hasHolyShield = false;
+	bool     hasLuckyCoin = false;
+	bool     hasDragonSlayer = false;
 	uint8_t  maxFloorVisited = 1;
 
 	EventManager* events = nullptr;
 	Backpack*     backpack = nullptr;
 
+	// 记事本对话记录（按时间先后，相同楼层+说话人+文本去重）
+	std::vector<DialogueEntry> dialogueLog;
+
 	void init();
+	void recordDialogue(uint8_t floor, const char* label, const char* text);
 	PREDICTION PredictAttack(uint8_t monster_id);
 	void respondToKey(KEY key);
 

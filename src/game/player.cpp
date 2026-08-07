@@ -26,11 +26,34 @@ void Player::init()
 	hasMonsterBook = false;
 	hasCross = false;
 	hasHolyShield = false;
+	hasLuckyCoin = false;
+	hasDragonSlayer = false;
+	dialogueLog.clear();
+}
+
+// 记录一条有用对话（相同楼层+标签+文本则去重）
+void Player::recordDialogue(uint8_t floor, const char* label, const char* text)
+{
+	for (auto& e : dialogueLog)
+		if (e.floor == floor && strcmp(e.label, label) == 0 && strcmp(e.text, text) == 0)
+			return;
+	DialogueEntry e;
+	e.floor = floor;
+	strncpy(e.label, label, sizeof(e.label) - 1);
+	e.label[sizeof(e.label) - 1] = 0;
+	strncpy(e.text, text, sizeof(e.text) - 1);
+	e.text[sizeof(e.text) - 1] = 0;
+	dialogueLog.push_back(e);
 }
 
 // 十字架加成目标：兽人(112)、兽人武士(113)、吸血鬼(116)
 static bool isCrossTarget(uint8_t id) {
 	return id == 112 || id == 113 || id == 116;
+}
+
+// 屠龙匕首加成目标：魔龙(123)
+static bool isDragonSlayerTarget(uint8_t id) {
+	return id == 123;
 }
 
 /**
@@ -46,6 +69,8 @@ int32_t SimulateCombatHealth(const Player& player, uint32_t health, uint8_t mons
 	int32_t monster_health_temp = (int32_t)monster->health;
 	int32_t player_attack = (int32_t)player.attack;
 	if (player.hasCross && isCrossTarget(monster_id))
+		player_attack *= 2;
+	if (player.hasDragonSlayer && isDragonSlayerTarget(monster_id))
 		player_attack *= 2;
 	int32_t damage_PlayerToMonster = player_attack - (int32_t)monster->defence;
 	int32_t damage_MonsterToPlayer = (int32_t)monster->attack - (int32_t)player.defence;
@@ -136,6 +161,10 @@ void Player::respondToMap(uint8_t floor_going, uint8_t x_going, uint8_t y_going)
 	default:
 		break;
 	}
+
+	// 移动/交互后的 Lua on_step 钩子
+	if (this->events)
+		this->events->callOnStep(this->floor, *this);
 }
 
 /**
@@ -158,12 +187,13 @@ void Player::reactToMonster(uint8_t floor_going, uint8_t x_going, uint8_t y_goin
 		// 消息
 		{
 			char _m[64];
+			int gold = this->hasLuckyCoin ? m->money * 2 : (int)m->money;
 			if (this->hurt > 0)
 				snprintf(_m, sizeof(_m), "击败%s，损失%d生命，获得%d金币",
-				getMonsterName(id), (int)this->hurt, (int)m->money);
+				getMonsterName(id), (int)this->hurt, gold);
 			else
 				snprintf(_m, sizeof(_m), "击败%s，获得%d金币",
-				getMonsterName(id), (int)m->money);
+				getMonsterName(id), gold);
 			term_set_message(_m);
 		}
 		if (this->events != nullptr)
@@ -188,6 +218,9 @@ void Player::reactToObject(uint8_t floor_going, uint8_t x_going, uint8_t y_going
 		this->y = y_going;
 		break;
 	case 2: // 墙
+		break;
+	case 140: // 隐形墙：阻挡并将墙显形
+		map_set(floor_going, x_going, y_going, 2);
 		break;
 	case 3: // 黄门
 		if (this->yellowKey > 0)

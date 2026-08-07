@@ -23,6 +23,7 @@ return {
             once = true,
             run = function()
                 say("老人：你购买了商品后再与商人对话，他会告诉你一些重要的信息")
+                note("老人", "你购买了商品后再与商人对话，他会告诉你一些重要的信息")
                 set_tile(4, 8, 1)
             end
         },
@@ -33,6 +34,7 @@ return {
                 if has_flag(2) then return end
                 if has_flag(1) then
                     say("商人：魔塔一共50层，每10层为一个区域。如果不打败此区域的头目就不能到达更高的地方。")
+                    note("商人", "魔塔一共50层，每10层为一个区域。如果不打败此区域的头目就不能到达更高的地方。")
                     set_tile(8, 4, 1)
                     set_flag(2)
                     return

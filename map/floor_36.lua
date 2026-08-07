@@ -17,5 +17,15 @@ return {
         {2,2,2,2,2,2,2,2,2,2,2,2,2}
     },
     events = {
+        {
+            trigger = "on_tile",
+            tile = 151,
+            once = true,
+            run = function()
+                say("老人：如果你能用好4条密道，你不用与强敌作战就能上楼。")
+                note("老人", "如果你能用好4条密道，你不用与强敌作战就能上楼。")
+                set_tile(1, 1, 1)
+            end
+        }
     }
 }

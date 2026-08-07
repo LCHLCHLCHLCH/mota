@@ -10,6 +10,7 @@
 #include "save_system.h"
 #include "ui/backpack.h"
 #include "ui/monster_book.h"
+#include "ui/notebook.h"
 #include "ui/victory.h"
 #include "sdl_3dwindow.h"
 #include "render/display.h"
@@ -51,6 +52,21 @@ static int l_say(lua_State* L) {
 	const char* text = luaL_checkstring(L, 1);
 	refresh_and_present();
 	saySomething((char*)text);
+	return 0;
+}
+
+// 记事本：显式添加一条有用对话
+// note(label, content) — label 显示左侧列表（自动加"x层"前缀），content 显示右侧内容
+static int l_note(lua_State* L) {
+	const char* label = luaL_checkstring(L, 1);
+	const char* text  = luaL_checkstring(L, 2);
+	if (g_ply) g_ply->recordDialogue(g_ply->floor, label, text);
+	return 0;
+}
+
+static int l_show_notebook(lua_State* L) {
+	(void)L;
+	if (g_ply) showNotebook(*g_ply);
 	return 0;
 }
 
@@ -233,6 +249,16 @@ static int l_set_holy_shield(lua_State* L) {
 	if (g_ply) g_ply->hasHolyShield = v;
 	return 0;
 }
+static int l_set_lucky_coin(lua_State* L) {
+	bool v = lua_toboolean(L, 1);
+	if (g_ply) g_ply->hasLuckyCoin = v;
+	return 0;
+}
+static int l_set_dragon_slayer(lua_State* L) {
+	bool v = lua_toboolean(L, 1);
+	if (g_ply) g_ply->hasDragonSlayer = v;
+	return 0;
+}
 static int l_show_monster_book(lua_State* L) {
 	(void)L;
 	if (g_ply) showMonsterBook(*g_ply);
@@ -257,8 +283,9 @@ static int l_show_victory(lua_State* L) {
 }
 static int l_backpack_add(lua_State* L) {
 	int id = (int)luaL_checkinteger(L, 1);
+	int uses = (int)luaL_optinteger(L, 2, -1);
 	if (!g_ply || !g_ply->backpack) return 0;
-	g_ply->backpack->addItem((uint8_t)id, getItemName((uint8_t)id));
+	g_ply->backpack->addItem((uint8_t)id, getItemName((uint8_t)id), uses);
 	return 0;
 }
 static int l_backpack_has(lua_State* L) {
@@ -344,6 +371,8 @@ void lua_register_game_api(lua_State* L, Player* player, EventManager* events) {
 	g_ev  = events;
 
 	lua_register(L, "say",          l_say);
+	lua_register(L, "note",         l_note);
+	lua_register(L, "show_notebook", l_show_notebook);
 	lua_register(L, "msg",          l_msg);
 	lua_register(L, "has_flag",     l_has_flag);
 	lua_register(L, "set_flag",     l_set_flag);
@@ -446,6 +475,8 @@ void lua_register_game_api(lua_State* L, Player* player, EventManager* events) {
 	lua_register(L, "set_monster_book", l_set_monster_book);
 	lua_register(L, "set_cross", l_set_cross);
 	lua_register(L, "set_holy_shield", l_set_holy_shield);
+	lua_register(L, "set_lucky_coin", l_set_lucky_coin);
+	lua_register(L, "set_dragon_slayer", l_set_dragon_slayer);
 	lua_register(L, "show_monster_book", l_show_monster_book);
 	lua_register(L, "battle_monster", l_battle_monster);
 	lua_register(L, "show_victory", l_show_victory);
@@ -456,6 +487,8 @@ void lua_register_game_api(lua_State* L, Player* player, EventManager* events) {
 	lua_register(L, "player_dir",     [](lua_State* L)->int { lua_pushinteger(L, g_ply ? g_ply->direction : 0); return 1; });
 	lua_register(L, "player_x",       [](lua_State* L)->int { lua_pushinteger(L, g_ply ? g_ply->x : 0); return 1; });
 	lua_register(L, "player_y",       [](lua_State* L)->int { lua_pushinteger(L, g_ply ? g_ply->y : 0); return 1; });
+	lua_register(L, "player_attack",  [](lua_State* L)->int { lua_pushinteger(L, g_ply ? g_ply->attack : 0); return 1; });
+	lua_register(L, "player_defence", [](lua_State* L)->int { lua_pushinteger(L, g_ply ? g_ply->defence : 0); return 1; });
 }
 
 // ============================================================

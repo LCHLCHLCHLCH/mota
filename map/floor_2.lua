@@ -9,7 +9,7 @@ return {
         {2,1,2,51,51,2,1,1,1,2,1,151,2},
         {2,1,2,51,1,8,1,1,1,8,1,1,2},
         {2,1,2,2,2,2,1,1,1,2,2,2,2},
-        {2,1,2,154,1,2,1,1,1,2,1,1,2},
+        {2,1,2,154,1,2,1,1,1,2,1,152,2},
         {2,1,2,1,1,8,1,1,1,8,1,1,2},
         {2,1,2,2,2,2,1,1,1,2,2,2,2},
         {2,1,2,55,55,2,1,1,1,2,1,1,2},
@@ -45,6 +45,34 @@ return {
                 set_tile(11, 11, 1)
                 set_flag(2)
                 set_tile_floor(35, 5, 10, 154)
+            end
+        },
+        {
+            trigger = "on_tile",
+            tile = 151,
+            once = true,
+            run = function()
+                say("老人：谢谢你救了我，为感谢你的帮助，请收下这些礼物（1000金币）。")
+                note("老人", "谢谢你救了我，为感谢你的帮助，请收下这些礼物（1000金币）。")
+                add_money(1000)
+                set_tile(11, 4, 1)
+            end
+        },
+        {
+            trigger = "on_tile",
+            tile = 152,
+            run = function()
+                if has_flag(4) then return end
+                say("商人：谢谢你救了我，我可以用祝福魔法提升你3%的攻击力和防御力，现在就提升吗？")
+                local c = choose_menu("好的", "下次再说")
+                if c == 0 then
+                    add_attack(math.floor(player_attack() * 0.03))
+                    add_defence(math.floor(player_defence() * 0.03))
+                    say("商人：祝福完成，你的力量增强了！")
+                    set_tile(11, 7, 1)
+                    set_flag(4)
+                end
+                drain()
             end
         }
     }

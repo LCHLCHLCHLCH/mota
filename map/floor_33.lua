@@ -54,6 +54,7 @@ return {
             set_flag = 4,
             run = function()
                 say("老人：别匆忙，降低速度！")
+                note("老人", "别匆忙，降低速度！")
                 set_tile(4, 3, 1)
             end
         }

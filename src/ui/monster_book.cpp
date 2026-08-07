@@ -97,7 +97,10 @@ void showMonsterBook(Player& player)
 			snprintf(buf, sizeof(buf), "生命 %d", m->health);  regionPrint(15, 1, buf);
 			snprintf(buf, sizeof(buf), "攻击 %d", m->attack);  regionPrint(15, 2, buf);
 			snprintf(buf, sizeof(buf), "防御 %d", m->defence); regionPrint(15, 3, buf);
-			snprintf(buf, sizeof(buf), "金币 %d", m->money);   regionPrint(15, 4, buf);
+			{
+				int32_t gold = player.hasLuckyCoin ? m->money * 2 : m->money;
+				snprintf(buf, sizeof(buf), "金币 %d", gold);   regionPrint(15, 4, buf);
+			}
 
 			// 承受伤害：可击败→黄色耗血；血量不足→红色耗血；无法攻击→红色"无法攻击"
 			COLOR dcolor;

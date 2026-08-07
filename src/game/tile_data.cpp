@@ -67,7 +67,16 @@ const TileDef g_tile_defs[256] = {
 	/*  71    */ { TILE_PROP,    C_YELLOW,      "镐", "镐子" },
 	/*  72    */ { TILE_NONE,    C_WHITE,       "",   "怪物手册" },
 	/*  73    */ { TILE_PROP,    C_YELLOW,      "十", "十字架" },
-	/*  74-100 */
+	/*  74    */ { TILE_PROP,    C_GREEN,       "飞", "中心对称飞行器" },
+	/*  75    */ { TILE_PROP,    C_GREEN,       "飞", "下楼飞行器" },
+	/*  76    */ { TILE_PROP,    C_GREEN,       "飞", "上楼飞行器" },
+	/*  77    */ { TILE_PROP,    C_YELLOW,      "钥", "魔法钥匙" },
+	/*  78    */ { TILE_PROP,    C_YELLOW,      "震", "地震卷轴" },
+	/*  79    */ { TILE_PROP,    C_YELLOW,      "币", "幸运金币(被动)" },
+	/*  80    */ { TILE_PROP,    C_GREEN,       "圣", "圣水" },
+	/*  81    */ { TILE_PROP,    C_BLUE,        "匕", "屠龙匕首" },
+	/*  82    */ { TILE_PROP,    C_BLUE,        "记", "记事本" },
+	/*  83-100 */
 	{ TILE_NONE, C_WHITE, "", "" }, { TILE_NONE, C_WHITE, "", "" },
 	{ TILE_NONE, C_WHITE, "", "" }, { TILE_NONE, C_WHITE, "", "" },
 	{ TILE_NONE, C_WHITE, "", "" }, { TILE_NONE, C_WHITE, "", "" },
@@ -77,11 +86,6 @@ const TileDef g_tile_defs[256] = {
 	{ TILE_NONE, C_WHITE, "", "" }, { TILE_NONE, C_WHITE, "", "" },
 	{ TILE_NONE, C_WHITE, "", "" }, { TILE_NONE, C_WHITE, "", "" },
 	{ TILE_NONE, C_WHITE, "", "" }, { TILE_NONE, C_WHITE, "", "" },
-	{ TILE_NONE, C_WHITE, "", "" }, { TILE_NONE, C_WHITE, "", "" },
-	{ TILE_NONE, C_WHITE, "", "" }, { TILE_NONE, C_WHITE, "", "" },
-	{ TILE_NONE, C_WHITE, "", "" }, { TILE_NONE, C_WHITE, "", "" },
-	{ TILE_NONE, C_WHITE, "", "" }, { TILE_NONE, C_WHITE, "", "" },
-	{ TILE_NONE, C_WHITE, "", "" },
 
 	/* 101 */ { TILE_MONSTER, C_GREEN,  "⊙", "绿史莱姆" },
 	/* 102 */ { TILE_MONSTER, C_RED,    "⊙", "红史莱姆" },
@@ -118,10 +122,10 @@ const TileDef g_tile_defs[256] = {
 	/* 133 */ { TILE_MONSTER, C_RED,    "王", "魔王" },
 	/* 134 */ { TILE_MONSTER, C_RED,    "王", "魔王" },
 	/* 135 */ { TILE_MONSTER, C_RED,    "王", "魔王" },
-	/* 136-150 */
+	/* 136-139 */
 	{ TILE_NONE, C_WHITE, "", "" }, { TILE_NONE, C_WHITE, "", "" },
 	{ TILE_NONE, C_WHITE, "", "" }, { TILE_NONE, C_WHITE, "", "" },
-	{ TILE_NONE, C_WHITE, "", "" }, { TILE_NONE, C_WHITE, "", "" },
+	/* 140 */ { TILE_OBJECT, C_WHITE, "", "隐形墙" }, { TILE_NONE, C_WHITE, "", "" },
 	{ TILE_NONE, C_WHITE, "", "" }, { TILE_NONE, C_WHITE, "", "" },
 	{ TILE_NONE, C_WHITE, "", "" }, { TILE_NONE, C_WHITE, "", "" },
 	{ TILE_NONE, C_WHITE, "", "" }, { TILE_NONE, C_WHITE, "", "" },

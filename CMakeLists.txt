@@ -25,7 +25,7 @@ add_executable(MotaSDL
 	src/event/event_manager.cpp
 	src/render/display.cpp src/render/frame_print.cpp
 	src/render/region_display.cpp src/ui/backpack.cpp
-	src/ui/monster_book.cpp src/ui/victory.cpp
+	src/ui/monster_book.cpp src/ui/victory.cpp src/ui/notebook.cpp
 	terminal/main.cpp
 	terminal/sdl_dialog.cpp terminal/sdl_key.cpp
 	terminal/sdl_statusBar.cpp terminal/sdl_terminal.cpp

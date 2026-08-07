@@ -248,6 +248,203 @@ M.register(73, {
 })
 
 -- ============================================================
+-- 中心对称飞行器（可使用 3 次）：传送到当前位置的对称位置
+-- 对称位置需为空地(1)；传送不触发领域/夹击伤害
+-- ============================================================
+M.register(74, {
+    name = "中心对称飞行器",
+    on_acquire = function()
+        backpack_add(74, 3)
+        msg("获得中心对称飞行器（可传送3次）")
+    end,
+    on_use = function()
+        local tx = 12 - player_x()
+        local ty = 12 - player_y()
+        if get_tile(tx, ty) == 1 then
+            set("x", tx)
+            set("y", ty)
+            msg("传送到了对称位置")
+            return true
+        else
+            msg("对称位置不是空地，无法传送")
+            return false
+        end
+    end,
+})
+
+-- ============================================================
+-- 下楼飞行器（单次）：传送到下一层楼相同位置
+-- 对应位置需为空地(1)，否则无法使用且不消耗
+-- ============================================================
+M.register(75, {
+    name = "下楼飞行器",
+    on_acquire = function()
+        backpack_add(75)
+        msg("获得下楼飞行器")
+    end,
+    on_use = function()
+        local f = player_floor() - 1
+        local tx = player_x()
+        local ty = player_y()
+        if get_tile_floor(f, tx, ty) == 1 then
+            set("floor", f)
+            msg("下楼飞行器带你到了下一层")
+            return true
+        else
+            msg("下一层对应位置不是空地，无法使用")
+            return false
+        end
+    end,
+})
+
+-- ============================================================
+-- 上楼飞行器（单次）：传送到上一层楼相同位置
+-- 对应位置需为空地(1)，否则无法使用且不消耗
+-- ============================================================
+M.register(76, {
+    name = "上楼飞行器",
+    on_acquire = function()
+        backpack_add(76)
+        msg("获得上楼飞行器")
+    end,
+    on_use = function()
+        local f = player_floor() + 1
+        local tx = player_x()
+        local ty = player_y()
+        if get_tile_floor(f, tx, ty) == 1 then
+            set("floor", f)
+            msg("上楼飞行器带你到了上一层")
+            return true
+        else
+            msg("上一层对应位置不是空地，无法使用")
+            return false
+        end
+    end,
+})
+
+-- ============================================================
+-- 魔法钥匙（一次性消耗）：打开当前楼层所有黄门
+-- ============================================================
+M.register(77, {
+    name = "魔法钥匙",
+    on_acquire = function()
+        backpack_add(77)
+        msg("获得魔法钥匙")
+    end,
+    on_use = function()
+        local opened = 0
+        for y = 0, 12 do
+            for x = 0, 12 do
+                if get_tile(x, y) == 3 then
+                    set_tile(x, y, 1)
+                    opened = opened + 1
+                end
+            end
+        end
+        if opened > 0 then
+            msg("魔法钥匙打开了" .. opened .. "扇黄门")
+        else
+            msg("本层没有黄门")
+        end
+        return true
+    end,
+})
+
+-- ============================================================
+-- 地震卷轴（一次性）：摧毁当前楼层所有墙（最外圈除外）
+-- ============================================================
+M.register(78, {
+    name = "地震卷轴",
+    on_acquire = function()
+        backpack_add(78)
+        msg("获得地震卷轴")
+    end,
+    on_use = function()
+        local replaced = 0
+        for y = 0, 12 do
+            for x = 0, 12 do
+                if x > 0 and x < 12 and y > 0 and y < 12 then
+                    if get_tile(x, y) == 2 then
+                        set_tile(x, y, 1)
+                        replaced = replaced + 1
+                    end
+                end
+            end
+        end
+        if replaced > 0 then
+            msg("地震卷轴摧毁了" .. replaced .. "面墙")
+        else
+            msg("本层没有可摧毁的墙")
+        end
+        return true
+    end,
+})
+
+-- ============================================================
+-- 幸运金币（被动道具：入背包，使用无效果且不消耗）
+-- 持有幸运金币时，击败敌人获得 2 倍金币
+-- ============================================================
+M.register(79, {
+    name = "幸运金币",
+    on_acquire = function()
+        set_lucky_coin(true)
+        backpack_add(79)
+        msg("获得幸运金币，打怪金币翻倍")
+    end,
+    on_use = function()
+        return false
+    end,
+})
+
+-- ============================================================
+-- 圣水（一次性）：按（攻击+防御）增加生命
+-- ============================================================
+M.register(80, {
+    name = "圣水",
+    on_acquire = function()
+        backpack_add(80)
+        msg("获得圣水")
+    end,
+    on_use = function()
+        local gain = player_attack() + player_defence()
+        add_health(gain)
+        msg("圣水使生命增加了" .. gain)
+        return true
+    end,
+})
+
+-- ============================================================
+-- 屠龙匕首（被动道具：入背包，使用无效果且不消耗）
+-- 持有屠龙匕首时，攻击魔龙(123) 攻击力翻倍
+-- ============================================================
+M.register(81, {
+    name = "屠龙匕首",
+    on_acquire = function()
+        set_dragon_slayer(true)
+        backpack_add(81)
+        msg("获得屠龙匕首，攻击魔龙伤害翻倍")
+    end,
+    on_use = function()
+        return false
+    end,
+})
+
+-- ============================================================
+-- 记事本：查看记录过的所有有用对话（老人/商人）
+-- ============================================================
+M.register(82, {
+    name = "记事本",
+    on_acquire = function()
+        backpack_add(82)
+        msg("获得记事本")
+    end,
+    on_use = function()
+        show_notebook()
+        return false
+    end,
+})
+
+-- ============================================================
 -- 拾取映射：地面 tile_id → 道具 id
 -- 所有 51-71 的地面道具都映射到同号道具
 -- ============================================================
@@ -256,5 +453,14 @@ for i = 51, 70 do
 end
 M.map_pickup(71, 71)
 M.map_pickup(73, 73)
+M.map_pickup(74, 74)
+M.map_pickup(75, 75)
+M.map_pickup(76, 76)
+M.map_pickup(77, 77)
+M.map_pickup(78, 78)
+M.map_pickup(79, 79)
+M.map_pickup(80, 80)
+M.map_pickup(81, 81)
+M.map_pickup(82, 82)
 
 return M

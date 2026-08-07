@@ -55,6 +55,8 @@ bool save_game(const char* name, const Player& player, const EventManager& event
 	fprintf(f, "player.hasMonsterBook=%d\n", player.hasMonsterBook ? 1 : 0);
 	fprintf(f, "player.hasCross=%d\n", player.hasCross ? 1 : 0);
 	fprintf(f, "player.hasHolyShield=%d\n", player.hasHolyShield ? 1 : 0);
+	fprintf(f, "player.hasLuckyCoin=%d\n", player.hasLuckyCoin ? 1 : 0);
+	fprintf(f, "player.hasDragonSlayer=%d\n", player.hasDragonSlayer ? 1 : 0);
 	fprintf(f, "player.maxFloorVisited=%u\n", player.maxFloorVisited);
 
 	// --- 事件标记（每层独立） ---
@@ -66,11 +68,20 @@ bool save_game(const char* name, const Player& player, const EventManager& event
 	}
 	fprintf(f, "event.altar_times=%u\n", events.getAltarTimes());
 
-	// --- 背包（存储物品 ID） ---
+	// --- 背包（存储物品 ID 与剩余次数） ---
 	if (player.backpack && !player.backpack->items.empty()) {
 		for (size_t idx = 0; idx < player.backpack->items.size(); idx++) {
 			fprintf(f, "backpack.item.%zu=%u\n", idx, player.backpack->items[idx].id);
+			fprintf(f, "backpack.uses.%zu=%d\n", idx, player.backpack->items[idx].uses);
 		}
+	}
+
+	// --- 记事本对话记录 ---
+	for (size_t idx = 0; idx < player.dialogueLog.size(); idx++) {
+		fprintf(f, "dialogue.%zu=%u %s %s\n", idx,
+		        (unsigned)player.dialogueLog[idx].floor,
+		        player.dialogueLog[idx].label,
+		        player.dialogueLog[idx].text);
 	}
 
 	// --- 地图变更 ---
@@ -118,9 +129,15 @@ bool load_game(const char* name, Player& player, EventManager& events) {
 	player.init();
 	events.init();
 
-	// 背包物品 ID 列表
+	// 背包物品 ID 与剩余次数列表
 	uint8_t bp_ids[16];
+	int     bp_uses[16];
+	for (int i = 0; i < 16; i++) bp_uses[i] = -1;
 	int     bp_count = 0;
+
+	// 记事本对话（索引忽略，按读取顺序追加）
+	char dlg_label[16];
+	char dlg_buf[160];
 
 	// 逐行解析
 	char line[256];
@@ -150,6 +167,8 @@ bool load_game(const char* name, Player& player, EventManager& events) {
 		else if (sscanf(line, "player.hasMonsterBook=%u", &val) == 1) player.hasMonsterBook = (val != 0);
 		else if (sscanf(line, "player.hasCross=%u", &val) == 1) player.hasCross = (val != 0);
 		else if (sscanf(line, "player.hasHolyShield=%u", &val) == 1) player.hasHolyShield = (val != 0);
+		else if (sscanf(line, "player.hasLuckyCoin=%u", &val) == 1) player.hasLuckyCoin = (val != 0);
+		else if (sscanf(line, "player.hasDragonSlayer=%u", &val) == 1) player.hasDragonSlayer = (val != 0);
 		else if (sscanf(line, "player.maxFloorVisited=%u", &val) == 1) player.maxFloorVisited = (uint8_t)val;
 
 		// event.*
@@ -160,6 +179,21 @@ bool load_game(const char* name, Player& player, EventManager& events) {
 		else if (sscanf(line, "backpack.item.%d=%u", (int*)&val, &val2) == 2) {
 			if (val < 16 && bp_count < 16)
 				bp_ids[bp_count++] = (uint8_t)val2;
+		}
+		else if (sscanf(line, "backpack.uses.%d=%d", (int*)&val, (int*)&val2) == 2) {
+			if (val < 16)
+				bp_uses[val] = (int)val2;
+		}
+
+		// dialogue.*
+		else if (sscanf(line, "dialogue.%d=%u %15s %159[^\n]", (int*)&val, &val2, dlg_label, dlg_buf) == 4) {
+			DialogueEntry d;
+			d.floor = (uint8_t)val2;
+			strncpy(d.label, dlg_label, sizeof(d.label) - 1);
+			d.label[sizeof(d.label) - 1] = 0;
+			strncpy(d.text, dlg_buf, sizeof(d.text) - 1);
+			d.text[sizeof(d.text) - 1] = 0;
+			player.dialogueLog.push_back(d);
 		}
 
 		// map.*
@@ -176,7 +210,7 @@ bool load_game(const char* name, Player& player, EventManager& events) {
 	if (player.backpack) {
 		player.backpack->items.clear();
 		for (int i = 0; i < bp_count; i++) {
-			player.backpack->addItem(bp_ids[i], getItemName(bp_ids[i]));
+			player.backpack->addItem(bp_ids[i], getItemName(bp_ids[i]), bp_uses[i]);
 		}
 	}
 

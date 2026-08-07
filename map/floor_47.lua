@@ -17,5 +17,30 @@ return {
         {2,2,2,2,2,2,2,2,2,2,2,2,2}
     },
     events = {
+        {
+            trigger = "on_tile",
+            tile = 152,
+            run = function()
+                if has_flag(2) then return end
+                if has_flag(1) then
+                    say("商人：如果要打败魔龙，你需要圣剑、圣盾、屠龙匕或更高级的装备。")
+                    note("商人", "如果要打败魔龙，你需要圣剑、圣盾、屠龙匕或更高级的装备。")
+                    set_tile(5, 2, 1)
+                    set_flag(2)
+                    return
+                end
+                say("商人：你给我4000个金币，我就给你地震卷轴，它可以摧毁一层楼的所有墙。")
+                local c = choose_menu("我太需要了", "下次再说")
+                if c == 0 then
+                    if take_money(4000) then
+                        give(78)
+                        set_flag(1)
+                    else
+                        say("商人：你的金币不够！")
+                    end
+                end
+                drain()
+            end
+        }
     }
 }

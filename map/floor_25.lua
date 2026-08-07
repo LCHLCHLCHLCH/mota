@@ -28,6 +28,16 @@ return {
                 set_tile(8, 8, 53)
                 msg("大法师被击败，掉落了四把红钥匙！")
             end
+        },
+        {
+            trigger = "on_tile",
+            x = 6, y = 9,
+            once = true,
+            run = function()
+                set("x", 6)
+                set("y", 9)
+                say("大法师：-杀-死-入-侵-者-！")
+            end
         }
     }
 }

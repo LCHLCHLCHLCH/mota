@@ -23,6 +23,13 @@ return {
             run = function()
                 say("公主：时间到了，你已经被命运选中。如果你不怕死亡，你最终将通过时空来到我这里。")
                 say("勇士：哦！什么？这只是个洋娃娃！")
+                -- 改变24层地形：打通 (6,4)(6,3)(6,2)，(5,1)(7,1) 变墙，(6,1) 变星星
+                for y = 2, 4 do
+                    set_tile_floor(24, 6, y, 1)
+                end
+                set_tile_floor(24, 5, 1, 2)
+                set_tile_floor(24, 7, 1, 2)
+                set_tile_floor(24, 6, 1, 7)
             end
         }
     }

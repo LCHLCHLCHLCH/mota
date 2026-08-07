@@ -37,6 +37,27 @@ static bool run_event_run(lua_State* L, int ev_idx, int px, int py) {
 	return true;
 }
 
+// 每次移动后调用楼层定义的 on_step 函数（如有）
+static bool load_floor_events(lua_State* L, uint8_t floor);
+void EventManager::callOnStep(uint8_t floor, Player& player)
+{
+	lua_State* L = script_init();
+	if (!L) return;
+	lua_register_game_api(L, &player, this);
+	if (!load_floor_events(L, floor)) return;
+
+	lua_getfield(L, -1, "on_step");
+	if (lua_isfunction(L, -1)) {
+		if (lua_pcall(L, 0, 0, 0) != LUA_OK) {
+			fprintf(stderr, "on_step error: %s\n", lua_tostring(L, -1));
+			lua_pop(L, 1);
+		}
+	} else {
+		lua_pop(L, 1);
+	}
+	lua_pop(L, 1); // floor module
+}
+
 // 读取事件的 once/condition_flag，返回是否应该跳过（已触发过）
 // 若不需要跳过且 once 为 true，自动分配内部 flag ID = event_index
 static bool check_event_skip(lua_State* L, int ev_idx, uint8_t floor, int event_index,

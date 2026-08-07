@@ -45,7 +45,7 @@ bool checkZoneEntry(Player& player, uint8_t floor, uint8_t x, uint8_t y, uint8_t
 {
 	// 不可进入的格子不触发区域伤害（墙/门/岩浆/星/守卫门/NPC/身躯等）
 	bool enterable = (tile == 1 || tile == 9 || tile == 10 || tile == 11) ||
-	                 (tile >= 51 && tile <= 73) ||
+	                 (tile >= 51 && tile <= 82) ||
 	                 (tile >= 101 && tile <= 150);
 	if (!enterable) return true;
 

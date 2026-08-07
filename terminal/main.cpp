@@ -60,8 +60,18 @@ int main(int argc, char** argv) {
 
 		if (key == KEY_X) {
 			int chosen = backpack.selectItem();
-			if (chosen >= 0 && lua_item_on_use(backpack.items[chosen].id)) {
-				backpack.removeItem(chosen);
+			if (chosen >= 0) {
+				bool used = lua_item_on_use(backpack.items[chosen].id);
+				if (backpack.items[chosen].uses > 0) {
+					// 有次数限制的道具：成功使用一次减一，用完移除
+					if (used) {
+						backpack.items[chosen].uses--;
+						if (backpack.items[chosen].uses <= 0)
+							backpack.removeItem(chosen);
+					}
+				} else if (used) {
+					backpack.removeItem(chosen);
+				}
 			}
 		} else {
 			switch (key) {

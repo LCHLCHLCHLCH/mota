@@ -15,13 +15,13 @@ void Player::init()
 	floor = 1;
 	x = 6;
 	y = 11;
-	money = 100000;
-	yellowKey = 100;
-	blueKey = 100;
-	redKey = 100;
-	attack = 1000;
-	defence = 1000;
-	health = 10000;
+	money = 0;
+	yellowKey = 0;
+	blueKey = 0;
+	redKey = 0;
+	attack = 100;
+	defence = 100;
+	health = 1000;
 	hasTeleporter = false;
 	hasMonsterBook = false;
 	hasCross = false;
@@ -374,14 +374,22 @@ void Player::respondToKey(KEY key)
 		freezeLava();
 		break;
 	case KEY_Q:
-		// 传送：向下到达过的楼层
+		// 传送：向下到达过的楼层（跳过隐藏楼层 44）
 		if (hasTeleporter && this->floor > 0)
-			teleportTo(this->floor - 1, 9);
+		{
+			int target = (int)this->floor - 1;
+			if (target == 44) target = 43;
+			teleportTo((uint8_t)target, 9);
+		}
 		break;
 	case KEY_E:
-		// 传送：向上到达过的楼层
+		// 传送：向上到达过的楼层（跳过隐藏楼层 44）
 		if (hasTeleporter && this->floor < maxFloorVisited)
-			teleportTo(this->floor + 1, 10);
+		{
+			int target = (int)this->floor + 1;
+			if (target == 44) target = 45;
+			teleportTo((uint8_t)target, 10);
+		}
 		break;
 	case KEY_1:
 		// 调试：下楼
@@ -390,7 +398,6 @@ void Player::respondToKey(KEY key)
 	case KEY_2:
 		// 调试：上楼
 		this->floor++;
-		break;
 		break;
 	case NOTHING:
 		// 按下了不相关的键

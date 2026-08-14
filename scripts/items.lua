@@ -32,6 +32,7 @@ end
 -- ============================================================
 M.register(51, {
     name = "黄钥匙",
+    desc = "打开黄色门的钥匙。",
     on_acquire = function()
         add_yellow_key(1)
         msg("获得黄钥匙")
@@ -40,6 +41,7 @@ M.register(51, {
 
 M.register(52, {
     name = "蓝钥匙",
+    desc = "打开蓝色门的钥匙。",
     on_acquire = function()
         add_blue_key(1)
         msg("获得蓝钥匙")
@@ -48,6 +50,7 @@ M.register(52, {
 
 M.register(53, {
     name = "红钥匙",
+    desc = "打开红色门的钥匙。",
     on_acquire = function()
         add_red_key(1)
         msg("获得红钥匙")
@@ -59,6 +62,7 @@ M.register(53, {
 -- ============================================================
 M.register(54, {
     name = "红血瓶",
+    desc = "恢复生命值，楼层越高效果越强。",
     on_acquire = function()
         local bonus = ((player_floor() - 1) // 10 + 1) * 50
         add_health(bonus)
@@ -68,6 +72,7 @@ M.register(54, {
 
 M.register(55, {
     name = "蓝血瓶",
+    desc = "大量恢复生命值，楼层越高效果越强。",
     on_acquire = function()
         local bonus = ((player_floor() - 1) // 10 + 1) * 200
         add_health(bonus)
@@ -77,6 +82,7 @@ M.register(55, {
 
 M.register(56, {
     name = "红宝石",
+    desc = "永久提升攻击力。",
     on_acquire = function()
         local bonus = ((player_floor() - 1) // 10 + 1)
         add_attack(bonus)
@@ -86,6 +92,7 @@ M.register(56, {
 
 M.register(57, {
     name = "蓝宝石",
+    desc = "永久提升防御力。",
     on_acquire = function()
         local bonus = ((player_floor() - 1) // 10 + 1)
         add_defence(bonus)
@@ -98,42 +105,52 @@ M.register(57, {
 -- ============================================================
 M.register(58, {
     name = "铁剑",
+    desc = "攻击力 +10。",
     on_acquire = function() add_attack(10);  msg("获得铁剑，攻击增加10") end,
 })
 M.register(59, {
     name = "铁盾",
+    desc = "防御力 +10。",
     on_acquire = function() add_defence(10); msg("获得铁盾，防御增加10") end,
 })
 M.register(60, {
     name = "银剑",
+    desc = "攻击力 +20。",
     on_acquire = function() add_attack(20);  msg("获得银剑，攻击增加20") end,
 })
 M.register(61, {
     name = "银盾",
+    desc = "防御力 +20。",
     on_acquire = function() add_defence(20); msg("获得银盾，防御增加20") end,
 })
 M.register(62, {
     name = "骑士剑",
+    desc = "攻击力 +40。",
     on_acquire = function() add_attack(40);  msg("获得骑士剑，攻击增加40") end,
 })
 M.register(63, {
     name = "骑士盾",
+    desc = "防御力 +40。",
     on_acquire = function() add_defence(40); msg("获得骑士盾，防御增加40") end,
 })
 M.register(64, {
     name = "圣剑",
+    desc = "攻击力 +50。",
     on_acquire = function() add_attack(50);  msg("获得圣剑，攻击增加50") end,
 })
 M.register(65, {
     name = "圣盾",
+    desc = "防御力 +50。",
     on_acquire = function() add_defence(50); msg("获得圣盾，防御增加50") end,
 })
 M.register(66, {
     name = "神圣剑",
+    desc = "攻击力 +100。",
     on_acquire = function() add_attack(100); msg("获得神圣剑，攻击增加100") end,
 })
 M.register(67, {
     name = "神圣盾",
+    desc = "防御力 +100，免疫魔法伤害。",
     on_acquire = function()
         set_holy_shield(true)
         add_defence(100)
@@ -146,6 +163,7 @@ M.register(67, {
 -- ============================================================
 M.register(68, {
     name = "楼层传送器",
+    desc = "在已到达的楼层之间上下传送。",
     on_acquire = function()
         set_teleporter(true)
         msg("获得楼层传送器")
@@ -157,6 +175,7 @@ M.register(68, {
 -- ============================================================
 M.register(69, {
     name = "冰霜魔法",
+    desc = "冰冻岩浆。",
     on_acquire = function()
         if not backpack_has(69) then
             backpack_add(69)
@@ -170,6 +189,7 @@ M.register(69, {
 
 M.register(70, {
     name = "炸药",
+    desc = "炸毁相邻格子的怪物，对首领无效。",
     on_acquire = function()
         backpack_add(70)
         msg("获得炸药")
@@ -189,6 +209,7 @@ M.register(70, {
 -- ============================================================
 M.register(71, {
     name = "镐子",
+    desc = "破坏一堵墙。",
     on_acquire = function()
         backpack_add(71)
         msg("获得镐子")
@@ -220,6 +241,7 @@ M.register(71, {
 -- ============================================================
 M.register(72, {
     name = "怪物手册",
+    desc = "查看本层怪物属性，开启威胁指示灯。",
     on_acquire = function()
         set_monster_book(true)
         backpack_add(72)
@@ -236,7 +258,8 @@ M.register(72, {
 -- 持有十字架时，对兽人/兽人武士/吸血鬼的攻击力加倍
 -- ============================================================
 M.register(73, {
-    name = "十字架",
+    name = "十字架(被动)",
+    desc = "对兽人、兽人武士、吸血鬼的攻击翻倍。",
     on_acquire = function()
         set_cross(true)
         backpack_add(73)
@@ -253,6 +276,7 @@ M.register(73, {
 -- ============================================================
 M.register(74, {
     name = "中心对称飞行器",
+    desc = "传送到地图中心对称位置（可使用 3 次）。",
     on_acquire = function()
         backpack_add(74, 3)
         msg("获得中心对称飞行器（可传送3次）")
@@ -278,12 +302,17 @@ M.register(74, {
 -- ============================================================
 M.register(75, {
     name = "下楼飞行器",
+    desc = "传送到下一层相同位置。",
     on_acquire = function()
         backpack_add(75)
         msg("获得下楼飞行器")
     end,
     on_use = function()
         local f = player_floor() - 1
+        if f < 0 then
+            msg("你已在最底层，无法使用下楼飞行器")
+            return false
+        end
         local tx = player_x()
         local ty = player_y()
         if get_tile_floor(f, tx, ty) == 1 then
@@ -303,12 +332,21 @@ M.register(75, {
 -- ============================================================
 M.register(76, {
     name = "上楼飞行器",
+    desc = "传送到上一层相同位置。",
     on_acquire = function()
         backpack_add(76)
         msg("获得上楼飞行器")
     end,
     on_use = function()
         local f = player_floor() + 1
+        if f > 50 then
+            msg("你已在最高层，无法使用上楼飞行器")
+            return false
+        end
+        if f == 50 then
+            msg("无法通过上楼飞行器到达50层")
+            return false
+        end
         local tx = player_x()
         local ty = player_y()
         if get_tile_floor(f, tx, ty) == 1 then
@@ -327,6 +365,7 @@ M.register(76, {
 -- ============================================================
 M.register(77, {
     name = "魔法钥匙",
+    desc = "打开本层所有黄门。",
     on_acquire = function()
         backpack_add(77)
         msg("获得魔法钥匙")
@@ -355,6 +394,7 @@ M.register(77, {
 -- ============================================================
 M.register(78, {
     name = "地震卷轴",
+    desc = "摧毁本层所有墙。",
     on_acquire = function()
         backpack_add(78)
         msg("获得地震卷轴")
@@ -385,7 +425,8 @@ M.register(78, {
 -- 持有幸运金币时，击败敌人获得 2 倍金币
 -- ============================================================
 M.register(79, {
-    name = "幸运金币",
+    name = "幸运金币(被动)",
+    desc = "击败敌人获得的金币翻倍。",
     on_acquire = function()
         set_lucky_coin(true)
         backpack_add(79)
@@ -401,6 +442,7 @@ M.register(79, {
 -- ============================================================
 M.register(80, {
     name = "圣水",
+    desc = "按攻击力与防御力之和恢复生命。",
     on_acquire = function()
         backpack_add(80)
         msg("获得圣水")
@@ -418,7 +460,8 @@ M.register(80, {
 -- 持有屠龙匕首时，攻击魔龙(123) 攻击力翻倍
 -- ============================================================
 M.register(81, {
-    name = "屠龙匕首",
+    name = "屠龙匕首(被动)",
+    desc = "攻击魔龙时伤害翻倍。",
     on_acquire = function()
         set_dragon_slayer(true)
         backpack_add(81)
@@ -434,6 +477,7 @@ M.register(81, {
 -- ============================================================
 M.register(82, {
     name = "记事本",
+    desc = "记录与老人、商人的重要对话。",
     on_acquire = function()
         backpack_add(82)
         msg("获得记事本")

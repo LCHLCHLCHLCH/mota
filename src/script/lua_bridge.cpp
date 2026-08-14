@@ -12,7 +12,6 @@
 #include "ui/monster_book.h"
 #include "ui/notebook.h"
 #include "ui/victory.h"
-#include "sdl_3dwindow.h"
 #include "render/display.h"
 #include "render/status_bar.h"
 extern "C" {
@@ -182,16 +181,6 @@ static int l_give(lua_State* L) {
 	return 0;
 }
 
-static int l_light(lua_State* L) {
-	const char* arg = luaL_optstring(L, 1, "");
-	if (strcmp(arg, "on") == 0 || strcmp(arg, "1") == 0)
-		{ term_set_light_mode(true); printf("light mode on\n"); }
-	else if (strcmp(arg, "off") == 0 || strcmp(arg, "0") == 0)
-		{ term_set_light_mode(false); printf("light mode off\n"); }
-	else printf("usage: light(\"on\") or light(\"off\")\n");
-	return 0;
-}
-
 static int l_restart(lua_State* L) {
 	(void)L;
 	map_reload();
@@ -337,19 +326,6 @@ static int l_load_cmd(lua_State* L) {
 	return 0;
 }
 
-static int l_open3d(lua_State* L) {
-	(void)L;
-	run_3d_window(term_get_window(), *g_ply);
-	return 0;
-}
-
-static int l_close3d(lua_State* L) {
-	(void)L;
-	shutdown_3d_window();
-	return 0;
-}
-
-
 // ============================================================
 // debug 模式（无视碰撞、事件、怪物）
 // ============================================================
@@ -385,12 +361,9 @@ void lua_register_game_api(lua_State* L, Player* player, EventManager* events) {
 	lua_register(L, "tp",    l_tp);
 	lua_register(L, "killall", l_killall);
 	lua_register(L, "give",  l_give);
-	lua_register(L, "light", l_light);
 	lua_register(L, "save",  l_save_cmd);
 	lua_register(L, "load",  l_load_cmd);
 	lua_register(L, "restart", l_restart);
-	lua_register(L, "open3d",  l_open3d);
-	lua_register(L, "close3d", l_close3d);
 
 	// 数值操作
 	lua_register(L, "add_health",  [](lua_State* L)->int { g_ply->health += (uint32_t)luaL_checkinteger(L,1); return 0; });
@@ -592,4 +565,62 @@ bool lua_item_on_acquire(uint8_t item_id) {
 
 bool lua_item_on_use(uint8_t item_id) {
 	return lua_item_dispatch(item_id, "on_use");
+}
+
+// ============================================================
+// 道具描述：读取 items[id].desc，无则返回 false
+// ============================================================
+bool lua_item_desc(uint8_t item_id, char* out, size_t out_size)
+{
+	if (!out || out_size == 0) return false;
+	out[0] = 0;
+
+	lua_State* L = script_init();
+	if (!L) return false;
+
+	lua_getglobal(L, "require");
+	lua_pushstring(L, "items");
+	if (lua_pcall(L, 1, 1, 0) != LUA_OK) {
+		fprintf(stderr, "require items: %s\n", lua_tostring(L, -1));
+		lua_pop(L, 1);
+		return false;
+	}
+	// 栈: items_module
+
+	lua_getfield(L, -1, "items");    // 栈: items_module, items_table
+	lua_pushinteger(L, item_id);     // 栈: items_module, items_table, id
+	lua_gettable(L, -2);             // 栈: items_module, items_table, item_def
+	if (!lua_istable(L, -1)) { lua_pop(L, 3); return false; }
+
+	lua_getfield(L, -1, "desc");     // 栈: items_module, items_table, item_def, desc
+	const char* s = lua_tostring(L, -1);
+	if (!s) { lua_pop(L, 4); return false; }
+
+	strncpy(out, s, out_size - 1);
+	out[out_size - 1] = 0;
+	lua_pop(L, 4);
+	return true;
+}
+
+// ============================================================
+// 启动脚本：直接执行 scripts/startup.lua（无此文件则静默跳过）。
+// 脚本内可调用 set/give/add_health 等全部 Lua API，在开局前配置状态。
+// ============================================================
+void lua_apply_startup(Player& player)
+{
+	lua_State* L = script_init();
+	if (!L) return;
+
+	// 确保 API 与全局玩家指针就绪（脚本内 set/give 依赖 g_ply/g_ev）
+	if (player.events) lua_register_game_api(L, &player, player.events);
+
+	lua_getglobal(L, "require");
+	lua_pushstring(L, "startup");
+	if (lua_pcall(L, 1, 0, 0) != LUA_OK) {
+		const char* err = lua_tostring(L, -1);
+		// 无启动脚本 → 静默；其它错误 → 打印
+		if (err && !strstr(err, "module 'startup' not found"))
+			fprintf(stderr, "startup script error: %s\n", err);
+		lua_pop(L, 1);
+	}
 }

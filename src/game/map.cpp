@@ -21,7 +21,7 @@ void map_init() {
 
 	for (int f = 0; f <= 50; f++) {
 		char file[32];
-		snprintf(file, sizeof(file), "floor_%d", f);
+		snprintf(file, sizeof(file), "f%d", f);
 
 		// 清除 require 缓存，确保热加载生效
 		lua_getglobal(L, "package");

@@ -53,7 +53,6 @@ return {
             once = true,
             run = function()
                 say("老人：谢谢你救了我，为感谢你的帮助，请收下这些礼物（1000金币）。")
-                note("老人", "谢谢你救了我，为感谢你的帮助，请收下这些礼物（1000金币）。")
                 add_money(1000)
                 set_tile(11, 4, 1)
             end

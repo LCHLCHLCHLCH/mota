@@ -2,7 +2,7 @@
 
 ## 文件结构
 
-每个楼层对应一个 Lua 文件：`map/floor_N.lua`（N 为楼层号，范围 0~50）。
+每个楼层对应一个 Lua 文件：`scripts/map/fN.lua`（N 为楼层号，范围 0~50）。
 
 文件返回一个 table，包含 `map` 和 `events` 两个字段：
 

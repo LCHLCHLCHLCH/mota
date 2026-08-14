@@ -17,6 +17,7 @@ static CRITICAL_SECTION g_cs;
 static char  g_cmd_queue[8][256];
 static int   g_cmd_head = 0, g_cmd_tail = 0;
 static bool  g_cmd_thread_running = false;
+static HANDLE g_cmd_thread = NULL;
 
 static void cmd_push(const char* cmd) {
 	EnterCriticalSection(&g_cs);
@@ -60,7 +61,7 @@ void console_welcome() {
 	printf("========================================\n\n");
 
 	g_cmd_thread_running = true;
-	_beginthreadex(NULL, 0, console_thread, NULL, 0, NULL);
+	g_cmd_thread = (HANDLE)_beginthreadex(NULL, 0, console_thread, NULL, 0, NULL);
 	printf("> "); fflush(stdout);
 }
 
@@ -77,7 +78,6 @@ static void process_line(const char* line) {
 		printf("  killall()            清除当前层怪物\n");
 		printf("  give(id)             给予道具\n");
 		printf("  save/load(name)      存档/读档\n");
-		printf("  light(\"on\"/\"off\")    切换浅色模式\n");
 		printf("\n可直接输入任意 Lua 表达式:\n");
 		printf("  print(2+3)\n");
 		printf("  for i=1,5 do print(i) end\n");
@@ -120,5 +120,10 @@ void console_poll(Player& player, EventManager& events) {
 void console_cmd_shutdown() {
 	g_cmd_thread_running = false;
 	cmd_push("");
+	if (g_cmd_thread) {
+		WaitForSingleObject(g_cmd_thread, 2000);
+		CloseHandle(g_cmd_thread);
+		g_cmd_thread = NULL;
+	}
 	DeleteCriticalSection(&g_cs);
 }

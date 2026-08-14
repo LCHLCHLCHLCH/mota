@@ -49,7 +49,7 @@ void drawMonsterLights(const Player& ply)
 		for (uint8_t x = 0; x < 13; x++)
 		{
 			uint8_t t = map_get(ply.floor, x, y);
-			if (t < 101 || t > 150) continue;
+			if (tile_category(t) != TILE_MONSTER) continue;
 			drawLight(x, y, SimulateCombat(ply, t));
 		}
 

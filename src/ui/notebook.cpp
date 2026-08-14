@@ -93,7 +93,7 @@ void showNotebook(Player& player)
 			if (selected < count - 1) selected++;
 			break;
 		case LEFT:
-			if (pageStart > 0) { pageStart -= perPage; selected = pageStart; }
+			if (pageStart > 0) { pageStart = (pageStart >= perPage) ? pageStart - perPage : 0; selected = pageStart; }
 			break;
 		case RIGHT:
 			if (pageStart + perPage < count) { pageStart += perPage; selected = pageStart; }

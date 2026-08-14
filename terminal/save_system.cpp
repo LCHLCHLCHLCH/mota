@@ -70,12 +70,6 @@ bool save_game(const char* name, const Player& player, const EventManager& event
 	}
 	fprintf(f, "event.altar_times=%u\n", events.getAltarTimes());
 
-	// --- 首次到达标记 ---
-	for (int fl = 0; fl < 51; fl++) {
-		if (events.hasArrived((uint8_t)fl))
-			fprintf(f, "event.arrived.%d=1\n", fl);
-	}
-
 	// --- 背包（存储物品 ID 与剩余次数） ---
 	if (player.backpack && !player.backpack->items.empty()) {
 		for (size_t idx = 0; idx < player.backpack->items.size(); idx++) {
@@ -155,10 +149,9 @@ bool load_game(const char* name, Player& player, EventManager& events) {
 			line[--len] = 0;
 		if (len == 0 || line[0] == '#') continue;
 
-		char key[64] = "";
 		unsigned int val = 0, val2 = 0;
 		uint8_t tkey = 0, tkey2 = 0;
-
+		int bidx = 0, buses = 0;
 		// player.*
 		if (sscanf(line, "player.health=%u", &val) == 1) player.health = val;
 		else if (sscanf(line, "player.attack=%u", &val) == 1) player.attack = val;
@@ -183,20 +176,19 @@ bool load_game(const char* name, Player& player, EventManager& events) {
 		else if (sscanf(line, "event.flag.%hhu.%hhu=%u", &tkey, &tkey2, &val) == 3) events.setFlag(tkey, tkey2);
 		else if (sscanf(line, "event.arrived.%hhu=%u", &tkey, &val) == 2) events.setArrived(tkey);
 		else if (sscanf(line, "event.altar_times=%u", &val) == 1) events.setAltarTimes((uint8_t)val);
-		else if (sscanf(line, "event.arrived.%hhu=%u", &tkey, &val) == 2) { if (val) events.setArrived(tkey); }
 
 		// backpack.*
-		else if (sscanf(line, "backpack.item.%d=%u", (int*)&val, &val2) == 2) {
-			if (val < 16 && bp_count < 16)
+		else if (sscanf(line, "backpack.item.%d=%u", &bidx, &val2) == 2) {
+			if (bidx >= 0 && bidx < 16 && bp_count < 16)
 				bp_ids[bp_count++] = (uint8_t)val2;
 		}
-		else if (sscanf(line, "backpack.uses.%d=%d", (int*)&val, (int*)&val2) == 2) {
-			if (val < 16)
-				bp_uses[val] = (int)val2;
+		else if (sscanf(line, "backpack.uses.%d=%d", &bidx, &buses) == 2) {
+			if (bidx >= 0 && bidx < 16)
+				bp_uses[bidx] = buses;
 		}
 
 		// dialogue.*
-		else if (sscanf(line, "dialogue.%d=%u %15s %159[^\n]", (int*)&val, &val2, dlg_label, dlg_buf) == 4) {
+		else if (sscanf(line, "dialogue.%d=%u %15s %159[^\n]", &bidx, &val2, dlg_label, dlg_buf) == 4) {
 			DialogueEntry d;
 			d.floor = (uint8_t)val2;
 			strncpy(d.label, dlg_label, sizeof(d.label) - 1);

@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <cstring>
 #include <cstdarg>
+#include <unordered_map>
 
 // ============================================================
 // 内部状态
@@ -34,8 +35,7 @@ static int g_cursor_y = 0;
 // 退出标志
 static bool g_quit = false;
 
-// 浅色模式
-static bool g_light_mode = false;
+// 黑屏演出
 static bool g_darkened   = false;
 
 // 底部消息
@@ -62,6 +62,20 @@ struct DeferredDraw {
 };
 static DeferredDraw g_deferred[MAX_DEFERRED];
 static int          g_deferred_count = 0;
+
+// 字形缓存：key = (fg << 32) | ch，避免每帧重复栅格化文字
+struct Glyph {
+	SDL_Texture* tex;
+	int          w;
+	int          h;
+};
+static std::unordered_map<uint64_t, Glyph> g_glyph_cache;
+
+static void clear_glyph_cache() {
+	for (auto& kv : g_glyph_cache)
+		if (kv.second.tex) SDL_DestroyTexture(kv.second.tex);
+	g_glyph_cache.clear();
+}
 
 // ============================================================
 // wchar_t → UTF-8 转换（用于 SDL_ttf 文本渲染）
@@ -124,6 +138,7 @@ static void attr_to_colors(int attr, int& fg, int& bg) {
 // 加载字体
 // ============================================================
 static void load_font() {
+	clear_glyph_cache();
 	if (g_ttf_font) { TTF_CloseFont(g_ttf_font); g_ttf_font = nullptr; }
 	if (g_ttf_font_big) { TTF_CloseFont(g_ttf_font_big); g_ttf_font_big = nullptr; }
 	int size = (int)((g_cell_h - 2) * g_scale + 0.5f);
@@ -227,27 +242,33 @@ static void draw_cell_sdl(int col, int row) {
 	SDL_RenderFillRect(g_renderer, &rect);
 
 	if (c->ch != L' ') {
-		SDL_Color& fg_c = g_palette[c->fg];
-		char* utf8 = wchar_to_utf8(&c->ch, 1);
-		if (utf8) {
-			SDL_Surface* surf = TTF_RenderText_Blended(g_ttf_font, utf8, 0, fg_c);
-			if (surf) {
-				SDL_Texture* tex = SDL_CreateTextureFromSurface(g_renderer, surf);
-				if (tex) {
-					float tw = (float)surf->w;
-					float th = (float)surf->h;
-					float s = g_scale;
-					SDL_FRect trect = {
-						cx + (g_cell_w - tw / s) * 0.5f,
-						cy + (g_cell_h - th / s) * 0.5f,
-						tw / s, th / s
-					};
-					SDL_RenderTexture(g_renderer, tex, NULL, &trect);
-					SDL_DestroyTexture(tex);
+		uint64_t key = ((uint64_t)c->fg << 32) | (uint32_t)c->ch;
+		auto it = g_glyph_cache.find(key);
+		if (it == g_glyph_cache.end()) {
+			Glyph g = { nullptr, 0, 0 };
+			char* utf8 = wchar_to_utf8(&c->ch, 1);
+			if (utf8) {
+				SDL_Color& fg_c = g_palette[c->fg];
+				SDL_Surface* surf = TTF_RenderText_Blended(g_ttf_font, utf8, 0, fg_c);
+				if (surf) {
+					g.w = surf->w;
+					g.h = surf->h;
+					g.tex = SDL_CreateTextureFromSurface(g_renderer, surf);
+					SDL_DestroySurface(surf);
 				}
-				SDL_DestroySurface(surf);
+				delete[] utf8;
 			}
-			delete[] utf8;
+			it = g_glyph_cache.emplace(key, g).first;
+		}
+		Glyph& g = it->second;
+		if (g.tex) {
+			float s = g_scale;
+			SDL_FRect trect = {
+				cx + (g_cell_w - g.w / s) * 0.5f,
+				cy + (g_cell_h - g.h / s) * 0.5f,
+				g.w / s, g.h / s
+			};
+			SDL_RenderTexture(g_renderer, g.tex, NULL, &trect);
 		}
 	}
 }
@@ -331,28 +352,42 @@ bool term_init(const char* title, int cols, int rows, int cell_w, int cell_h) {
 		return false;
 	}
 
-	// 设置窗口图标
+	// 设置窗口图标（从 exe 同目录 logo2.ico 加载，见 CMake 产物复制）
 	{
-		HBITMAP hBmp = (HBITMAP)LoadImageW(NULL, L"logo/logo2.png",
-			IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
-		if (hBmp) {
-			BITMAP bm;
-			GetObjectW(hBmp, sizeof(bm), &bm);
-			int w = bm.bmWidth, h = bm.bmHeight;
-			BITMAPINFOHEADER bi = {};
-			bi.biSize = sizeof(bi);
-			bi.biWidth = w; bi.biHeight = -h;
-			bi.biPlanes = 1; bi.biBitCount = 32; bi.biCompression = BI_RGB;
-			int rb = w * 4;
-			BYTE* px = new BYTE[h * rb];
-			HDC hdc = GetDC(NULL);
-			GetDIBits(hdc, hBmp, 0, h, px, (BITMAPINFO*)&bi, DIB_RGB_COLORS);
-			ReleaseDC(NULL, hdc);
-			SDL_Surface* surf = SDL_CreateSurfaceFrom(w, h,
-				SDL_PIXELFORMAT_BGRA8888, px, rb);
-			if (surf) { SDL_SetWindowIcon(g_window, surf); SDL_DestroySurface(surf); }
-			delete[] px;
-			DeleteObject(hBmp);
+		char exe_path[MAX_PATH];
+		GetModuleFileNameA(NULL, exe_path, MAX_PATH);
+		char* last_slash = strrchr(exe_path, '\\');
+		if (last_slash) *last_slash = 0;
+		char icon_path[MAX_PATH];
+		snprintf(icon_path, sizeof(icon_path), "%s\\logo2.ico", exe_path);
+
+		WCHAR wpath[MAX_PATH];
+		MultiByteToWideChar(CP_UTF8, 0, icon_path, -1, wpath, MAX_PATH);
+		HICON hIcon = (HICON)LoadImageW(NULL, wpath, IMAGE_ICON, 0, 0, LR_LOADFROMFILE);
+		if (hIcon) {
+			ICONINFO ii = {};
+			if (GetIconInfo(hIcon, &ii)) {
+				BITMAP bm = {};
+				if (ii.hbmColor && GetObjectW(ii.hbmColor, sizeof(bm), &bm)) {
+					int w = bm.bmWidth, h = bm.bmHeight;
+					BITMAPINFOHEADER bi = {};
+					bi.biSize = sizeof(bi);
+					bi.biWidth = w; bi.biHeight = -h;
+					bi.biPlanes = 1; bi.biBitCount = 32; bi.biCompression = BI_RGB;
+					int rb = w * 4;
+					BYTE* px = new BYTE[h * rb];
+					HDC hdc = GetDC(NULL);
+					GetDIBits(hdc, ii.hbmColor, 0, h, px, (BITMAPINFO*)&bi, DIB_RGB_COLORS);
+					ReleaseDC(NULL, hdc);
+					SDL_Surface* surf = SDL_CreateSurfaceFrom(w, h,
+						SDL_PIXELFORMAT_BGRA8888, px, rb);
+					if (surf) { SDL_SetWindowIcon(g_window, surf); SDL_DestroySurface(surf); }
+					delete[] px;
+				}
+				if (ii.hbmColor) DeleteObject(ii.hbmColor);
+				if (ii.hbmMask)  DeleteObject(ii.hbmMask);
+			}
+			DestroyIcon(hIcon);
 		}
 	}
 
@@ -365,8 +400,10 @@ TTF_Font* term_get_ttf_font() { return g_ttf_font; }
 float term_get_display_scale() { return g_scale; }
 
 void term_shutdown() {
+	clear_glyph_cache();
 	delete[] g_cells; g_cells = nullptr;
 	if (g_ttf_font) { TTF_CloseFont(g_ttf_font); g_ttf_font = nullptr; }
+	if (g_ttf_font_big) { TTF_CloseFont(g_ttf_font_big); g_ttf_font_big = nullptr; }
 	TTF_Quit();
 	if (g_renderer) { SDL_DestroyRenderer(g_renderer); g_renderer = nullptr; }
 	if (g_window)   { SDL_DestroyWindow(g_window); g_window = nullptr; }
@@ -518,14 +555,6 @@ int term_printw(const char* fmt, ...) {
 bool term_quit_requested() { return g_quit; }
 
 void term_set_quit() { g_quit = true; }
-
-void term_set_light_mode(bool on) {
-	if (g_light_mode == on) return;
-	g_light_mode = on;
-	SDL_Color tmp = g_palette[0];
-	g_palette[0] = g_palette[4];
-	g_palette[4] = tmp;
-}
 
 void term_set_darkened(bool on) { g_darkened = on; }
 bool term_is_darkened()         { return g_darkened; }

@@ -47,7 +47,7 @@ return {
             run = function()
                 say("老人：41楼事实上是左右对称的。")
                 note("老人", "41楼事实上是左右对称的。")
-                set_tile(9, 9, 1)
+                set_tile(8, 9, 1)
             end
         }
     }

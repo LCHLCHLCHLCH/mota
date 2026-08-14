@@ -143,7 +143,7 @@ static void apply_event_flag(lua_State* L, int ev_idx, uint8_t floor, EventManag
 
 static bool load_floor_events(lua_State* L, uint8_t floor) {
 	char file[32];
-	snprintf(file, sizeof(file), "floor_%d", floor);
+	snprintf(file, sizeof(file), "f%d", floor);
 	lua_getglobal(L, "require");
 	lua_pushstring(L, file);
 	if (lua_pcall(L, 1, 1, 0) != LUA_OK) {

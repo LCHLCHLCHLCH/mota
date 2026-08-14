@@ -3,7 +3,6 @@
 #include "console_cmd.h"
 #include "script/lua_state.h"
 #include "script/lua_bridge.h"
-#include "sdl_3dwindow.h"
 #include "game/player.h"
 #include "game/monster.h"
 #include "render/display.h"
@@ -40,6 +39,9 @@ int main(int argc, char** argv) {
 	map_init();
 	map_init_default();
 
+	// 执行可选启动脚本（scripts/startup.lua），不存在则使用默认初始状态
+	lua_apply_startup(player);
+
 	SetColor(WHITE);
 
 	uint8_t prevFloor = player.floor;
@@ -52,8 +54,6 @@ int main(int argc, char** argv) {
 		drawMonsterLights(player);
 		hideCursor();
 		term_present();
-
-		render_3d_frame(player);
 
 		console_poll(player, events);
 
@@ -76,13 +76,6 @@ int main(int argc, char** argv) {
 				}
 			}
 		} else {
-			switch (key) {
-			case UP:    notify_3d_move(0, -1); break;
-			case DOWN:  notify_3d_move(0,  1); break;
-			case LEFT:  notify_3d_move(-1, 0); break;
-			case RIGHT: notify_3d_move(1,  0); break;
-			default: break;
-			}
 			player.respondToKey(key);
 		}
 
@@ -93,8 +86,8 @@ int main(int argc, char** argv) {
 		}
 	}
 
-	shutdown_3d_window();
 	console_cmd_shutdown();
+	script_close();
 	term_shutdown();
 	return 0;
 }

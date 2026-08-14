@@ -19,7 +19,7 @@ void saySomething(char *s) {
 
 uint8_t chooseFromSomething(uint8_t num, char **list) {
 	uint8_t chosenOption = 0;
-	uint8_t lastOption;
+	uint8_t lastOption = 0;
 	KEY key;
 	for (int i = 0; i < num; i++) {
 		if (i == 0)

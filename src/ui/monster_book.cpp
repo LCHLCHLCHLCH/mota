@@ -18,7 +18,7 @@ void showMonsterBook(Player& player)
 		{
 			uint8_t t = map_get(player.floor, x, y);
 			uint8_t add = 0;
-			if (t >= 101 && t <= 150) add = t;
+			if (tile_category(t) == TILE_MONSTER) add = t;
 			else if (t == TILE_MONSTER_BODY) add = bodyBossForFloor(player.floor);  // 多格 Boss 身躯
 			if (add == 0) continue;
 			bool dup = false;
@@ -133,7 +133,7 @@ void showMonsterBook(Player& player)
 			if (selected < count - 1) selected++;
 			break;
 		case LEFT:
-			if (pageStart > 0) { pageStart -= perPage; selected = pageStart; }
+			if (pageStart > 0) { pageStart = (pageStart >= perPage) ? pageStart - perPage : 0; selected = pageStart; }
 			break;
 		case RIGHT:
 			if (pageStart + perPage < count) { pageStart += perPage; selected = pageStart; }

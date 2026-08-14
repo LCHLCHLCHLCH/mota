@@ -36,12 +36,22 @@ tp(15)                  -- 传送到 15 层
 give(66)                -- 给予神圣剑
 save("mygame")          -- 保存
 load("mygame")          -- 读档
-light("on")             -- 浅色模式
 
 print(2 ^ 10)           -- 任意 Lua 表达式
 ```
 
 输入 `help` 查看完整命令列表。
+
+## 启动脚本
+
+游戏启动时会自动执行 `scripts/startup.lua`——它是一个普通 Lua 脚本，可在其中调用 `set`/`give`/`add_health` 等任意 API 配置初始状态。删除或重命名该文件即回到默认开局（1000 生命 / 100 攻击 / 100 防御 / 0 金币 / 0 钥匙）。
+
+```lua
+set("health", 100000)   -- 设置属性
+set("attack", 5000)
+set("yellow", 100)      -- 钥匙
+give(78)                -- 给予地震卷轴
+```
 
 ## 项目结构
 
@@ -52,8 +62,9 @@ src/             游戏逻辑
   render/        渲染层
   ui/            背包
 terminal/        SDL3 终端 + 控制台 + 存档
-lib/             SDL3 / SDL_ttf 预编译库
-lua-5.5.0/       Lua 5.5.0 源码
+scripts/         Lua 脚本（items.lua / startup.lua）
+  map/           各楼层地图与事件（fN.lua）
+lib/             SDL3 / SDL_ttf / Lua 预编译库与源码
 ```
 
 ## 许可
